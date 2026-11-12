@@ -167,4 +167,955 @@
                 </div>
             </section>
 
-            <!-- Tables Ticketing:
+            <!-- Tables Ticketing: Outstanding Alert & MTTR Priority -->
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-4 rounded shadow-sm border">
+                    <div class="flex justify-between items-center border-b pb-2 mb-4">
+                        <h2 class="text-sm font-bold text-orange-600">Tiket Outstanding (Warning &gt;90% &amp; Breach)</h2>
+                        <span class="text-xs font-semibold text-gray-600" id="alertCount">0 Tiket</span>
+                    </div>
+                    <div class="table-container text-sm">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-xs text-gray-600 border-b">
+                                    <th class="py-2 px-3">Ticket ID</th>
+                                    <th class="py-2 px-3">Priority</th>
+                                    <th class="py-2 px-3">Sub / Detail Category</th>
+                                    <th class="py-2 px-3 text-right">Durasi</th>
+                                    <th class="py-2 px-3 text-center">Status SLA</th>
+                                </tr>
+                            </thead>
+                            <tbody id="alertTableBody" class="divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded shadow-sm border">
+                    <div class="flex justify-between items-center border-b pb-2 mb-4">
+                        <h2 class="text-sm font-bold text-blue-900">MTTR &amp; Pencapaian SLA per Priority (Tiket Selesai)</h2>
+                    </div>
+                    <div class="table-container text-sm">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-xs text-gray-600 border-b">
+                                    <th class="py-2 px-3">Priority</th>
+                                    <th class="py-2 px-3 text-center">Selesai</th>
+                                    <th class="py-2 px-3 text-center">Target SLA</th>
+                                    <th class="py-2 px-3 text-right">MTTR Aktual</th>
+                                    <th class="py-2 px-3 text-center">Pencapaian</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mttrTableBody" class="divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pengawasan Real-Time Resolusi Tiket (Status = Resolved menunggu konfirmasi Close) -->
+            <section class="bg-white p-4 rounded shadow-sm border">
+                <div class="flex justify-between items-center border-b pb-2 mb-3 flex-wrap gap-2">
+                    <div>
+                        <h2 class="text-sm font-bold text-indigo-900">Pengawasan Resolusi Tiket — Status "Resolved" (Menunggu Konfirmasi Close)</h2>
+                        <p class="text-xs text-gray-500">Sesuai skenario CASN: Monitoring real-time tiket yang sudah diselesaikan solver namun belum berstatus Close.</p>
+                    </div>
+                    <span class="badge badge-info" id="resolvedPendingCount">0 Tiket Resolved</span>
+                </div>
+                <div class="table-container text-sm">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-xs text-gray-600 border-b">
+                                <th class="py-2 px-3">Ticket ID</th>
+                                <th class="py-2 px-3">Priority</th>
+                                <th class="py-2 px-3">Subcategory</th>
+                                <th class="py-2 px-3">Detail Category</th>
+                                <th class="py-2 px-3">Waktu Resolved</th>
+                                <th class="py-2 px-3 text-right">Durasi Resolusi</th>
+                                <th class="py-2 px-3 text-center">SLA Resolusi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resolvedMonitorTableBody" class="divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- TAB 2: DAILY REPORT INTERAKSI CASN (WHATSAPP & EMAIL)     -->
+        <!-- ========================================================= -->
+        <div id="tabInteraksi" class="tab-content hidden space-y-6">
+
+            <!-- Sub-filter khusus Channel Interaksi -->
+            <div class="bg-white p-3 rounded shadow-sm border flex items-center justify-between flex-wrap gap-3">
+                <div class="text-xs font-semibold text-gray-600">
+                    Basis Data: Seluruh Interaksi Masuk pada Channel <span class="text-emerald-700 font-bold">WhatsApp</span> &amp; <span class="text-blue-700 font-bold">Email</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-semibold text-gray-600">Channel:</label>
+                    <select id="filterChannelInteraksi" class="rounded border-gray-300 text-xs p-1.5 border">
+                        <option value="ALL">Semua (WhatsApp &amp; Email)</option>
+                        <option value="Whatsapp">WhatsApp Saja</option>
+                        <option value="Email">Email Saja</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- KPI Cards Interaksi -->
+            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div class="bg-white p-4 rounded shadow-sm border card-primary">
+                    <div class="text-xs font-semibold text-gray-500 uppercase mb-1">Total Antrian (WA &amp; Email)</div>
+                    <div class="text-3xl font-bold text-gray-900" id="kpiIntTotal">0</div>
+                    <div class="text-[11px] text-gray-500 mt-1" id="kpiIntChannelSplit">WA: 0 | Email: 0</div>
+                </div>
+                <div class="bg-white p-4 rounded shadow-sm border card-breach">
+                    <div class="text-xs font-semibold text-gray-500 uppercase mb-1">Antrian Terlama (Max Wait)</div>
+                    <div class="text-3xl font-bold text-gray-900" id="kpiIntMaxWait">00:00</div>
+                    <div class="text-[11px] text-red-700 mt-1 truncate" id="kpiIntMaxWaitInfo">-</div>
+                </div>
+                <div class="bg-white p-4 rounded shadow-sm border card-warning">
+                    <div class="text-xs font-semibold text-gray-500 uppercase mb-1">Rata-rata Antrian (Avg Wait)</div>
+                    <div class="text-3xl font-bold text-gray-900" id="kpiIntAvgWait">00:00</div>
+                    <div class="text-[11px] text-gray-500 mt-1">Waktu Tunggu Pickup Agent</div>
+                </div>
+                <div class="bg-white p-4 rounded shadow-sm border card-teal">
+                    <div class="text-xs font-semibold text-gray-500 uppercase mb-1">Average Handling Time (AHT)</div>
+                    <div class="text-3xl font-bold text-gray-900" id="kpiIntAHT">00:00</div>
+                    <div class="text-[11px] text-gray-500 mt-1" id="kpiIntAhtSplit">WA: 00:00 | Email: 00:00</div>
+                </div>
+                <div class="bg-white p-4 rounded shadow-sm border card-aman">
+                    <div class="text-xs font-semibold text-gray-500 uppercase mb-1">FCR / Non-Escalated L0</div>
+                    <div class="text-3xl font-bold text-gray-900" id="kpiIntFCR">0%</div>
+                    <div class="text-[11px] text-gray-500 mt-1" id="kpiIntFcrSplit">Selesai L0: 0 | Eskalasi: 0</div>
+                </div>
+            </section>
+
+            <!-- Charts Interaksi -->
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-4 rounded shadow-sm border">
+                    <h2 class="text-sm font-bold text-blue-900 mb-4 border-b pb-2">Daily Report Interaksi CASN (Volume WA vs Email Harian)</h2>
+                    <div class="relative h-64 w-full"><canvas id="intDailyChart"></canvas></div>
+                </div>
+                <div class="bg-white p-4 rounded shadow-sm border">
+                    <h2 class="text-sm font-bold text-blue-900 mb-4 border-b pb-2">Kategori Pertanyaan Terbanyak (Interaksi WA &amp; Email)</h2>
+                    <div class="relative h-64 w-full"><canvas id="intTopCatChart"></canvas></div>
+                </div>
+            </section>
+
+            <!-- Hourly Peak Traffic & Longest Queue Table -->
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-4 rounded shadow-sm border">
+                    <div class="border-b pb-2 mb-4">
+                        <h2 class="text-sm font-bold text-purple-900">Distribusi Trafik per Jam (Identifikasi Jam-Jam Krusial Shift)</h2>
+                        <p class="text-[11px] text-gray-500">Acuan penyesuaian jadwal shift &amp; overtime 6 agent (Manajemen Shift &amp; Kapasitas).</p>
+                    </div>
+                    <div class="relative h-64 w-full"><canvas id="intHourlyChart"></canvas></div>
+                </div>
+
+                <div class="bg-white p-4 rounded shadow-sm border">
+                    <div class="flex justify-between items-center border-b pb-2 mb-4">
+                        <h2 class="text-sm font-bold text-red-700">Top 15 Antrian Terlama (Evaluasi Pickup LIFO/FIFO)</h2>
+                        <span class="text-xs text-gray-500">Urut Waiting Time Tertinggi</span>
+                    </div>
+                    <div class="table-container text-sm">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-xs text-gray-600 border-b">
+                                    <th class="py-2 px-3">ID / Channel</th>
+                                    <th class="py-2 px-3">Waktu Masuk</th>
+                                    <th class="py-2 px-3">Kategori</th>
+                                    <th class="py-2 px-3 text-right">Waiting</th>
+                                    <th class="py-2 px-3 text-right">AHT</th>
+                                </tr>
+                            </thead>
+                            <tbody id="longestQueueTableBody" class="divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- TAB 3: SKENARIO CASN 2026 & BENCHMARK HISTORIS SLA        -->
+        <!-- ========================================================= -->
+        <div id="tabSkenario" class="tab-content hidden space-y-6">
+
+            <!-- Matriks Skenario Penanganan CASN 2026 -->
+            <section class="bg-white p-5 rounded shadow-sm border">
+                <h2 class="text-base font-bold text-blue-900 border-b pb-2 mb-4">Matriks Skenario Penanganan CASN 2026 E-Meterai</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div class="p-4 rounded border bg-blue-50/40 border-blue-200">
+                        <h3 class="font-bold text-blue-900 mb-2">1. Manajemen Interaksi &amp; Kapasitas</h3>
+                        <ul class="list-disc pl-5 space-y-1.5 text-xs text-gray-700">
+                            <li><strong>Manajemen Shift &amp; Kapasitas:</strong> Penyesuaian jadwal shift dan skema overtime untuk <strong>6 agent</strong> guna antisipasi lonjakan trafik pada jam-jam krusial.</li>
+                            <li><strong>Segmentasi Antrean:</strong> Memisahkan segmentasi antrean user CASN dan Non-CASN (evaluasi 2024) agar SLA reguler/VIP tidak terdampak.</li>
+                            <li><strong>Strategi Pickup Interaksi:</strong> Skema pickup adaptif (<strong>LIFO/FIFO</strong>) saat terjadi penumpukan antrean ekstrem.</li>
+                            <li><strong>Optimalisasi AHT:</strong> Standar jawaban (<em>canned responses</em>) yang seragam untuk kendala repetitif.</li>
+                            <li><strong>Sosialisasi Internal (L0):</strong> Penyegaran Product Knowledge dan alur penanganan khusus CASN 2026 ke tim L0.</li>
+                        </ul>
+                    </div>
+
+                    <div class="p-4 rounded border bg-amber-50/40 border-amber-200">
+                        <h3 class="font-bold text-amber-900 mb-2">2. Manajemen Tiket &amp; Eskalasi</h3>
+                        <ul class="list-disc pl-5 space-y-1.5 text-xs text-gray-700">
+                            <li><strong>Eskalasi Status Tiket:</strong> Menaikkan tingkat severity (prioritas) untuk seluruh tiket terkait kendala e-Meterai CASN menjadi <strong>Critical / High</strong>.</li>
+                            <li><strong>Pengawasan Resolusi Tiket:</strong> Monitoring ketat secara real-time terhadap konfirmasi tiket berstatus <strong>Resolved</strong>.</li>
+                        </ul>
+                    </div>
+
+                    <div class="p-4 rounded border bg-purple-50/40 border-purple-200">
+                        <h3 class="font-bold text-purple-900 mb-2">3. Koordinasi &amp; Validasi Eksternal (Approval Peruri)</h3>
+                        <ul class="list-disc pl-5 space-y-1.5 text-xs text-gray-700">
+                            <li><strong>Penyesuaian Parameter Sistem:</strong> Persetujuan penambahan Kategori dan KIP khusus CASN 2026 untuk Interaksi dan Ticketing.</li>
+                            <li><strong>Pembaruan Pansol:</strong> Validasi kelengkapan dan akurasi Panduan Solusi penanganan CASN 2026.</li>
+                            <li><strong>Konfigurasi Sistem Omnix:</strong> Persetujuan implementasi dan isi template <em>Auto-Reply</em> pada sistem Omnix selama periode CASN.</li>
+                        </ul>
+                    </div>
+
+                    <div class="p-4 rounded border bg-emerald-50/40 border-emerald-200">
+                        <h3 class="font-bold text-emerald-900 mb-2">4. Pelaporan &amp; Evaluasi (Reporting)</h3>
+                        <ul class="list-disc pl-5 space-y-1.5 text-xs text-gray-700">
+                            <li><strong>Daily Report Interaksi CASN:</strong> Total Antrian (WhatsApp &amp; Email), Antrian terlama, dan kategori pertanyaan terbanyak harian.</li>
+                            <li><strong>Daily Report Ticketing CASN:</strong> Jumlah tiket masuk, penyelesaian (MTTR), serta pengawasan status SLA.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Benchmark Historis SLA EMET & PERISAI (2024 - 2026) -->
+            <section class="bg-white p-5 rounded shadow-sm border">
+                <div class="flex justify-between items-center border-b pb-2 mb-4 flex-wrap gap-2">
+                    <div>
+                        <h2 class="text-base font-bold text-blue-900">Benchmark Historis Pencapaian SLA EMET (2024 – 2026)</h2>
+                        <p class="text-xs text-gray-500">Data historis menunjukkan penurunan tajam SLA EMET pada periode CASN Aug–Dec 2024 (terendah 18,72% di Sep 2024, rata-rata tahunan 51,45%).</p>
+                    </div>
+                </div>
+                <div class="relative h-72 w-full mb-6"><canvas id="benchmarkChart"></canvas></div>
+                <div class="overflow-x-auto text-xs">
+                    <table class="w-full text-left border-collapse border">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-700 border-b">
+                                <th class="py-2 px-3 border">Produk &amp; Tahun</th>
+                                <th class="py-2 px-2 text-center border">Jan</th>
+                                <th class="py-2 px-2 text-center border">Feb</th>
+                                <th class="py-2 px-2 text-center border">Mar</th>
+                                <th class="py-2 px-2 text-center border">Apr</th>
+                                <th class="py-2 px-2 text-center border">Mei</th>
+                                <th class="py-2 px-2 text-center border">Jun</th>
+                                <th class="py-2 px-2 text-center border">Jul</th>
+                                <th class="py-2 px-2 text-center border bg-amber-50">Agu</th>
+                                <th class="py-2 px-2 text-center border bg-amber-50">Sep</th>
+                                <th class="py-2 px-2 text-center border bg-amber-50">Okt</th>
+                                <th class="py-2 px-2 text-center border bg-amber-50">Nov</th>
+                                <th class="py-2 px-2 text-center border bg-amber-50">Des</th>
+                                <th class="py-2 px-3 text-center border font-bold bg-blue-50">Avg</th>
+                            </tr>
+                        </thead>
+                        <tbody id="benchmarkTableBody" class="divide-y"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <script>
+        // =========================================================================
+        // 1. KONFIGURASI SLA & REFERENSI HISTORIS (SAMA DENGAN SCRIPT SEBELUMNYA)
+        // =========================================================================
+        const SLA_TARGET = { 'CRITICAL': 8, 'HIGH': 12, 'MEDIUM': 24, 'LOW': 48 };
+        const FINISHED_STATUSES = new Set(['close', 'resolved', 'return']);
+
+        const HISTORICAL_BENCHMARK = [
+            { label: 'EMET 2024 (Total SLA)', values: [79.83, 48.63, 53.00, 61.32, 69.02, 72.47, 47.74, 55.21, 18.72, 45.94, 39.24, 26.32], avg: '51.45%' },
+            { label: 'EMET 2025 (Total SLA)', values: [35.97, 42.70, 77.06, 81.11, 65.90, 57.56, 61.48, 65.21, 70.34, 68.41, 57.94, 74.29], avg: '63.16%' },
+            { label: 'EMET 2026 YTD (Total SLA)', values: [70.12, 70.89, 63.41, 72.98, 78.13, 70.70, 75.73, null, null, null, null, null], avg: '71.71%' },
+            { label: 'PERISAI 2024 (Total SLA)', values: [95.01, 95.19, 94.80, 92.19, 93.45, 83.64, 68.49, 88.63, 86.22, 92.18, 96.08, 95.36], avg: '90.10%' },
+            { label: 'PERISAI 2025 (Total SLA)', values: [97.86, 97.76, 99.29, 98.45, 98.98, 97.78, 95.47, 98.27, 97.44, 96.56, 97.54, 98.08], avg: '97.79%' },
+            { label: 'PERISAI 2026 YTD (Total SLA)', values: [97.61, 98.17, 98.08, 98.96, 97.94, 99.38, 98.32, null, null, null, null, null], avg: '98.35%' }
+        ];
+
+        // Global State
+        let allRowsNormalized = [];
+        let maxDatasetMs = 0;
+        let charts = {};
+        let latestReportSummaryText = '';
+
+        // =========================================================================
+        // 2. EVENT LISTENERS (UPLOAD, TABS, FILTERS, COPY REPORT)
+        // =========================================================================
+        document.getElementById('csvFileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    ingestCsvData(results.data);
+                },
+                error: function(err) {
+                    alert("Gagal membaca CSV: " + err.message);
+                }
+            });
+        });
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab).classList.remove('hidden');
+            });
+        });
+
+        document.getElementById('viewSkenarioOnlyBtn').addEventListener('click', () => {
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('tabNav').classList.remove('hidden');
+            document.getElementById('dashboardContainer').classList.remove('hidden');
+            document.querySelector('[data-tab="tabSkenario"]').click();
+        });
+
+        document.getElementById('filterDate').addEventListener('change', applyAllFilters);
+        document.getElementById('filterSubcategory').addEventListener('change', () => {
+            updateDetailCategoryDropdown();
+            applyAllFilters();
+        });
+        document.getElementById('filterDetailCategory').addEventListener('change', applyAllFilters);
+        document.getElementById('filterChannelInteraksi').addEventListener('change', applyAllFilters);
+
+        document.getElementById('resetFilterBtn').addEventListener('click', () => {
+            document.getElementById('filterDate').value = 'ALL';
+            document.getElementById('filterSubcategory').value = 'ALL';
+            updateDetailCategoryDropdown();
+            document.getElementById('filterDetailCategory').value = 'ALL';
+            document.getElementById('filterChannelInteraksi').value = 'ALL';
+            applyAllFilters();
+        });
+
+        document.getElementById('copyReportBtn').addEventListener('click', () => {
+            if (!latestReportSummaryText) return;
+            navigator.clipboard.writeText(latestReportSummaryText).then(() => {
+                const btn = document.getElementById('copyReportBtn');
+                const orig = btn.textContent;
+                btn.textContent = 'Tersalin ke Clipboard!';
+                setTimeout(() => { btn.textContent = orig; }, 2000);
+            });
+        });
+
+        // Render Benchmark Statis saat halaman dimuat
+        renderHistoricalBenchmark();
+
+        // =========================================================================
+        // 3. HELPER PARSING TANGGAL, DURASI & KOLOM CSV
+        // =========================================================================
+        function getCol(row, keys) {
+            for (let k of keys) {
+                if (row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') {
+                    return String(row[k]).trim();
+                }
+            }
+            // Fallback case-insensitive
+            const map = {};
+            for (let rawKey in row) {
+                map[rawKey.toLowerCase().replace(/[^a-z0-9]/g, '')] = row[rawKey];
+            }
+            for (let k of keys) {
+                const clean = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (map[clean] !== undefined && map[clean] !== null && String(map[clean]).trim() !== '') {
+                    return String(map[clean]).trim();
+                }
+            }
+            return '-';
+        }
+
+        function parseSafeDate(dateStr) {
+            if (!dateStr || dateStr === '-' || dateStr.toLowerCase() === 'nan') return null;
+            const s = String(dateStr).trim();
+            // Handle MM/DD/YYYY H:MM(:SS) secara eksplisit agar konsisten lintas browser
+            const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+            if (m) {
+                const month = parseInt(m[1], 10) - 1;
+                const day = parseInt(m[2], 10);
+                const year = parseInt(m[3], 10);
+                const hour = m[4] ? parseInt(m[4], 10) : 0;
+                const min = m[5] ? parseInt(m[5], 10) : 0;
+                const sec = m[6] ? parseInt(m[6], 10) : 0;
+                const d = new Date(year, month, day, hour, min, sec);
+                return isNaN(d.getTime()) ? null : d.getTime();
+            }
+            const ms = Date.parse(s);
+            return isNaN(ms) ? null : ms;
+        }
+
+        function toLocalYMD(ms) {
+            if (!ms) return null;
+            const d = new Date(ms);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+
+        function parseHmsToSec(hmsStr) {
+            if (!hmsStr || hmsStr === '-') return null;
+            const parts = String(hmsStr).trim().split(':');
+            if (parts.length === 3) {
+                return (parseInt(parts[0], 10) || 0) * 3600 + (parseInt(parts[1], 10) || 0) * 60 + (parseFloat(parts[2]) || 0);
+            }
+            if (parts.length === 2) {
+                return (parseInt(parts[0], 10) || 0) * 60 + (parseFloat(parts[1]) || 0);
+            }
+            return null;
+        }
+
+        function formatSecToDuration(sec) {
+            if (sec === null || isNaN(sec)) return '-';
+            const s = Math.max(0, Math.round(sec));
+            const hrs = Math.floor(s / 3600);
+            const mins = Math.floor((s % 3600) / 60);
+            const secs = s % 60;
+            if (hrs > 0) {
+                return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            }
+            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        function formatHours(h) {
+            if (h === null || isNaN(h)) return '-';
+            return h.toFixed(2) + 'h';
+        }
+
+        // =========================================================================
+        // 4. INGESTION & NORMALISASI DATA CSV
+        // =========================================================================
+        function ingestCsvData(rawRows) {
+            // Cari maxDateMs di seluruh dataset untuk acuan durasi tiket outstanding
+            maxDatasetMs = 0;
+            rawRows.forEach(r => {
+                const candidates = [
+                    parseSafeDate(getCol(r, ['date_open'])),
+                    parseSafeDate(getCol(r, ['date_resolved'])),
+                    parseSafeDate(getCol(r, ['date_close'])),
+                    parseSafeDate(getCol(r, ['date_origin_interaction'])),
+                    parseSafeDate(getCol(r, ['date_last_update']))
+                ];
+                candidates.forEach(ms => { if (ms && ms > maxDatasetMs) maxDatasetMs = ms; });
+            });
+
+            const dateSet = new Set();
+            const subCatSet = new Set();
+
+            allRowsNormalized = rawRows.map(r => {
+                const id = getCol(r, ['ticket_id']);
+                const isEscalatedRaw = getCol(r, ['is_escalated']).toLowerCase();
+                const isEscalated = (isEscalatedRaw === 'escalated');
+                const channelRaw = getCol(r, ['channel_name']);
+                const channelLower = channelRaw.toLowerCase();
+                const channelNorm = channelLower === 'whatsapp' ? 'Whatsapp' : (channelLower === 'email' ? 'Email' : channelRaw);
+
+                const subCat = getCol(r, ['subCategory', 'subcategory', 'sub_category', 'subcategory_name']);
+                const detailCat = getCol(r, ['detailSubCategory', 'detailcategory', 'detail_category', 'detailSubCategory2']);
+
+                const priority = getCol(r, ['priority_name']).toUpperCase();
+                const target = SLA_TARGET[priority] || null;
+                const statusName = getCol(r, ['ticket_status_name']);
+                const statusLower = statusName.toLowerCase();
+                const isFinished = FINISHED_STATUSES.has(statusLower);
+
+                const openMs = parseSafeDate(getCol(r, ['date_open']));
+                const resMs = parseSafeDate(getCol(r, ['date_resolved'])) || parseSafeDate(getCol(r, ['date_close']));
+                const originMs = parseSafeDate(getCol(r, ['date_origin_interaction'])) || openMs || parseSafeDate(getCol(r, ['date_created_at']));
+
+                // Tanggal acuan: untuk tiket escalated utamakan date_open, fallback originMs; untuk interaksi utamakan originMs
+                const ticketDateYMD = toLocalYMD(openMs || originMs);
+                const interactionDateYMD = toLocalYMD(originMs);
+                const primaryDateYMD = isEscalated ? ticketDateYMD : interactionDateYMD;
+
+                if (primaryDateYMD) dateSet.add(primaryDateYMD);
+                if (subCat && subCat !== '-') subCatSet.add(subCat);
+
+                // Perhitungan SLA & MTTR (100% identik dengan script sebelumnya)
+                let hours = null, pct = null, slaResult = 'unknown';
+                if (openMs && target) {
+                    if (isFinished && resMs) {
+                        hours = (resMs - openMs) / 3600000;
+                    } else {
+                        hours = (maxDatasetMs - openMs) / 3600000;
+                    }
+                    if (hours < 0) hours = 0;
+                    pct = (hours / target) * 100;
+                    if (pct >= 100) slaResult = 'breach';
+                    else if (pct >= 90) slaResult = 'warning';
+                    else slaResult = 'aman';
+                }
+
+                // Durasi Interaksi (Waiting Time & Handling Time)
+                const waitSec = parseHmsToSec(getCol(r, ['waitingTime']));
+                const ahtSec = parseHmsToSec(getCol(r, ['handlingTime']));
+                const originHour = originMs ? new Date(originMs).getHours() : null;
+
+                return {
+                    id,
+                    isEscalated,
+                    channel: channelNorm,
+                    subCategory: subCat,
+                    detailCategory: detailCat,
+                    priority,
+                    statusName,
+                    statusLower,
+                    isFinished,
+                    openMs,
+                    resMs,
+                    resRaw: getCol(r, ['date_resolved']),
+                    originMs,
+                    originRaw: getCol(r, ['date_origin_interaction']),
+                    ticketDateYMD,
+                    interactionDateYMD,
+                    primaryDateYMD,
+                    originHour,
+                    hours,
+                    pct,
+                    slaResult,
+                    waitSec,
+                    ahtSec
+                };
+            }).filter(r => r.id && r.id !== '-');
+
+            // Populate Dropdown Tanggal & Subcategory
+            const dateSelect = document.getElementById('filterDate');
+            dateSelect.innerHTML = '<option value="ALL">Semua Tanggal</option>';
+            Array.from(dateSet).sort().forEach(d => dateSelect.appendChild(new Option(d, d)));
+
+            const subSelect = document.getElementById('filterSubcategory');
+            subSelect.innerHTML = '<option value="ALL">Semua Subcategory</option>';
+            Array.from(subCatSet).sort().forEach(sc => subSelect.appendChild(new Option(sc, sc)));
+
+            updateDetailCategoryDropdown();
+
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('filterSection').classList.remove('hidden');
+            document.getElementById('tabNav').classList.remove('hidden');
+            document.getElementById('dashboardContainer').classList.remove('hidden');
+            document.getElementById('copyReportBtn').classList.remove('hidden');
+
+            applyAllFilters();
+        }
+
+        function updateDetailCategoryDropdown() {
+            const selectedSub = document.getElementById('filterSubcategory').value;
+            const detSelect = document.getElementById('filterDetailCategory');
+            const prevVal = detSelect.value;
+
+            const detSet = new Set();
+            allRowsNormalized.forEach(r => {
+                if (selectedSub === 'ALL' || r.subCategory === selectedSub) {
+                    if (r.detailCategory && r.detailCategory !== '-') detSet.add(r.detailCategory);
+                }
+            });
+
+            detSelect.innerHTML = '<option value="ALL">Semua Detail Category</option>';
+            Array.from(detSet).sort().forEach(dc => detSelect.appendChild(new Option(dc, dc)));
+
+            if (Array.from(detSet).includes(prevVal)) {
+                detSelect.value = prevVal;
+            } else {
+                detSelect.value = 'ALL';
+            }
+        }
+
+        // =========================================================================
+        // 5. FILTERING & RENDER SEMUA VIEW
+        // =========================================================================
+        function applyAllFilters() {
+            const fDate = document.getElementById('filterDate').value;
+            const fSub = document.getElementById('filterSubcategory').value;
+            const fDet = document.getElementById('filterDetailCategory').value;
+            const fChannel = document.getElementById('filterChannelInteraksi').value;
+
+            const baseFiltered = allRowsNormalized.filter(r => {
+                if (fSub !== 'ALL' && r.subCategory !== fSub) return false;
+                if (fDet !== 'ALL' && r.detailCategory !== fDet) return false;
+                return true;
+            });
+
+            // Subset 1: Tiket Escalated (Daily Report Ticketing CASN)
+            const ticketsEscalated = baseFiltered.filter(r => {
+                if (!r.isEscalated) return false;
+                if (fDate !== 'ALL' && r.ticketDateYMD !== fDate) return false;
+                return true;
+            });
+
+            // Subset 2: Interaksi WhatsApp & Email (Daily Report Interaksi CASN)
+            const interactionsWaEmail = baseFiltered.filter(r => {
+                if (r.channel !== 'Whatsapp' && r.channel !== 'Email') return false;
+                if (fDate !== 'ALL' && r.interactionDateYMD !== fDate) return false;
+                if (fChannel !== 'ALL' && r.channel !== fChannel) return false;
+                return true;
+            });
+
+            const totalRawDateFiltered = baseFiltered.filter(r => fDate === 'ALL' || r.primaryDateYMD === fDate).length;
+            document.getElementById('filteredRawCount').textContent = totalRawDateFiltered;
+            document.getElementById('filteredEscCount').textContent = ticketsEscalated.length;
+
+            const tickStats = renderTicketingView(ticketsEscalated);
+            const intStats = renderInteraksiView(interactionsWaEmail);
+            buildCopyableSummary(fDate, fSub, fDet, tickStats, intStats);
+        }
+
+        // =========================================================================
+        // 6. RENDER VIEW 1: DAILY REPORT TICKETING CASN (ESCALATED)
+        // =========================================================================
+        function renderTicketingView(tickets) {
+            const finished = tickets.filter(t => t.isFinished);
+            const outstanding = tickets.filter(t => !t.isFinished);
+
+            const resolvedOnly = tickets.filter(t => t.statusLower === 'resolved');
+            const closedOnly = tickets.filter(t => t.statusLower === 'close');
+
+            const critHighCount = tickets.filter(t => t.priority === 'CRITICAL' || t.priority === 'HIGH').length;
+            const medLowCount = tickets.length - critHighCount;
+
+            const outAman = outstanding.filter(t => t.slaResult === 'aman').length;
+            const outWarning = outstanding.filter(t => t.slaResult === 'warning').length;
+            const outBreach = outstanding.filter(t => t.slaResult === 'breach').length;
+
+            const totalMTTR = finished.reduce((sum, t) => sum + (t.hours || 0), 0);
+            const avgMTTR = finished.length > 0 ? (totalMTTR / finished.length) : 0;
+            const slaAchievedFinished = finished.filter(t => t.slaResult === 'aman').length;
+            const slaAchPct = finished.length > 0 ? ((slaAchievedFinished / finished.length) * 100).toFixed(1) : '0.0';
+
+            document.getElementById('kpiTotalMasuk').textContent = tickets.length;
+            document.getElementById('kpiSeveritySplit').textContent = `Crit/High: ${critHighCount} | Med/Low: ${medLowCount}`;
+            document.getElementById('kpiResolved').textContent = finished.length;
+            document.getElementById('kpiResolvedSplit').textContent = `Resolved: ${resolvedOnly.length} | Close: ${closedOnly.length}`;
+            document.getElementById('kpiMTTR').textContent = formatHours(avgMTTR);
+            document.getElementById('kpiSlaAchAll').textContent = `SLA Tercapai: ${slaAchPct}%`;
+            document.getElementById('kpiOnTrack').textContent = outAman;
+            document.getElementById('kpiWarning').textContent = outWarning;
+            document.getElementById('kpiBreach').textContent = outBreach;
+
+            // Chart Tren Harian Tiket
+            const dailyCounts = {};
+            tickets.forEach(t => {
+                if (t.ticketDateYMD) dailyCounts[t.ticketDateYMD] = (dailyCounts[t.ticketDateYMD] || 0) + 1;
+            });
+            const sortedDates = Object.keys(dailyCounts).sort();
+
+            if (charts.dailyTrend) charts.dailyTrend.destroy();
+            charts.dailyTrend = new Chart(document.getElementById('dailyTrendChart'), {
+                type: 'line',
+                data: {
+                    labels: sortedDates,
+                    datasets: [{
+                        label: 'Tiket Masuk (Escalated)',
+                        data: sortedDates.map(d => dailyCounts[d]),
+                        borderColor: '#1A73E8',
+                        backgroundColor: 'rgba(26, 115, 232, 0.12)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            // Chart Top Detail Category Tiket
+            const catCounts = {};
+            tickets.forEach(t => { catCounts[t.detailCategory] = (catCounts[t.detailCategory] || 0) + 1; });
+            const sortedCats = Object.entries(catCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+            if (charts.topCategory) charts.topCategory.destroy();
+            charts.topCategory = new Chart(document.getElementById('topCategoryChart'), {
+                type: 'bar',
+                data: {
+                    labels: sortedCats.map(c => c[0]),
+                    datasets: [{
+                        label: 'Jumlah Tiket',
+                        data: sortedCats.map(c => c[1]),
+                        backgroundColor: '#D97706',
+                        borderRadius: 4
+                    }]
+                },
+                options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            // Table Outstanding (Warning & Breach)
+            const alerts = outstanding
+                .filter(t => t.slaResult === 'warning' || t.slaResult === 'breach')
+                .sort((a, b) => (b.pct || 0) - (a.pct || 0));
+
+            document.getElementById('alertCount').textContent = `${alerts.length} Tiket`;
+            document.getElementById('alertTableBody').innerHTML = alerts.length ? alerts.map(t => `
+                <tr class="hover:bg-gray-50">
+                    <td class="py-2 px-3 font-mono text-xs text-blue-700 font-semibold">${t.id}</td>
+                    <td class="py-2 px-3 text-xs font-semibold">${t.priority}</td>
+                    <td class="py-2 px-3 text-xs">
+                        <div class="font-medium text-gray-800">${t.subCategory}</div>
+                        <div class="text-gray-500">${t.detailCategory}</div>
+                    </td>
+                    <td class="py-2 px-3 text-right font-mono text-xs">${formatHours(t.hours)}</td>
+                    <td class="py-2 px-3 text-center">
+                        <span class="badge ${t.slaResult === 'breach' ? 'badge-breach' : 'badge-warning'}">
+                            ${t.slaResult.toUpperCase()} (${t.pct !== null ? t.pct.toFixed(0) : '-'}%)
+                        </span>
+                    </td>
+                </tr>
+            `).join('') : '<tr><td colspan="5" class="py-4 text-center text-gray-500 text-xs">Aman, tidak ada tiket Warning atau Breach</td></tr>';
+
+            // Table MTTR per Priority
+            document.getElementById('mttrTableBody').innerHTML = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map(pr => {
+                const prFinished = finished.filter(t => t.priority === pr);
+                const count = prFinished.length;
+                const prAvg = count > 0 ? (prFinished.reduce((sum, t) => sum + (t.hours || 0), 0) / count) : 0;
+                const achPct = count > 0 ? ((prFinished.filter(t => t.slaResult === 'aman').length / count) * 100).toFixed(1) : '-';
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-2 px-3 font-bold text-xs">${pr}</td>
+                        <td class="py-2 px-3 text-center text-xs">${count}</td>
+                        <td class="py-2 px-3 text-center text-xs">${SLA_TARGET[pr]}h</td>
+                        <td class="py-2 px-3 text-right font-mono text-xs">${formatHours(prAvg)}</td>
+                        <td class="py-2 px-3 text-center">
+                            <span class="badge ${achPct !== '-' && parseFloat(achPct) >= 90 ? 'badge-aman' : (achPct === '-' ? 'badge-neutral' : 'badge-breach')}">
+                                ${achPct === '-' ? '-' : achPct + '%'}
+                            </span>
+                        </td>
+                    </tr>`;
+            }).join('');
+
+            // Table Pengawasan Tiket Resolved (Menunggu Konfirmasi Close)
+            const resolvedSorted = [...resolvedOnly].sort((a, b) => (a.resMs || 0) - (b.resMs || 0));
+            document.getElementById('resolvedPendingCount').textContent = `${resolvedSorted.length} Tiket Resolved`;
+            document.getElementById('resolvedMonitorTableBody').innerHTML = resolvedSorted.length ? resolvedSorted.slice(0, 100).map(t => `
+                <tr class="hover:bg-gray-50">
+                    <td class="py-2 px-3 font-mono text-xs text-indigo-700 font-semibold">${t.id}</td>
+                    <td class="py-2 px-3 text-xs font-semibold">${t.priority}</td>
+                    <td class="py-2 px-3 text-xs">${t.subCategory}</td>
+                    <td class="py-2 px-3 text-xs text-gray-600">${t.detailCategory}</td>
+                    <td class="py-2 px-3 text-xs font-mono">${t.resRaw}</td>
+                    <td class="py-2 px-3 text-right font-mono text-xs">${formatHours(t.hours)}</td>
+                    <td class="py-2 px-3 text-center">
+                        <span class="badge ${t.slaResult === 'aman' ? 'badge-aman' : (t.slaResult === 'breach' ? 'badge-breach' : 'badge-neutral')}">
+                            ${t.slaResult === 'aman' ? 'IN SLA' : (t.slaResult === 'breach' ? 'BREACH' : '-')}
+                        </span>
+                    </td>
+                </tr>
+            `).join('') : '<tr><td colspan="7" class="py-4 text-center text-gray-500 text-xs">Tidak ada tiket berstatus Resolved yang menunggu konfirmasi</td></tr>';
+
+            return {
+                total: tickets.length,
+                finished: finished.length,
+                resolvedOnly: resolvedOnly.length,
+                closedOnly: closedOnly.length,
+                avgMTTR: formatHours(avgMTTR),
+                slaAchPct,
+                outAman,
+                outWarning,
+                outBreach,
+                topCategory: sortedCats.length ? `${sortedCats[0][0]} (${sortedCats[0][1]})` : '-'
+            };
+        }
+
+        // =========================================================================
+        // 7. RENDER VIEW 2: DAILY REPORT INTERAKSI CASN (WHATSAPP & EMAIL)
+        // =========================================================================
+        function renderInteraksiView(interactions) {
+            const waItems = interactions.filter(i => i.channel === 'Whatsapp');
+            const emItems = interactions.filter(i => i.channel === 'Email');
+
+            // Waiting time stats
+            const validWaits = interactions.filter(i => i.waitSec !== null);
+            let maxWaitItem = null;
+            validWaits.forEach(i => {
+                if (!maxWaitItem || i.waitSec > maxWaitItem.waitSec) maxWaitItem = i;
+            });
+            const avgWaitSec = validWaits.length ? validWaits.reduce((s, i) => s + i.waitSec, 0) / validWaits.length : 0;
+
+            // AHT stats
+            const validAht = interactions.filter(i => i.ahtSec !== null);
+            const avgAhtSec = validAht.length ? validAht.reduce((s, i) => s + i.ahtSec, 0) / validAht.length : 0;
+
+            const validWaAht = waItems.filter(i => i.ahtSec !== null);
+            const avgWaAht = validWaAht.length ? validWaAht.reduce((s, i) => s + i.ahtSec, 0) / validWaAht.length : 0;
+
+            const validEmAht = emItems.filter(i => i.ahtSec !== null);
+            const avgEmAht = validEmAht.length ? validEmAht.reduce((s, i) => s + i.ahtSec, 0) / validEmAht.length : 0;
+
+            // FCR / Non-Escalated L0
+            const escCount = interactions.filter(i => i.isEscalated).length;
+            const nonEscCount = interactions.length - escCount;
+            const fcrPct = interactions.length ? ((nonEscCount / interactions.length) * 100).toFixed(1) : '0.0';
+
+            document.getElementById('kpiIntTotal').textContent = interactions.length;
+            document.getElementById('kpiIntChannelSplit').textContent = `WA: ${waItems.length} | Email: ${emItems.length}`;
+            document.getElementById('kpiIntMaxWait').textContent = maxWaitItem ? formatSecToDuration(maxWaitItem.waitSec) : '00:00';
+            document.getElementById('kpiIntMaxWaitInfo').textContent = maxWaitItem ? `${maxWaitItem.channel} • ${maxWaitItem.detailCategory}` : '-';
+            document.getElementById('kpiIntAvgWait').textContent = formatSecToDuration(avgWaitSec);
+            document.getElementById('kpiIntAHT').textContent = formatSecToDuration(avgAhtSec);
+            document.getElementById('kpiIntAhtSplit').textContent = `WA: ${formatSecToDuration(avgWaAht)} | Email: ${formatSecToDuration(avgEmAht)}`;
+            document.getElementById('kpiIntFCR').textContent = `${fcrPct}%`;
+            document.getElementById('kpiIntFcrSplit').textContent = `Selesai L0: ${nonEscCount} | Eskalasi: ${escCount}`;
+
+            // Chart 1: Daily Volume WA vs Email
+            const dateMap = {};
+            interactions.forEach(i => {
+                if (!i.interactionDateYMD) return;
+                if (!dateMap[i.interactionDateYMD]) dateMap[i.interactionDateYMD] = { wa: 0, em: 0 };
+                if (i.channel === 'Whatsapp') dateMap[i.interactionDateYMD].wa++;
+                else dateMap[i.interactionDateYMD].em++;
+            });
+            const sortedDates = Object.keys(dateMap).sort();
+
+            if (charts.intDaily) charts.intDaily.destroy();
+            charts.intDaily = new Chart(document.getElementById('intDailyChart'), {
+                type: 'bar',
+                data: {
+                    labels: sortedDates,
+                    datasets: [
+                        { label: 'WhatsApp', data: sortedDates.map(d => dateMap[d].wa), backgroundColor: '#10B981', borderRadius: 3 },
+                        { label: 'Email', data: sortedDates.map(d => dateMap[d].em), backgroundColor: '#2563EB', borderRadius: 3 }
+                    ]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+                }
+            });
+
+            // Chart 2: Top Kategori Pertanyaan Interaksi
+            const catCounts = {};
+            interactions.forEach(i => { catCounts[i.detailCategory] = (catCounts[i.detailCategory] || 0) + 1; });
+            const sortedCats = Object.entries(catCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+            if (charts.intTopCat) charts.intTopCat.destroy();
+            charts.intTopCat = new Chart(document.getElementById('intTopCatChart'), {
+                type: 'bar',
+                data: {
+                    labels: sortedCats.map(c => c[0]),
+                    datasets: [{
+                        label: 'Total Interaksi',
+                        data: sortedCats.map(c => c[1]),
+                        backgroundColor: '#0D9488',
+                        borderRadius: 4
+                    }]
+                },
+                options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            // Chart 3: Distribusi Trafik per Jam (00 - 23) untuk Manajemen Shift & Overtime
+            const hourlyCounts = Array(24).fill(0);
+            interactions.forEach(i => {
+                if (i.originHour !== null && i.originHour >= 0 && i.originHour < 24) {
+                    hourlyCounts[i.originHour]++;
+                }
+            });
+            const hourLabels = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, '0')}:00`);
+
+            if (charts.intHourly) charts.intHourly.destroy();
+            charts.intHourly = new Chart(document.getElementById('intHourlyChart'), {
+                type: 'line',
+                data: {
+                    labels: hourLabels,
+                    datasets: [{
+                        label: 'Volume Interaksi / Jam',
+                        data: hourlyCounts,
+                        borderColor: '#7C3AED',
+                        backgroundColor: 'rgba(124, 58, 237, 0.12)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            // Table Top 15 Antrian Terlama
+            const longestList = [...validWaits].sort((a, b) => b.waitSec - a.waitSec).slice(0, 15);
+            document.getElementById('longestQueueTableBody').innerHTML = longestList.length ? longestList.map(i => `
+                <tr class="hover:bg-gray-50">
+                    <td class="py-2 px-3 text-xs">
+                        <span class="font-mono font-semibold text-blue-800">${i.id}</span><br>
+                        <span class="badge ${i.channel === 'Whatsapp' ? 'badge-aman' : 'badge-info'}">${i.channel}</span>
+                    </td>
+                    <td class="py-2 px-3 font-mono text-xs text-gray-600">${i.originRaw}</td>
+                    <td class="py-2 px-3 text-xs">
+                        <div class="font-medium">${i.subCategory}</div>
+                        <div class="text-gray-500">${i.detailCategory}</div>
+                    </td>
+                    <td class="py-2 px-3 text-right font-mono text-xs font-bold text-red-700">${formatSecToDuration(i.waitSec)}</td>
+                    <td class="py-2 px-3 text-right font-mono text-xs text-gray-700">${formatSecToDuration(i.ahtSec)}</td>
+                </tr>
+            `).join('') : '<tr><td colspan="5" class="py-4 text-center text-gray-500 text-xs">Tidak ada data antrian interaksi</td></tr>';
+
+            return {
+                total: interactions.length,
+                wa: waItems.length,
+                email: emItems.length,
+                maxWait: maxWaitItem ? formatSecToDuration(maxWaitItem.waitSec) : '00:00',
+                avgWait: formatSecToDuration(avgWaitSec),
+                avgAht: formatSecToDuration(avgAhtSec),
+                topCategories: sortedCats.slice(0, 3).map(c => `${c[0]} (${c[1]})`).join(', ') || '-'
+            };
+        }
+
+        // =========================================================================
+        // 8. RENDER BENCHMARK HISTORIS (SHEET 2) & SUMMARY GENERATOR
+        // =========================================================================
+        function renderHistoricalBenchmark() {
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            const colors = ['#DC2626', '#D97706', '#2563EB', '#9CA3AF', '#6B7280', '#10B981'];
+
+            new Chart(document.getElementById('benchmarkChart'), {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: HISTORICAL_BENCHMARK.slice(0, 3).map((row, idx) => ({
+                        label: row.label,
+                        data: row.values,
+                        borderColor: colors[idx],
+                        backgroundColor: colors[idx],
+                        tension: 0.25,
+                        spanGaps: false
+                    }))
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { min: 0, max: 100, ticks: { callback: v => v + '%' } }
+                    }
+                }
+            });
+
+            document.getElementById('benchmarkTableBody').innerHTML = HISTORICAL_BENCHMARK.map(row => `
+                <tr class="hover:bg-gray-50">
+                    <td class="py-2 px-3 font-semibold border">${row.label}</td>
+                    ${row.values.map((v, idx) => {
+                        const isCasnPeak = idx >= 7;
+                        const bg = isCasnPeak ? 'bg-amber-50/50' : '';
+                        const color = v !== null && v < 50 ? 'text-red-600 font-bold' : '';
+                        return `<td class="py-2 px-2 text-center border ${bg} ${color}">${v !== null ? v.toFixed(1) + '%' : '-'}</td>`;
+                    }).join('')}
+                    <td class="py-2 px-3 text-center font-bold border bg-blue-50">${row.avg}</td>
+                </tr>
+            `).join('');
+        }
+
+        function buildCopyableSummary(fDate, fSub, fDet, tickStats, intStats) {
+            const periodeLabel = fDate === 'ALL' ? 'Semua Periode Data' : fDate;
+            const filterLabel = `Subcategory: ${fSub} | Detail: ${fDet}`;
+            latestReportSummaryText = [
+                `*DAILY REPORT PENANGANAN CASN 2026*`,
+                `Periode: ${periodeLabel}`,
+                `Filter: ${filterLabel}`,
+                ``,
+                `*1. Daily Report Interaksi CASN (WA & Email)*`,
+                `- Total Antrian Masuk: ${intStats.total} (WA: ${intStats.wa} | Email: ${intStats.email})`,
+                `- Antrian Terlama (Max Wait): ${intStats.maxWait} (Avg Wait: ${intStats.avgWait})`,
+                `- Average Handling Time (AHT): ${intStats.avgAht}`,
+                `- Kategori Pertanyaan Terbanyak: ${intStats.topCategories}`,
+                ``,
+                `*2. Daily Report Ticketing CASN (Escalated)*`,
+                `- Jumlah Tiket Masuk: ${tickStats.total}`,
+                `- Penyelesaian: ${tickStats.finished} (Resolved: ${tickStats.resolvedOnly} | Close: ${tickStats.closedOnly})`,
+                `- MTTR Aktual: ${tickStats.avgMTTR} (Pencapaian SLA: ${tickStats.slaAchPct}%)`,
+                `- Outstanding SLA: On Track (${tickStats.outAman}) | Warning (${tickStats.outWarning}) | Breach (${tickStats.outBreach})`
+            ].join('\n');
+        }
+    </script>
+</body>
+</html>

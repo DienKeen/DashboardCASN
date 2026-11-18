@@ -1,262 +1,704 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CASN 2026 E-Meterai — Operational & SLA Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #F4F6F9; }
-        .badge { padding: 0.2rem 0.55rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; display: inline-block; }
-        .badge-aman { background-color: #E6F4EA; color: #0F8B58; border: 1px solid #0F8B58; }
-        .badge-warning { background-color: #FEF3C7; color: #D97706; border: 1px solid #D97706; }
-        .badge-breach { background-color: #FEE2E2; color: #DC2626; border: 1px solid #DC2626; }
-        .badge-info { background-color: #DBEAFE; color: #1D4ED8; border: 1px solid #1D4ED8; }
-        .badge-pending { background-color: #F3E8FF; color: #6D28D9; border: 1px solid #7C3AED; }
-        .badge-neutral { background-color: #F3F4F6; color: #4B5563; border: 1px solid #9CA3AF; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Monitoring SLA &amp; MTTR Tiket CASN</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --primary: #1e3a8a;
+      --primary-light: #eff6ff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --pass-bg: #ecfdf5;
+      --pass-text: #059669;
+      --pass-border: #6ee7b7;
+      --fail-bg: #fef2f2;
+      --fail-text: #dc2626;
+      --fail-border: #fca5a5;
+    }
 
-        .table-container { max-height: 380px; overflow-y: auto; }
-        th.sticky-th { position: sticky; top: 0; background-color: #f9fafb; z-index: 10; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
 
-        .card-aman { border-left: 4px solid #0F8B58; }
-        .card-warning { border-left: 4px solid #D97706; }
-        .card-breach { border-left: 4px solid #DC2626; }
-        .card-primary { border-left: 4px solid #1A73E8; }
-        .card-purple { border-left: 4px solid #7C3AED; }
-        .card-teal { border-left: 4px solid #0D9488; }
+    .topbar {
+      background: var(--primary);
+      color: #ffffff;
+      padding: 16px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .topbar h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .topbar p {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: #cbd5e1;
+    }
 
-        .tab-btn { border-bottom: 3px solid transparent; transition: all 0.2s; }
-        .tab-btn.active { border-bottom-color: #1E40AF; color: #1E3A8A; font-weight: 700; background-color: #EFF6FF; }
+    .container {
+      max-width: 1280px;
+      margin: 24px auto;
+      padding: 0 20px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
 
-        /* Styling Executive Report SSCASN */
-        .exec-dark { background-color: #070A12; color: #F9FAFB; }
-        .exec-dark .exec-card { background-color: #0D1322; border-color: #1E3A8A; }
-        .exec-dark .exec-th-blue { background-color: #163E8C; color: #FFFFFF; border-color: #2B59B5; }
-        .exec-dark .exec-th-dark { background-color: #0F172A; color: #E5E7EB; border-color: #334155; }
-        .exec-dark .exec-cell { border-color: #263248; color: #F3F4F6; }
-        .exec-dark .exec-row-alt:nth-child(even) { background-color: #0F172A; }
-        .exec-dark .exec-row-alt:nth-child(odd) { background-color: #090D16; }
-        .exec-dark .exec-footer { background-color: #163E8C; color: #FFFFFF; border-color: #2B59B5; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
 
-        .exec-light { background-color: #FFFFFF; color: #111827; }
-        .exec-light .exec-card { background-color: #F8FAFC; border-color: #CBD5E1; }
-        .exec-light .exec-th-blue { background-color: #1D4ED8; color: #FFFFFF; border-color: #1E40AF; }
-        .exec-light .exec-th-dark { background-color: #E2E8F0; color: #1E293B; border-color: #CBD5E1; }
-        .exec-light .exec-cell { border-color: #CBD5E1; color: #111827; }
-        .exec-light .exec-row-alt:nth-child(even) { background-color: #F1F5F9; }
-        .exec-light .exec-row-alt:nth-child(odd) { background-color: #FFFFFF; }
-        .exec-light .exec-footer { background-color: #1D4ED8; color: #FFFFFF; border-color: #1E40AF; }
-    </style>
+    /* Filter & Upload Bar */
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      align-items: end;
+    }
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .field input[type="file"],
+    .field input[type="date"],
+    .field select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      background: #ffffff;
+      color: var(--text);
+    }
+
+    /* KPI Summary Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+    }
+    .kpi-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+    .kpi-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .kpi-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-top: 4px;
+    }
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* SLA Card Header & Toggle */
+    .sla-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 14px;
+    }
+    .sla-card-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .sla-card-subtitle {
+      margin: 4px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .sla-toggle-group {
+      display: inline-flex;
+      background: #f1f5f9;
+      padding: 3px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .sla-toggle-btn {
+      border: none;
+      background: transparent;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .sla-toggle-btn.active {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Tables */
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    thead th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 600;
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    tbody td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+    tbody tr:hover { background: #f8fafc; }
+    tfoot td {
+      padding: 12px 14px;
+      font-weight: 700;
+      background: #f8fafc;
+      border-top: 2px solid var(--border);
+    }
+
+    .badge {
+      display: inline-block;
+      min-width: 64px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      text-align: center;
+    }
+    .badge.pass {
+      background: var(--pass-bg);
+      color: var(--pass-text);
+      border: 1px solid var(--pass-border);
+    }
+    .badge.fail {
+      background: var(--fail-bg);
+      color: var(--fail-text);
+      border: 1px solid var(--fail-border);
+    }
+    .badge.empty {
+      background: #f8fafc;
+      color: #94a3b8;
+      border: 1px solid #cbd5e1;
+    }
+    .tag-pending {
+      display: inline-block;
+      margin-top: 3px;
+      padding: 1px 6px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #475569;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+    }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
+    .text-danger { color: var(--fail-text); font-weight: 700; }
+    .text-success { color: var(--pass-text); font-weight: 600; }
+  </style>
 </head>
-<body class="text-gray-800">
+<body>
 
-    <!-- Topbar -->
-    <header class="bg-white border-b-2 border-blue-800 p-4 shadow-sm">
-        <div class="max-w-7xl mx-auto flex justify-between items-center flex-wrap gap-4">
-            <div>
-                <h1 class="text-xl font-bold text-blue-900 uppercase tracking-wide">CASN 2026 Operational &amp; SLA Dashboard</h1>
-                <div class="flex flex-wrap items-center gap-2 mt-1">
-                    <span id="dbStatusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300">
-                        <span id="dbStatusDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
-                        <span id="dbStatusText">Memeriksa Database...</span>
-                    </span>
-                    <span id="dbMetaText" class="text-xs text-gray-500"></span>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-2 flex-wrap">
-                <button id="slaViewToggleBtn" title="Beralih antara perhitungan SLA Internal (jeda waktu pending) dan User (waktu berjalan penuh)" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-300 text-xs font-semibold py-2 px-3 rounded shadow-sm transition">
-                    Internal (Exclude Pending)
-                </button>
-                <select id="uploadModeSelect" title="Pilih cara penyimpanan saat upload CSV baru" class="rounded border-gray-300 text-xs font-semibold p-2 border bg-gray-50 text-gray-700">
-                    <option value="upsert">Mode: Gabung &amp; Update (Upsert)</option>
-                    <option value="replace">Mode: Timpa Semua Data</option>
-                </select>
-                <label for="csvFileInput" class="cursor-pointer bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold py-2 px-3.5 rounded shadow transition">
-                    Upload Raw CSV
-                </label>
-                <input type="file" id="csvFileInput" accept=".csv" class="hidden">
-
-                <button id="copyReportBtn" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-2 px-3 rounded shadow transition">
-                    Salin Report
-                </button>
-                <button id="exportDbBtn" class="hidden bg-slate-700 hover:bg-slate-800 text-white text-xs font-semibold py-2 px-3 rounded shadow transition">
-                    Backup DB
-                </button>
-                <button id="clearDbBtn" class="hidden bg-red-50 hover:bg-red-100 text-red-700 border border-red-300 text-xs font-semibold py-2 px-3 rounded transition">
-                    Hapus DB
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- Banner Peringatan Migrasi Schema Lama (jika D1/IDB belum punya kolom date_pending) -->
-    <div id="legacySchemaBanner" class="max-w-7xl mx-auto mt-4 px-4 hidden">
-        <div class="bg-amber-50 border-l-4 border-amber-500 text-amber-950 p-3.5 rounded shadow-sm flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div>
-                <span class="font-bold text-amber-800 uppercase">Perlu Sinkronisasi Kolom Pending:</span>
-                Data yang tersimpan di database saat ini berasal dari upload sebelum fitur pemotongan <code>date_pending</code> aktif, sehingga usia pending belum terpotong.
-                Mode upload telah otomatis diatur ke <strong>Timpa Semua Data</strong> — silakan klik <strong>Upload Raw CSV</strong> satu kali untuk memperbarui database.
-            </div>
-        </div>
+  <header class="topbar">
+    <div>
+      <h1>Dashboard Monitoring SLA &amp; MTTR Tiket CASN</h1>
+      <p>Mendukung perhitungan dual-mode: Potong Usia Pending (Internal) &amp; Hitung Penuh (User)</p>
     </div>
+    <div id="file-status" style="font-size:12px;color:#e2e8f0;">Belum ada file CSV diunggah</div>
+  </header>
 
-    <!-- Global Filter Bar -->
-    <section id="filterSection" class="max-w-7xl mx-auto mt-4 px-4 hidden">
-        <div class="bg-white p-4 rounded shadow-sm border flex flex-wrap gap-4 items-end">
-            <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">Filter Tanggal</label>
-                <select id="filterDate" class="block w-44 rounded border-gray-300 shadow-sm text-sm p-2 border focus:border-blue-500 focus:ring-blue-500">
-                    <option value="ALL">Semua Tanggal</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">Subcategory</label>
-                <select id="filterSubcategory" class="block w-52 rounded border-gray-300 shadow-sm text-sm p-2 border focus:border-blue-500 focus:ring-blue-500">
-                    <option value="ALL">Semua Subcategory</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1">Detail Category</label>
-                <select id="filterDetailCategory" class="block w-64 rounded border-gray-300 shadow-sm text-sm p-2 border focus:border-blue-500 focus:ring-blue-500">
-                    <option value="ALL">Semua Detail Category</option>
-                </select>
-            </div>
-            <div>
-                <button id="resetFilterBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold py-2.5 px-3 rounded border transition">
-                    Reset Filter
-                </button>
-            </div>
-            <div class="ml-auto text-right text-xs text-gray-500">
-                <div>Total Baris Terfilter: <span id="filteredRawCount" class="font-bold text-gray-800">0</span></div>
-                <div>Tiket Escalated Terfilter: <span id="filteredEscCount" class="font-bold text-blue-800">0</span></div>
-            </div>
+  <main class="container">
+    <!-- Filter & Upload -->
+    <section class="card">
+      <div class="controls-grid">
+        <div class="field">
+          <label for="csv-input">Upload Report CSV Omnix</label>
+          <input type="file" id="csv-input" accept=".csv" />
         </div>
+        <div class="field">
+          <label for="filter-product">Produk / SubCategory</label>
+          <select id="filter-product">
+            <option value="ALL">Semua Produk</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="filter-escalation">Cakupan Tiket</label>
+          <select id="filter-escalation">
+            <option value="escalated" selected>Escalated Only</option>
+            <option value="ALL">Semua Tiket (Escalated &amp; Non-Escalated)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="filter-date-start">Tanggal Open (Dari)</label>
+          <input type="date" id="filter-date-start" />
+        </div>
+        <div class="field">
+          <label for="filter-date-end">Tanggal Open (Sampai)</label>
+          <input type="date" id="filter-date-end" />
+        </div>
+      </div>
     </section>
 
-    <!-- Navigation Tabs -->
-    <nav id="tabNav" class="max-w-7xl mx-auto mt-4 px-4 hidden">
-        <div class="bg-white rounded-t border-b flex flex-wrap overflow-x-auto">
-            <button data-tab="tabExecutive" class="tab-btn active px-5 py-3 text-sm text-gray-600">
-                1. Executive Summary Interaksi SSCASN
-            </button>
-            <button data-tab="tabTicketing" class="tab-btn px-5 py-3 text-sm text-gray-600">
-                2. Daily Report Ticketing (Escalated &amp; SLA)
-            </button>
-            <button data-tab="tabInteraksi" class="tab-btn px-5 py-3 text-sm text-gray-600">
-                3. Monitoring Antrian &amp; AHT (WA &amp; Email)
-            </button>
-            <button data-tab="tabSkenario" class="tab-btn px-5 py-3 text-sm text-gray-600">
-                4. Skenario CASN &amp; Benchmark Historis
-            </button>
+    <!-- KPI Ringkasan -->
+    <section class="kpi-grid">
+      <div class="kpi-box">
+        <div class="kpi-label">Total Tiket Terfilter</div>
+        <div class="kpi-value" id="kpi-total">0</div>
+        <div class="kpi-sub">Sesuai filter produk &amp; tanggal</div>
+      </div>
+      <div class="kpi-box">
+        <div class="kpi-label">Tiket Selesai</div>
+        <div class="kpi-value" id="kpi-finished">0</div>
+        <div class="kpi-sub">Status Resolved / Close / Return</div>
+      </div>
+      <div class="kpi-box">
+        <div class="kpi-label">Tiket Belum Selesai</div>
+        <div class="kpi-value" id="kpi-open">0</div>
+        <div class="kpi-sub">Status Open / On Progress</div>
+      </div>
+      <div class="kpi-box">
+        <div class="kpi-label">Pencapaian SLA Total</div>
+        <div class="kpi-value" id="kpi-sla-pct">-</div>
+        <div class="kpi-sub" id="kpi-sla-detail">0 Achieved / 0 Breach</div>
+      </div>
+    </section>
+
+    <!-- Card MTTR & Pencapaian SLA per Priority -->
+    <section class="card">
+      <div class="sla-card-header">
+        <div>
+          <h2 class="sla-card-title">MTTR &amp; Pencapaian SLA per Priority (Tiket Selesai)</h2>
+          <p class="sla-card-subtitle" id="sla-mode-desc">
+            Mode Internal: usia tiket berstatus Pending dipotong dari durasi penyelesaian.
+          </p>
         </div>
-    </nav>
+        <div class="sla-toggle-group" role="group" aria-label="Mode Perhitungan Pending">
+          <button type="button" class="sla-toggle-btn active" data-mode="internal" onclick="setSlaPendingMode('internal')">
+            Potong Pending (Internal)
+          </button>
+          <button type="button" class="sla-toggle-btn" data-mode="user" onclick="setSlaPendingMode('user')">
+            Hitung Pending (User)
+          </button>
+        </div>
+      </div>
 
-    <!-- Initial State -->
-    <div id="emptyState" class="max-w-7xl mx-auto mt-8 p-12 bg-white border border-dashed border-gray-300 rounded-lg text-center">
-        <h2 class="text-lg font-bold text-gray-700 mb-2">Database Masih Kosong</h2>
-        <p class="text-sm text-gray-500 max-w-lg mx-auto mb-4">
-            Silakan upload file raw report CSV dari Omnix. Data akan <strong>otomatis disimpan ke database</strong> sehingga tidak hilang saat browser ditutup atau di-reload.
-        </p>
-        <button id="viewSkenarioOnlyBtn" class="text-xs font-semibold text-blue-700 hover:underline">
-            Lihat Skenario Penanganan CASN 2026 &amp; Benchmark Historis SLA terlebih dahulu →
-        </button>
-    </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Priority</th>
+              <th>Selesai</th>
+              <th>Target SLA</th>
+              <th class="text-right">MTTR Aktual</th>
+              <th class="text-right">Dibawah SLA</th>
+              <th class="text-right">Breach</th>
+              <th class="text-center">Pencapaian</th>
+            </tr>
+          </thead>
+          <tbody id="casn-sla-tbody">
+            <tr>
+              <td colspan="7" class="text-center" style="color:#94a3b8;padding:24px;">
+                Silakan unggah file CSV untuk menampilkan ringkasan SLA.
+              </td>
+            </tr>
+          </tbody>
+          <tfoot id="casn-sla-tfoot"></tfoot>
+        </table>
+      </div>
+    </section>
 
-    <!-- MAIN CONTENT -->
-    <main id="dashboardContainer" class="max-w-7xl mx-auto p-4 hidden">
+    <!-- Tabel Rincian Tiket -->
+    <section class="card">
+      <div class="sla-card-header">
+        <div>
+          <h2 class="sla-card-title">Rincian Durasi Tiket Selesai (Perbandingan Internal vs User)</h2>
+          <p class="sla-card-subtitle" id="detail-table-subtitle">
+            Menampilkan perbandingan waktu solver (potong pending) dan waktu penuh (user).
+          </p>
+        </div>
+        <div class="field" style="min-width:210px;">
+          <select id="filter-detail-status">
+            <option value="BREACH" selected>Tampilkan Tiket Breach Saja</option>
+            <option value="PENDING">Tampilkan Tiket Pernah Pending</option>
+            <option value="ALL">Tampilkan Semua Tiket Selesai</option>
+          </select>
+        </div>
+      </div>
 
-        <!-- ========================================================= -->
-        <!-- TAB 1: EXECUTIVE SUMMARY INTERAKSI SSCASN (SLIDE LAYOUT)  -->
-        <!-- ========================================================= -->
-        <div id="tabExecutive" class="tab-content space-y-4">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Ticket ID</th>
+              <th>Subject</th>
+              <th>Kategori</th>
+              <th>Priority</th>
+              <th class="text-right">Waktu (Internal)</th>
+              <th class="text-right">Waktu (User)</th>
+              <th class="text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody id="detail-tbody">
+            <tr>
+              <td colspan="7" class="text-center" style="color:#94a3b8;padding:24px;">
+                Belum ada data tiket ditampilkan.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
 
-            <div class="bg-white p-3 rounded shadow-sm border flex flex-wrap items-center justify-between gap-3">
-                <div class="flex flex-wrap items-center gap-3 text-xs">
-                    <div>
-                        <label class="font-semibold text-gray-600 mr-1">Tanggal Report:</label>
-                        <select id="execDateSelect" class="rounded border-gray-300 p-1.5 border font-semibold text-blue-900"></select>
-                    </div>
-                    <div class="flex items-center gap-1">
-                        <label class="font-semibold text-gray-600">Time Interval:</label>
-                        <select id="execStartHour" class="rounded border-gray-300 p-1.5 border font-mono"></select>
-                        <span class="text-gray-500">s/d</span>
-                        <select id="execEndHour" class="rounded border-gray-300 p-1.5 border font-mono"></select>
-                    </div>
-                    <div>
-                        <label class="font-semibold text-gray-600 mr-1">Basis SSCASN/CASN:</label>
-                        <select id="execScopeMode" class="rounded border-gray-300 p-1.5 border">
-                            <option value="EMETERAI">Subcategory: E-Meterai</option>
-                            <option value="CASN_KEYWORD">Keyword: CASN / SSCASN</option>
-                            <option value="FOLLOW_GLOBAL">Ikuti Filter Subcategory Atas</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="font-semibold text-gray-600 mr-1">Channel:</label>
-                        <select id="execChannelScope" class="rounded border-gray-300 p-1.5 border">
-                            <option value="ALL">Semua Channel (All)</option>
-                            <option value="WA_EMAIL">WhatsApp &amp; Email Saja</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button id="toggleExecThemeBtn" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold py-1.5 px-3 rounded transition">
-                        Mode Terang / Gelap
-                    </button>
-                </div>
-            </div>
+  <script>
+    const SLA_TARGETS = { CRITICAL: 8, HIGH: 12, MEDIUM: 24, LOW: 48 };
+    const FINISHED_STATUSES = new Set(['close', 'resolved', 'return']);
+    let rawRows = [];
+    let currentSlaMode = 'internal'; // 'internal' = potong pending | 'user' = hitung pending
 
-            <!-- Executive Slide Canvas -->
-            <div id="execSlideWrapper" class="exec-dark rounded-lg p-5 shadow-lg border border-slate-800 transition-colors">
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    function parseOmnixDate(val) {
+      if (!val || typeof val !== 'string') return null;
+      const clean = val.trim();
+      if (!clean || clean === '-' || clean.toLowerCase() === 'nan') return null;
+      const [datePart, timePart = '0:0'] = clean.split(' ');
+      const [m, d, y] = datePart.split('/').map(Number);
+      const [hh, mm] = timePart.split(':').map(Number);
+      if (!y || !m || !d) return null;
+      const dt = new Date(y, m - 1, d, hh || 0, mm || 0, 0);
+      return isNaN(dt.getTime()) ? null : dt;
+    }
 
-                    <!-- KOLOM KIRI (7/12): Matriks Interaksi + TOP 10 Daily + TOP 10 MTD -->
-                    <div class="lg:col-span-7 space-y-5">
+    function formatDuration(hours) {
+      if (hours === null || isNaN(hours)) return '-';
+      const base = `${hours.toFixed(1)} jam`;
+      if (hours >= 24) {
+        return `${base} (${(hours / 24).toFixed(1)} hari)`;
+      }
+      return base;
+    }
 
-                        <div class="overflow-x-auto">
-                            <table class="w-full border-collapse text-xs">
-                                <thead>
-                                    <tr>
-                                        <th class="exec-th-blue border py-2 px-3 text-center font-bold w-44">Date</th>
-                                        <th colspan="2" id="execDisplayDate" class="exec-th-dark border py-2 px-3 text-center font-semibold">-</th>
-                                        <th colspan="3" class="exec-th-dark border py-2 px-3 text-center font-bold">Prosentase Interaksi SSCASN</th>
-                                    </tr>
-                                    <tr>
-                                        <th class="exec-th-blue border py-2 px-3 text-center font-bold">Time Interval</th>
-                                        <th id="execDisplayStart" class="exec-th-dark border py-2 px-3 text-center font-mono font-semibold">0:00</th>
-                                        <th id="execDisplayEnd" class="exec-th-dark border py-2 px-3 text-center font-mono font-semibold">23:00</th>
-                                        <th id="execPctInfo" class="exec-th-dark border py-2 px-3 text-center font-bold text-sky-400">0.00%</th>
-                                        <th id="execPctKeluhan" class="exec-th-dark border py-2 px-3 text-center font-bold text-amber-400">0.00%</th>
-                                        <th id="execPctPermintaan" class="exec-th-dark border py-2 px-3 text-center font-bold text-emerald-400">0.00%</th>
-                                    </tr>
-                                    <tr>
-                                        <th class="exec-th-blue border py-2.5 px-3 text-center font-bold">Interaksi SSCASN</th>
-                                        <th class="exec-th-blue border py-2.5 px-3 text-center font-bold">Total</th>
-                                        <th class="exec-th-blue border py-2.5 px-3 text-center font-bold">Escalated</th>
-                                        <th class="exec-th-blue border py-2.5 px-3 text-center font-bold">Not Escalated</th>
-                                        <th class="exec-th-blue border py-2.5 px-3 text-center font-bold">Informasi</th>
-                                        <th class="exec-th-blue border py-2.5 px-3 text-center font-bold">Keluhan</th>
-                                        <th class="exec-th-blue border py-2.5 px-3 text-center font-bold">Permintaan</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="execMatrixBody" class="font-semibold text-sm"></tbody>
-                            </table>
-                        </div>
+    /**
+     * Aturan kondisi SLA campuran (opsional):
+     * Kembalikan 'user' jika tiket/kategori tertentu wajib dihitung usia pendingnya,
+     * 'internal' jika usia pending wajib dipotong, atau null untuk mengikuti toggle tombol UI.
+     */
+    function resolveTicketSlaRule(row) {
+      // Contoh jika nanti ada kategori tertentu yang pending-nya tetap dihitung:
+      // if (String(row.subCategory || '').toLowerCase() === 'perisai') return 'user';
+      return null;
+    }
 
-                        <div class="overflow-x-auto">
-                            <table class="w-full border-collapse text-xs">
-                                <thead>
-                                    <tr>
-                                        <th class="exec-th-blue border py-2 px-2 text-center font-bold w-10">No</th>
-                                        <th class="exec-th-blue border py-2 px-3 text-center font-bold">TOP Interaksi (Daily)</th>
-                                        <th class="exec-th-blue border py-2 px-3 text-center font-bold w-20">Total</th>
-                                        <th class="exec-th-blue border py-2 px-3 text-center font-bold w-24">%</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="execTopDailyBody"></tbody>
-                                <tfoot>
-                                    <tr>
-                                        <td colspan="2" class
+    function computeTicketMetrics(r) {
+      const openDt = parseOmnixDate(r.date_open);
+      const resDt = parseOmnixDate(r.date_resolved);
+      const reopDt = parseOmnixDate(r.date_reopen);
+      const updDt = parseOmnixDate(r.date_last_update);
+      const closeDt = parseOmnixDate(r.date_close);
+      const pendDt = parseOmnixDate(r.date_pending);
+
+      // Waktu selesai efektif (handle date_resolved kosong & kasus reopen)
+      let endUser = resDt;
+      if (!endUser) {
+        endUser = updDt || closeDt;
+      } else if (reopDt && reopDt > endUser) {
+        endUser = updDt || closeDt || endUser;
+      }
+
+      const validChronology = openDt && endUser && endUser >= openDt;
+      const hoursUser = validChronology ? (endUser - openDt) / 3600000 : null;
+
+      // Potong usia pending jika valid secara kronologis
+      const hasValidPending = validChronology && pendDt && pendDt > openDt && pendDt < endUser;
+      const endInternal = hasValidPending ? pendDt : endUser;
+      const hoursInternal = validChronology ? (endInternal - openDt) / 3600000 : null;
+
+      return {
+        ...r,
+        _openDt: openDt,
+        _hasPending: Boolean(hasValidPending),
+        _hoursInternal: hoursInternal,
+        _hoursUser: hoursUser,
+        _forcedRule: resolveTicketSlaRule(r)
+      };
+    }
+
+    function populateProductDropdown(rows) {
+      const select = document.getElementById('filter-product');
+      const products = Array.from(
+        new Set(rows.map(r => String(r.subCategory || '').trim()).filter(v => v && v !== '-'))
+      ).sort();
+
+      select.innerHTML = '<option value="ALL">Semua Produk</option>' +
+        products.map(p => `<option value="${p}">${p}</option>`).join('');
+
+      if (products.includes('E-Meterai')) {
+        select.value = 'E-Meterai';
+      }
+    }
+
+    function getFilteredTickets() {
+      const prodFilter = document.getElementById('filter-product').value;
+      const escFilter = document.getElementById('filter-escalation').value;
+      const startVal = document.getElementById('filter-date-start').value;
+      const endVal = document.getElementById('filter-date-end').value;
+
+      const startDt = startVal ? new Date(startVal + 'T00:00:00') : null;
+      const endDt = endVal ? new Date(endVal + 'T23:59:59') : null;
+
+      return rawRows.filter(t => {
+        if (escFilter === 'escalated') {
+          if (String(t.is_escalated || '').trim().toLowerCase() !== 'escalated') return false;
+        }
+        if (prodFilter !== 'ALL') {
+          if (String(t.subCategory || '').trim() !== prodFilter) return false;
+        }
+        if (startDt && (!t._openDt || t._openDt < startDt)) return false;
+        if (endDt && (!t._openDt || t._openDt > endDt)) return false;
+        return true;
+      });
+    }
+
+    function refreshDashboard() {
+      if (rawRows.length === 0) return;
+
+      const filtered = getFilteredTickets();
+      const finished = filtered.filter(t =>
+        FINISHED_STATUSES.has(String(t.ticket_status_name || '').trim().toLowerCase())
+      );
+
+      document.getElementById('kpi-total').textContent = filtered.length.toLocaleString('id-ID');
+      document.getElementById('kpi-finished').textContent = finished.length.toLocaleString('id-ID');
+      document.getElementById('kpi-open').textContent = (filtered.length - finished.length).toLocaleString('id-ID');
+
+      renderSlaSummaryTable(finished);
+      renderDetailTable(finished);
+    }
+
+    function renderSlaSummaryTable(finishedTickets) {
+      const tbody = document.getElementById('casn-sla-tbody');
+      const tfoot = document.getElementById('casn-sla-tfoot');
+      const priorities = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
+
+      let grandSelesai = 0;
+      let grandValid = 0;
+      let grandAchieved = 0;
+      let grandBreach = 0;
+      let grandHours = 0;
+
+      tbody.innerHTML = priorities.map(pr => {
+        const target = SLA_TARGETS[pr];
+        const items = finishedTickets.filter(
+          t => String(t.priority_name || '').trim().toUpperCase() === pr
+        );
+
+        const selesai = items.length;
+        if (selesai === 0) {
+          return `
+            <tr>
+              <td><strong>${pr}</strong></td>
+              <td>0</td>
+              <td>${target}h</td>
+              <td class="text-right mono">0.00h</td>
+              <td class="text-right">0</td>
+              <td class="text-right">0</td>
+              <td class="text-center"><span class="badge empty">-</span></td>
+            </tr>
+          `;
+        }
+
+        let totalHours = 0;
+        let validCount = 0;
+        let achievedCount = 0;
+
+        items.forEach(item => {
+          const effectiveMode = item._forcedRule || currentSlaMode;
+          const dur = effectiveMode === 'internal' ? item._hoursInternal : item._hoursUser;
+          if (dur !== null && !isNaN(dur)) {
+            totalHours += dur;
+            validCount++;
+            if (dur < target) achievedCount++;
+          }
+        });
+
+        const breachCount = validCount - achievedCount;
+        const mttr = validCount > 0 ? (totalHours / validCount).toFixed(2) : '0.00';
+        const pct = validCount > 0 ? ((achievedCount / validCount) * 100).toFixed(1) : '0.0';
+        const badgeClass = Number(pct) >= 85 ? 'pass' : 'fail';
+
+        grandSelesai += selesai;
+        grandValid += validCount;
+        grandAchieved += achievedCount;
+        grandBreach += breachCount;
+        grandHours += totalHours;
+
+        return `
+          <tr>
+            <td><strong>${pr}</strong></td>
+            <td>${selesai}</td>
+            <td>${target}h</td>
+            <td class="text-right mono">${mttr}h</td>
+            <td class="text-right">${achievedCount}</td>
+            <td class="text-right">${breachCount}</td>
+            <td class="text-center"><span class="badge ${badgeClass}">${pct}%</span></td>
+          </tr>
+        `;
+      }).join('');
+
+      const totalMttr = grandValid > 0 ? (grandHours / grandValid).toFixed(2) : '0.00';
+      const totalPct = grandValid > 0 ? ((grandAchieved / grandValid) * 100).toFixed(1) + '%' : '-';
+
+      tfoot.innerHTML = `
+        <tr>
+          <td>Total</td>
+          <td>${grandSelesai}</td>
+          <td>-</td>
+          <td class="text-right mono">${totalMttr}h</td>
+          <td class="text-right">${grandAchieved}</td>
+          <td class="text-right">${grandBreach}</td>
+          <td class="text-center">${totalPct}</td>
+        </tr>
+      `;
+
+      document.getElementById('kpi-sla-pct').textContent = totalPct;
+      document.getElementById('kpi-sla-detail').textContent = `${grandAchieved} Achieved / ${grandBreach} Breach`;
+    }
+
+    function renderDetailTable(finishedTickets) {
+      const tbody = document.getElementById('detail-tbody');
+      const filterMode = document.getElementById('filter-detail-status').value;
+
+      const enriched = finishedTickets.map(item => {
+        const pr = String(item.priority_name || '').trim().toUpperCase();
+        const target = SLA_TARGETS[pr] || 24;
+        const effectiveMode = item._forcedRule || currentSlaMode;
+        const activeDur = effectiveMode === 'internal' ? item._hoursInternal : item._hoursUser;
+        const isAchieved = activeDur !== null && activeDur < target;
+        return { ...item, _target: target, _activeDur: activeDur, _isAchieved: isAchieved };
+      });
+
+      let list = enriched;
+      if (filterMode === 'BREACH') {
+        list = enriched.filter(t => t._activeDur !== null && !t._isAchieved);
+      } else if (filterMode === 'PENDING') {
+        list = enriched.filter(t => t._hasPending);
+      }
+
+      document.getElementById('detail-table-subtitle').textContent =
+        `Menampilkan ${list.length} tiket (status badge mengikuti mode ${currentSlaMode === 'internal' ? 'Potong Pending' : 'Hitung Pending'}).`;
+
+      if (list.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="text-center" style="color:#94a3b8;padding:20px;">
+              Tidak ada tiket yang sesuai kriteria tampilan ini.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = list.slice(0, 200).map(t => {
+        const pr = String(t.priority_name || '-').toUpperCase();
+        const intBreach = t._hoursInternal !== null && t._hoursInternal >= t._target;
+        const usrBreach = t._hoursUser !== null && t._hoursUser >= t._target;
+
+        return `
+          <tr>
+            <td class="mono" style="white-space:nowrap;">${t.ticket_id || '-'}</td>
+            <td>${t.subject || '-'}</td>
+            <td>${t.category || t.subCategory || '-'}</td>
+            <td><strong>${pr}</strong></td>
+            <td class="text-right">
+              <div class="${intBreach ? 'text-danger' : 'text-success'}">${formatDuration(t._hoursInternal)}</div>
+              ${t._hasPending ? '<span class="tag-pending">PENDING</span>' : ''}
+            </td>
+            <td class="text-right">
+              <div class="${usrBreach ? 'text-danger' : 'text-success'}">${formatDuration(t._hoursUser)}</div>
+            </td>
+            <td class="text-center">
+              <span class="badge ${t._isAchieved ? 'pass' : 'fail'}">
+                ${t._isAchieved ? 'ACHIEVED' : 'NOT ACHIEVED'}
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function setSlaPendingMode(mode) {
+      currentSlaMode = mode;
+      document.querySelectorAll('.sla-toggle-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+      });
+      document.getElementById('sla-mode-desc').textContent = mode === 'internal'
+        ? 'Mode Internal: usia tiket berstatus Pending dipotong dari durasi penyelesaian.'
+        : 'Mode User: usia tiket berstatus Pending tetap dihitung penuh hingga Resolved.';
+      refreshDashboard();
+    }
+
+    document.getElementById('csv-input').addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: results => {
+          rawRows = results.data.map(computeTicketMetrics);
+          document.getElementById('file-status').textContent =
+            `File aktif: ${file.name} (${rawRows.length.toLocaleString('id-ID')} baris)`;
+          populateProductDropdown(rawRows);
+          refreshDashboard();
+        }
+      });
+    });
+
+    ['filter-product', 'filter-escalation', 'filter-date-start', 'filter-date-end', 'filter-detail-status']
+      .forEach(id => document.getElementById(id).addEventListener('change', refreshDashboard));
+  </script>
+</body>
+</html>

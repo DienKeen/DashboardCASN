@@ -1,704 +1,1138 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard Monitoring SLA &amp; MTTR Tiket CASN</title>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <style>
-    :root {
-      --bg: #f1f5f9;
-      --card: #ffffff;
-      --primary: #1e3a8a;
-      --primary-light: #eff6ff;
-      --text: #0f172a;
-      --muted: #64748b;
-      --border: #e2e8f0;
-      --pass-bg: #ecfdf5;
-      --pass-text: #059669;
-      --pass-border: #6ee7b7;
-      --fail-bg: #fef2f2;
-      --fail-text: #dc2626;
-      --fail-border: #fca5a5;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CASN 2026 Command Center &amp; SLA Ticket Evaluator — Helpdesk Peruri Digital</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root {
+  --peruri-blue: #00529B;
+  --peruri-violet: #6A1B9A;
+  --peruri-purple: #3A1059;
+  --table-header: #512DA8;
+  --table-accent: #1A73E8;
 
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
-    }
+  --bg: #F4F6F9;
+  --surface: #FFFFFF;
+  --surface-2: #F8F9FA;
+  --text: #333333;
+  --text-muted: #666666;
+  --border: #D1D5DB;
+  --brand-ink: #00529B;
+  --heading: #3A1059;
+  --primary: #00529B;
+  --primary-hover: #003F7A;
 
-    .topbar {
-      background: var(--primary);
-      color: #ffffff;
-      padding: 16px 28px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-    .topbar h1 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 700;
-    }
-    .topbar p {
-      margin: 2px 0 0;
-      font-size: 12px;
-      color: #cbd5e1;
-    }
+  --grid-line: #E5E7EA;
+  --row-odd: #FFFFFF;
+  --row-even: #FAFAFA;
+  --row-hover: #F1ECFA;
+  --hover-bg: #F1F3F5;
+  --selected-bg: #E8F0FE;
+  --info-bg: #EEF4FF;
 
-    .container {
-      max-width: 1280px;
-      margin: 24px auto;
-      padding: 0 20px 40px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
+  --aman: #0F8B58;       --aman-bg: #E6F4EA;
+  --warning: #D97706;    --warning-bg: #FEF3C7;
+  --breach: #DC2626;     --breach-bg: #FEE2E2;
+  --unknown: #6B7280;    --unknown-bg: #F3F4F6;
 
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px 24px;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-    }
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --corporate-gradient: linear-gradient(90deg, var(--peruri-blue) 0%, var(--peruri-violet) 50%, var(--peruri-purple) 100%);
+  --ctl-h: 32px;
+  --radius: 3px;
+  --font-ui: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Consolas', 'Courier New', monospace;
+}
 
-    /* Filter & Upload Bar */
-    .controls-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 14px;
-      align-items: end;
-    }
-    .field label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-    .field input[type="file"],
-    .field input[type="date"],
-    .field select {
-      width: 100%;
-      padding: 8px 10px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 13px;
-      background: #ffffff;
-      color: var(--text);
-    }
+:root[data-theme="dark"] {
+  --bg: #121417;  --surface: #1B1E23;  --surface-2: #23272E;
+  --text: #E4E6EA;  --text-muted: #9AA1AC;  --border: #363B44;
+  --brand-ink: #7DB4F0;  --heading: #D2BDF2;
+  --primary: #1F5FA8;  --primary-hover: #2A70BE;
+  --grid-line: #2E333B;  --row-odd: #1B1E23;  --row-even: #20242A;  --row-hover: #2A2540;
+  --hover-bg: #2A2F37;  --selected-bg: #1F3358;  --info-bg: #1C2A44;
+  --aman-bg: rgba(15, 139, 88, 0.2);  --warning-bg: rgba(217, 119, 6, 0.2);  --breach-bg: rgba(220, 38, 38, 0.2);
+  --unknown-bg: rgba(107, 114, 128, 0.2);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
 
-    /* KPI Summary Cards */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 14px;
-    }
-    .kpi-box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px 20px;
-    }
-    .kpi-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--muted);
-    }
-    .kpi-value {
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--primary);
-      margin-top: 4px;
-    }
-    .kpi-sub {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0; background: var(--bg); color: var(--text);
+  font-family: var(--font-ui); font-size: 13px; line-height: 1.5; -webkit-font-smoothing: antialiased;
+}
+input[type=file] { display: none; }
 
-    /* SLA Card Header & Toggle */
-    .sla-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
-      flex-wrap: wrap;
-      padding-bottom: 14px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 14px;
-    }
-    .sla-card-title {
-      margin: 0;
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--primary);
-    }
-    .sla-card-subtitle {
-      margin: 4px 0 0;
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .sla-toggle-group {
-      display: inline-flex;
-      background: #f1f5f9;
-      padding: 3px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-    }
-    .sla-toggle-btn {
-      border: none;
-      background: transparent;
-      padding: 6px 12px;
-      font-size: 12px;
-      font-weight: 600;
-      color: #475569;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-    .sla-toggle-btn.active {
-      background: var(--primary);
-      color: #ffffff;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-    }
+.wrap { max-width: 1380px; margin: 0 auto; padding: 0 20px 44px; }
 
-    /* Tables */
-    .table-wrap { overflow-x: auto; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-    thead th {
-      background: #f8fafc;
-      color: #475569;
-      font-weight: 600;
-      padding: 12px 14px;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
-      white-space: nowrap;
-    }
-    tbody td {
-      padding: 12px 14px;
-      border-bottom: 1px solid #f1f5f9;
-      vertical-align: middle;
-    }
-    tbody tr:hover { background: #f8fafc; }
-    tfoot td {
-      padding: 12px 14px;
-      font-weight: 700;
-      background: #f8fafc;
-      border-top: 2px solid var(--border);
-    }
+.topbar {
+  background: var(--surface); border-bottom: 2px solid var(--peruri-blue);
+  padding: 12px 24px; margin-bottom: 20px; box-shadow: var(--shadow-sm);
+}
+.topbar-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+.topbar-filters { justify-content: flex-start; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--grid-line); }
+.topbar-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.topbar-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+.brand h1 { font-size: 17px; font-weight: 700; margin: 0; color: var(--brand-ink); text-transform: uppercase; letter-spacing: 0.5px; }
+.brand p { margin: 2px 0 0; color: var(--text-muted); font-size: 11.5px; font-weight: 500; }
 
-    .badge {
-      display: inline-block;
-      min-width: 64px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 700;
-      text-align: center;
-    }
-    .badge.pass {
-      background: var(--pass-bg);
-      color: var(--pass-text);
-      border: 1px solid var(--pass-border);
-    }
-    .badge.fail {
-      background: var(--fail-bg);
-      color: var(--fail-text);
-      border: 1px solid var(--fail-border);
-    }
-    .badge.empty {
-      background: #f8fafc;
-      color: #94a3b8;
-      border: 1px solid #cbd5e1;
-    }
-    .tag-pending {
-      display: inline-block;
-      margin-top: 3px;
-      padding: 1px 6px;
-      font-size: 10px;
-      font-weight: 700;
-      color: #475569;
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
-      border-radius: 4px;
-    }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-    .text-right { text-align: right; }
-    .text-center { text-align: center; }
-    .text-danger { color: var(--fail-text); font-weight: 700; }
-    .text-success { color: var(--pass-text); font-weight: 600; }
-  </style>
+.main-tabs { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
+.main-tab {
+  height: 36px; padding: 0 16px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface); color: var(--text-muted); font-family: var(--font-ui); font-size: 12.5px;
+  font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+}
+.main-tab:hover:not(.active) { background: var(--hover-bg); color: var(--text); }
+.main-tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: var(--ctl-h); padding: 0 13px;
+  font-family: var(--font-ui); font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
+  white-space: nowrap; cursor: pointer; border-radius: var(--radius); border: 1px solid transparent; transition: 0.12s;
+}
+.btn-primary { background: var(--primary); color: #fff; border-color: var(--primary-hover); }
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-ghost { background: var(--surface-2); color: var(--text); border-color: var(--border); }
+.btn-ghost:hover { background: var(--hover-bg); border-color: var(--text-muted); }
+.btn-xs { height: 26px; padding: 0 10px; font-size: 10.5px; }
+
+.filter-select, .search-input {
+  height: var(--ctl-h); font-family: var(--font-ui); font-size: 12px; color: var(--text); background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius); padding: 0 10px;
+}
+.filter-select { padding-right: 26px; cursor: pointer; }
+.filter-select:focus, .search-input:focus { outline: none; border-color: var(--peruri-blue); }
+.meta-pill { font-size: 11px; color: var(--text-muted); padding: 4px 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); margin-left: auto; }
+
+.status-line { font-size: 12px; font-weight: 600; margin-bottom: 12px; }
+.status-line.error { color: var(--breach); }
+.status-line.ok { color: var(--aman); }
+
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; box-shadow: var(--shadow-sm); margin-bottom: 18px; overflow: hidden; }
+.section-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 11px 16px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.section-head h2 { font-size: 13.5px; font-weight: 700; margin: 0; color: var(--heading); }
+.section-head .sub { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+.panel-body { padding: 16px; }
+
+.cards { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; padding: 16px; }
+.cards.cards-4 { grid-template-columns: repeat(4, 1fr); }
+.cards.cards-3 { grid-template-columns: repeat(3, 1fr); }
+.card { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--peruri-blue); border-radius: var(--radius); padding: 14px; }
+.card.aman { border-left-color: var(--aman); }
+.card.warning { border-left-color: var(--warning); }
+.card.breach { border-left-color: var(--breach); }
+.card .label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+.card .value { font-size: 22px; font-weight: 700; line-height: 1.1; color: var(--text); font-variant-numeric: tabular-nums; }
+.card .hint { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-sim { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 16px; align-items: start; }
+
+.badge { display: inline-flex; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: var(--radius); text-transform: uppercase; letter-spacing: 0.4px; border: 1px solid transparent; }
+.badge.aman { background: var(--aman-bg); color: var(--aman); border-color: var(--aman); }
+.badge.warning { background: var(--warning-bg); color: var(--warning); border-color: var(--warning); }
+.badge.breach { background: var(--breach-bg); color: var(--breach); border-color: var(--breach); }
+.badge.muted { background: var(--unknown-bg); color: var(--unknown); border-color: var(--unknown); }
+.pending-mark { display: inline-block; margin-left: 4px; padding: 0 5px; font-size: 9.5px; font-weight: 700; text-transform: uppercase; color: var(--warning); background: var(--warning-bg); border: 1px solid var(--warning); border-radius: var(--radius); }
+
+.table-scroll { max-height: 440px; overflow: auto; }
+.table-scroll--full { max-height: none; }
+.table-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.table-note { font-size: 11.5px; color: var(--text-muted); padding: 10px 16px; margin: 0; }
+
+table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+thead th {
+  position: sticky; top: 0; z-index: 1; padding: 8px 12px; white-space: nowrap; text-align: left; font-weight: 600; color: #FFFFFF;
+  background: var(--table-header); border: 1px solid var(--table-header); border-right-color: rgba(255, 255, 255, 0.25);
+}
+tbody td { padding: 7px 12px; vertical-align: middle; color: var(--text); border: 1px solid var(--grid-line); }
+tbody tr:nth-child(odd) { background-color: var(--row-odd); }
+tbody tr:nth-child(even) { background-color: var(--row-even); }
+tbody tr:hover { background-color: var(--row-hover); }
+.tid { white-space: nowrap; font-family: var(--font-mono); font-weight: 600; }
+
+.chart-holder { position: relative; height: 270px; padding: 14px; }
+.chart-holder--340 { height: 340px; }
+
+.breakdown-row { display: flex; align-items: center; gap: 12px; padding: 6px 0; border-bottom: 1px dashed var(--border); }
+.breakdown-row:last-child { border-bottom: none; }
+.breakdown-row .name { flex: 0 0 180px; font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.breakdown-row .barbg { flex: 1; height: 10px; background: var(--surface-2); border: 1px solid var(--border); }
+.breakdown-row .barfg { height: 100%; background: var(--corporate-gradient); }
+.breakdown-row .num { flex: 0 0 auto; width: 105px; font-family: var(--font-mono); font-size: 11px; text-align: right; }
+
+/* Simulator controls */
+.sim-group { margin-bottom: 14px; }
+.sim-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; margin-bottom: 5px; }
+.sim-val { color: var(--brand-ink); font-family: var(--font-mono); font-weight: 700; }
+input[type=range] { width: 100%; accent-color: var(--peruri-blue); cursor: pointer; }
+.sim-check { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 8px; cursor: pointer; font-size: 12px; font-weight: 600; }
+.sim-check input { accent-color: var(--peruri-blue); width: 15px; height: 15px; }
+
+.pillar-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.pillar-card { border: 1px solid var(--border); border-top: 3px solid var(--peruri-violet); border-radius: var(--radius); padding: 14px; background: var(--surface-2); }
+.pillar-card h3 { margin: 0 0 8px; font-size: 13px; color: var(--heading); }
+.pillar-card ul { margin: 0; padding-left: 18px; font-size: 12px; line-height: 1.65; }
+
+.empty-box { text-align: center; padding: 48px 20px; border: 1px dashed var(--border); background: var(--surface); border-radius: 4px; margin-bottom: 18px; }
+.empty-box h3 { margin: 0 0 8px; font-size: 15px; color: var(--heading); }
+.empty-box p { max-width: 500px; margin: 0 auto 14px; color: var(--text-muted); font-size: 12.5px; }
+
+footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-line); color: var(--text-muted); font-size: 11px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+
+@media (max-width: 1100px) {
+  .cards { grid-template-columns: repeat(3, 1fr); }
+  .grid-sim { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  .cards, .cards.cards-4, .cards.cards-3 { grid-template-columns: repeat(2, 1fr); }
+  .grid-2, .pillar-grid { grid-template-columns: 1fr; }
+  .meta-pill { margin-left: 0; }
+}
+</style>
 </head>
 <body>
 
-  <header class="topbar">
-    <div>
-      <h1>Dashboard Monitoring SLA &amp; MTTR Tiket CASN</h1>
-      <p>Mendukung perhitungan dual-mode: Potong Usia Pending (Internal) &amp; Hitung Penuh (User)</p>
+<header class="topbar">
+  <div class="topbar-row">
+    <div class="brand">
+      <h1>CASN 2026 Command Center &amp; SLA Ticket Evaluator</h1>
+      <p>Helpdesk Peruri Digital — Simulasi Kapasitas CASN E-Meterai &amp; Evaluasi SLA Aktual (Rumus Presisi Website)</p>
     </div>
-    <div id="file-status" style="font-size:12px;color:#e2e8f0;">Belum ada file CSV diunggah</div>
-  </header>
+    <div class="topbar-actions">
+      <label class="btn btn-primary" for="fileInput">&#128228; Upload CSV / Excel</label>
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+      <span class="topbar-sep"></span>
+      <button class="btn btn-ghost" id="slaViewToggle" title="Ganti cara hitung waktu pending">&#128065; Internal (Exclude Pending)</button>
+      <button class="btn btn-ghost" id="themeToggleBtn">&#9788; Terang</button>
+    </div>
+  </div>
+  <div class="topbar-row topbar-filters" id="filterBar" style="display:none;">
+    <select class="filter-select" id="productFilter" style="min-width:210px;"><option value="ALL">Semua Produk</option></select>
+    <select class="filter-select" id="categoryFilter" style="min-width:260px;"><option value="ALL">Semua Kategori</option></select>
+    <select class="filter-select" id="monthFilter" style="min-width:190px;"><option value="ALL">Semua Bulan</option></select>
+    <span class="meta-pill" id="metaBadge">Belum ada file diunggah</span>
+  </div>
+</header>
 
-  <main class="container">
-    <!-- Filter & Upload -->
-    <section class="card">
-      <div class="controls-grid">
-        <div class="field">
-          <label for="csv-input">Upload Report CSV Omnix</label>
-          <input type="file" id="csv-input" accept=".csv" />
+<div class="wrap">
+  <div class="status-line" id="statusLine"></div>
+
+  <div class="main-tabs">
+    <button class="main-tab active" data-tab="simulasi">&#128202; Simulasi &amp; Skenario CASN 2026</button>
+    <button class="main-tab" data-tab="aktual">&#9989; Evaluasi Data Tiket Aktual (CSV / Excel)</button>
+  </div>
+
+  <!-- ================= TAB 1: SIMULASI & SKENARIO CASN 2026 ================= -->
+  <div class="tab-pane active" id="tab-simulasi">
+    <div class="grid-sim">
+      <div class="panel">
+        <div class="section-head">
+          <h2>Parameter Simulasi Trafik CASN</h2>
+          <button class="btn btn-ghost btn-xs" id="simResetBtn">Reset Default</button>
         </div>
-        <div class="field">
-          <label for="filter-product">Produk / SubCategory</label>
-          <select id="filter-product">
-            <option value="ALL">Semua Produk</option>
+        <div class="panel-body">
+          <div class="sim-group">
+            <div class="sim-label"><span>Lonjakan Trafik Harian (WA + Email)</span><span class="sim-val" id="valVolume">1.800 interaksi/hari</span></div>
+            <input type="range" id="inVolume" min="200" max="5000" step="100" value="1800">
+          </div>
+          <div class="sim-group">
+            <div class="sim-label"><span>Jumlah Agent Aktif (Base + Overtime)</span><span class="sim-val" id="valAgents">12 agent (6 OT)</span></div>
+            <input type="range" id="inAgents" min="4" max="30" step="1" value="12">
+          </div>
+          <div class="sim-group">
+            <div class="sim-label"><span>Rata-rata Handling Time (AHT)</span><span class="sim-val" id="valAht">6.5 menit</span></div>
+            <input type="range" id="inAht" min="3" max="15" step="0.5" value="6.5">
+          </div>
+          <div class="sim-group">
+            <div class="sim-label"><span>Rasio Eskalasi ke Tiket L1/L2</span><span class="sim-val" id="valEscRate">18%</span></div>
+            <input type="range" id="inEscRate" min="5" max="45" step="1" value="18">
+          </div>
+
+          <label class="sim-check"><input type="checkbox" id="chkSegment" checked> Segmentasi Antrean CASN vs Reguler/VIP (Lindungi PERISAI)</label>
+          <label class="sim-check"><input type="checkbox" id="chkCanned" checked> Aktifkan Canned Responses &amp; Auto-Reply Omnix (-25% AHT)</label>
+          <label class="sim-check"><input type="checkbox" id="chkLifo" checked> Pickup Adaptif LIFO/FIFO saat Antrean Ekstrem</label>
+          <label class="sim-check"><input type="checkbox" id="chkSeverity"> Eskalasi Seluruh Tiket CASN ke Critical/High (Target 8j/12j)</label>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <div class="section-head">
+            <h2>Proyeksi Dampak Operasional &amp; SLA CASN 2026</h2>
+            <span class="sub">Kapasitas 8 jam kerja efektif/agent/hari</span>
+          </div>
+          <div class="cards cards-4" id="simCards"></div>
+        </div>
+
+        <div class="panel">
+          <div class="section-head">
+            <h2>Benchmark Historis SLA 2024–2026 (E-Meterai vs Perisai)</h2>
+            <span class="sub">Sumber: CatatanSkenarioCASN.xlsx (Dampak Puncak CASN Sep 2024)</span>
+          </div>
+          <div class="chart-holder"><canvas id="histChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="section-head">
+        <h2>4 Pilar Skenario Penanganan CASN 2026 E-Meterai</h2>
+        <span class="sub">Standar Operasional &amp; Kesiapan Helpdesk</span>
+      </div>
+      <div class="panel-body">
+        <div class="pillar-grid">
+          <div class="pillar-card">
+            <h3>1. Manajemen Interaksi &amp; Kapasitas</h3>
+            <ul>
+              <li><strong>Manajemen Shift &amp; Overtime:</strong> Penyesuaian jadwal shift dan skema overtime untuk 6 agent pada jam krusial.</li>
+              <li><strong>Segmentasi Antrean:</strong> Pemisahan antrean user CASN vs Non-CASN (berkaca evaluasi Sep 2024 agar SLA VIP/PERISAI tetap &gt;86%).</li>
+              <li><strong>Strategi Pickup Adaptif:</strong> Skema LIFO/FIFO dinamis saat terjadi penumpukan antrean ekstrem.</li>
+              <li><strong>Optimalisasi AHT &amp; Sosialisasi L0:</strong> Canned responses seragam untuk kendala repetitif &amp; penyegaran Product Knowledge L0.</li>
+            </ul>
+          </div>
+          <div class="pillar-card">
+            <h3>2. Manajemen Tiket &amp; Eskalasi</h3>
+            <ul>
+              <li><strong>Eskalasi Status Tiket:</strong> Menaikkan severity kendala kritikal e-Meterai CASN menjadi Critical (8j) / High (12j).</li>
+              <li><strong>Pengawasan Resolusi Tiket:</strong> Monitoring ketat secara real-time terhadap konfirmasi tiket berstatus Resolved agar tidak terjadi lonjakan Reopen.</li>
+            </ul>
+          </div>
+          <div class="pillar-card">
+            <h3>3. Koordinasi &amp; Validasi Eksternal (Approval Peruri)</h3>
+            <ul>
+              <li><strong>Penyesuaian Parameter Sistem:</strong> Persetujuan penambahan Kategori dan KIP khusus CASN 2026 untuk Interaksi &amp; Ticketing.</li>
+              <li><strong>Pembaruan Pansol:</strong> Validasi kelengkapan dan akurasi Panduan Solusi penanganan CASN 2026.</li>
+              <li><strong>Konfigurasi Sistem Omnix:</strong> Persetujuan implementasi dan isi template Auto-Reply pada Omnix selama periode CASN.</li>
+            </ul>
+          </div>
+          <div class="pillar-card">
+            <h3>4. Pelaporan &amp; Evaluasi (Daily Reporting)</h3>
+            <ul>
+              <li><strong>Daily Report Interaksi CASN:</strong> Total antrean WhatsApp &amp; Email, durasi antrean terlama, serta top kategori pertanyaan harian.</li>
+              <li><strong>Daily Report Ticketing CASN:</strong> Jumlah tiket eskalasi masuk, tingkat penyelesaian (MTTR), dan monitoring SLA harian.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TAB 2: EVALUASI DATA TIKET AKTUAL ================= -->
+  <div class="tab-pane" id="tab-aktual">
+    <div id="emptyState" class="empty-box">
+      <h3>Belum Ada File Data Tiket yang Diunggah</h3>
+      <p>Klik tombol <strong>Upload CSV / Excel</strong> di pojok kanan atas untuk memuat file tarikan sistem ticketing (CSV atau sheet <code>Dbase</code>). Perhitungan otomatis menggunakan rumus presisi website.</p>
+      <label class="btn btn-primary" for="fileInput">&#128228; Pilih File CSV / Excel</label>
+    </div>
+
+    <div id="actualDashboard" style="display:none;">
+      <div class="panel">
+        <div class="section-head">
+          <h2>Ringkasan Eksekutif Tiket</h2>
+          <span class="sub" id="modeSubtitle">Mode Aktif: Internal (Exclude Pending)</span>
+        </div>
+        <div class="cards" id="overviewCards"></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="section-head">
+            <h2>Pencapaian SLA per Priority</h2>
+            <span class="sub">Target: Critical ≤8j · High ≤12j · Medium ≤24j · Low ≤48j</span>
+          </div>
+          <div class="table-scroll table-scroll--full">
+            <table>
+              <thead>
+                <tr>
+                  <th>Priority</th>
+                  <th>Selesai</th>
+                  <th>Dibawah SLA</th>
+                  <th>Breach</th>
+                  <th>% Achievement</th>
+                  <th>MTTR Aktual</th>
+                </tr>
+              </thead>
+              <tbody id="achievementBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="section-head">
+            <h2>Achieved vs Not Achieved per Severity</h2>
+            <span class="sub">Klik bar untuk filter daftar tiket</span>
+          </div>
+          <div class="chart-holder"><canvas id="achievedChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="section-head">
+          <h2>Distribusi Waktu Resolusi per Priority</h2>
+          <span class="sub">Pengelompokan durasi penyelesaian tiket selesai</span>
+        </div>
+        <div class="table-scroll table-scroll--full">
+          <table>
+            <thead><tr id="distTableHead"></tr></thead>
+            <tbody id="distTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="section-head">
+            <h2>TOP 10 Kategori Tiket</h2>
+            <span class="sub">mainCategory - subCategory - detailSubCategory</span>
+          </div>
+          <div class="chart-holder chart-holder--340"><canvas id="top10Chart"></canvas></div>
+        </div>
+
+        <div class="panel">
+          <div class="section-head">
+            <h2>Waktu Eskalasi (Interaksi Masuk → Tiket Dibuat)</h2>
+            <span class="sub">Target: ≤15 menit · Channel Email &amp; WhatsApp</span>
+          </div>
+          <div class="cards cards-3" id="escalationCards"></div>
+          <div class="panel-body" style="padding-top:0;" id="escalationByProduct"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="section-head">
+          <h2>Rata-rata Respons &amp; Resolusi per Produk × Priority</h2>
+          <span class="sub">Hanya menghitung durasi valid (≥ 0)</span>
+        </div>
+        <div class="panel-body" id="productPriorityTables"></div>
+      </div>
+
+      <div class="panel" id="ticketListPanel">
+        <div class="section-head">
+          <h2>Daftar Detail Tiket (Perbandingan Waktu Internal vs User)</h2>
+          <span class="sub" id="ticketListCount"></span>
+        </div>
+        <div class="table-toolbar">
+          <input class="search-input" id="ticketSearch" placeholder="Cari Ticket ID / Subject / Kategori..." style="min-width:240px;">
+          <select class="filter-select" id="ticketStatusFilter">
+            <option value="ALL">Semua Tiket</option>
+            <option value="achieved">Selesai — Achieved</option>
+            <option value="not_achieved">Selesai — Not Achieved (Breach)</option>
+            <option value="outstanding">Outstanding (Belum Selesai)</option>
           </select>
-        </div>
-        <div class="field">
-          <label for="filter-escalation">Cakupan Tiket</label>
-          <select id="filter-escalation">
-            <option value="escalated" selected>Escalated Only</option>
-            <option value="ALL">Semua Tiket (Escalated &amp; Non-Escalated)</option>
+          <select class="filter-select" id="ticketPriorityFilter">
+            <option value="ALL">Semua Priority</option>
+            <option value="CRITICAL">Critical</option>
+            <option value="HIGH">High</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="LOW">Low</option>
           </select>
+          <button class="btn btn-ghost" id="exportCsvBtn" style="margin-left:auto;">&#128229; Export CSV</button>
         </div>
-        <div class="field">
-          <label for="filter-date-start">Tanggal Open (Dari)</label>
-          <input type="date" id="filter-date-start" />
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Ticket ID</th>
+                <th>Produk</th>
+                <th>Subject</th>
+                <th>Kategori</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Waktu (Internal)</th>
+                <th>Waktu (User)</th>
+                <th>Hasil SLA</th>
+              </tr>
+            </thead>
+            <tbody id="ticketListBody"></tbody>
+          </table>
         </div>
-        <div class="field">
-          <label for="filter-date-end">Tanggal Open (Sampai)</label>
-          <input type="date" id="filter-date-end" />
-        </div>
+        <p class="table-note" id="ticketListNote"></p>
       </div>
-    </section>
+    </div>
+  </div>
 
-    <!-- KPI Ringkasan -->
-    <section class="kpi-grid">
-      <div class="kpi-box">
-        <div class="kpi-label">Total Tiket Terfilter</div>
-        <div class="kpi-value" id="kpi-total">0</div>
-        <div class="kpi-sub">Sesuai filter produk &amp; tanggal</div>
-      </div>
-      <div class="kpi-box">
-        <div class="kpi-label">Tiket Selesai</div>
-        <div class="kpi-value" id="kpi-finished">0</div>
-        <div class="kpi-sub">Status Resolved / Close / Return</div>
-      </div>
-      <div class="kpi-box">
-        <div class="kpi-label">Tiket Belum Selesai</div>
-        <div class="kpi-value" id="kpi-open">0</div>
-        <div class="kpi-sub">Status Open / On Progress</div>
-      </div>
-      <div class="kpi-box">
-        <div class="kpi-label">Pencapaian SLA Total</div>
-        <div class="kpi-value" id="kpi-sla-pct">-</div>
-        <div class="kpi-sub" id="kpi-sla-detail">0 Achieved / 0 Breach</div>
-      </div>
-    </section>
+  <footer>
+    <span>Target SLA — Critical: 8j · High: 12j · Medium: 24j · Low: 48j (jam kalender penuh, dihitung sampai resolved)</span>
+    <span>Helpdesk Peruri Digital — Formula Identik Website Produksi</span>
+  </footer>
+</div>
 
-    <!-- Card MTTR & Pencapaian SLA per Priority -->
-    <section class="card">
-      <div class="sla-card-header">
-        <div>
-          <h2 class="sla-card-title">MTTR &amp; Pencapaian SLA per Priority (Tiket Selesai)</h2>
-          <p class="sla-card-subtitle" id="sla-mode-desc">
-            Mode Internal: usia tiket berstatus Pending dipotong dari durasi penyelesaian.
-          </p>
-        </div>
-        <div class="sla-toggle-group" role="group" aria-label="Mode Perhitungan Pending">
-          <button type="button" class="sla-toggle-btn active" data-mode="internal" onclick="setSlaPendingMode('internal')">
-            Potong Pending (Internal)
-          </button>
-          <button type="button" class="sla-toggle-btn" data-mode="user" onclick="setSlaPendingMode('user')">
-            Hitung Pending (User)
-          </button>
-        </div>
-      </div>
+<script>
+(function(){
+  // =========================================================================
+  // 1. KONSTANTA & RUMUS IDENTIK WEBSITE PRODUKSI
+  // =========================================================================
+  const SLA_TARGET = { CRITICAL: 8, HIGH: 12, MEDIUM: 24, LOW: 48 };
+  const FINISHED_STATUSES = new Set(['close', 'resolved', 'return']);
+  const PRIORITY_ORDER = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
+  const ESCALATION_TARGET_HOURS = 0.25; // 15 menit
+  const ESCALATION_ELIGIBLE = new Set(['close', 'resolved', 'return', 'open', 'on progress']);
+  const ESCALATION_CHANNELS = new Set(['email', 'whatsapp']);
+  const COMBINED_VALUE = 'COMBINED:E-Meterai|Perisai';
 
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Priority</th>
-              <th>Selesai</th>
-              <th>Target SLA</th>
-              <th class="text-right">MTTR Aktual</th>
-              <th class="text-right">Dibawah SLA</th>
-              <th class="text-right">Breach</th>
-              <th class="text-center">Pencapaian</th>
-            </tr>
-          </thead>
-          <tbody id="casn-sla-tbody">
-            <tr>
-              <td colspan="7" class="text-center" style="color:#94a3b8;padding:24px;">
-                Silakan unggah file CSV untuk menampilkan ringkasan SLA.
-              </td>
-            </tr>
-          </tbody>
-          <tfoot id="casn-sla-tfoot"></tfoot>
-        </table>
-      </div>
-    </section>
+  const DURATION_BUCKETS = [
+    { label: '8 Jam', max: 8 },
+    { label: '12 Jam', max: 12 },
+    { label: '24 Jam', max: 24 },
+    { label: '36 Jam', max: 36 },
+    { label: '48 Jam', max: 48 },
+    { label: '<4 Hari', max: 96 },
+    { label: '4-10 Hari', max: 240 },
+    { label: '11-20 Hari', max: 480 },
+    { label: '21-30 Hari', max: 720 },
+    { label: '>30 Hari', max: Infinity },
+  ];
 
-    <!-- Tabel Rincian Tiket -->
-    <section class="card">
-      <div class="sla-card-header">
-        <div>
-          <h2 class="sla-card-title">Rincian Durasi Tiket Selesai (Perbandingan Internal vs User)</h2>
-          <p class="sla-card-subtitle" id="detail-table-subtitle">
-            Menampilkan perbandingan waktu solver (potong pending) dan waktu penuh (user).
-          </p>
-        </div>
-        <div class="field" style="min-width:210px;">
-          <select id="filter-detail-status">
-            <option value="BREACH" selected>Tampilkan Tiket Breach Saja</option>
-            <option value="PENDING">Tampilkan Tiket Pernah Pending</option>
-            <option value="ALL">Tampilkan Semua Tiket Selesai</option>
-          </select>
-        </div>
-      </div>
+  let ticketsMap = new Map();
+  let slaViewMode = 'exclude'; // 'exclude' = Internal (Exclude Pending) | 'include' = User (Include Pending)
+  let selectedProduct = 'ALL';
+  let selectedCategory = 'ALL';
+  let selectedMonth = 'ALL';
+  let achievedChart = null;
+  let top10Chart = null;
+  let histChart = null;
 
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Ticket ID</th>
-              <th>Subject</th>
-              <th>Kategori</th>
-              <th>Priority</th>
-              <th class="text-right">Waktu (Internal)</th>
-              <th class="text-right">Waktu (User)</th>
-              <th class="text-center">Status</th>
-            </tr>
-          </thead>
-          <tbody id="detail-tbody">
-            <tr>
-              <td colspan="7" class="text-center" style="color:#94a3b8;padding:24px;">
-                Belum ada data tiket ditampilkan.
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-  </main>
+  function safeStr(v){
+    if(v === null || v === undefined) return '';
+    return String(v).trim();
+  }
 
-  <script>
-    const SLA_TARGETS = { CRITICAL: 8, HIGH: 12, MEDIUM: 24, LOW: 48 };
-    const FINISHED_STATUSES = new Set(['close', 'resolved', 'return']);
-    let rawRows = [];
-    let currentSlaMode = 'internal'; // 'internal' = potong pending | 'user' = hitung pending
-
-    function parseOmnixDate(val) {
-      if (!val || typeof val !== 'string') return null;
-      const clean = val.trim();
-      if (!clean || clean === '-' || clean.toLowerCase() === 'nan') return null;
-      const [datePart, timePart = '0:0'] = clean.split(' ');
-      const [m, d, y] = datePart.split('/').map(Number);
-      const [hh, mm] = timePart.split(':').map(Number);
-      if (!y || !m || !d) return null;
-      const dt = new Date(y, m - 1, d, hh || 0, mm || 0, 0);
-      return isNaN(dt.getTime()) ? null : dt;
+  function toISO(v){
+    if(v instanceof Date && !isNaN(v.getTime())) return v.toISOString();
+    if(typeof v === 'number' && isFinite(v)){
+      const ms = Math.round((v - 25569) * 86400 * 1000);
+      const d = new Date(ms);
+      if(!isNaN(d.getTime())) return d.toISOString();
     }
-
-    function formatDuration(hours) {
-      if (hours === null || isNaN(hours)) return '-';
-      const base = `${hours.toFixed(1)} jam`;
-      if (hours >= 24) {
-        return `${base} (${(hours / 24).toFixed(1)} hari)`;
+    if(typeof v === 'string'){
+      const s = v.trim();
+      if(s && s !== '-'){
+        const d = new Date(s);
+        if(!isNaN(d.getTime())) return d.toISOString();
       }
-      return base;
     }
+    return null;
+  }
 
-    /**
-     * Aturan kondisi SLA campuran (opsional):
-     * Kembalikan 'user' jika tiket/kategori tertentu wajib dihitung usia pendingnya,
-     * 'internal' jika usia pending wajib dipotong, atau null untuk mengikuti toggle tombol UI.
-     */
-    function resolveTicketSlaRule(row) {
-      // Contoh jika nanti ada kategori tertentu yang pending-nya tetap dihitung:
-      // if (String(row.subCategory || '').toLowerCase() === 'perisai') return 'user';
-      return null;
+  function findHeaderRowIndex(aoa){
+    for(let r = 0; r < Math.min(aoa.length, 20); r++){
+      const row = aoa[r] || [];
+      for(let c = 0; c < row.length; c++){
+        if(safeStr(row[c]).toLowerCase() === 'ticket_id') return r;
+      }
     }
+    return -1;
+  }
 
-    function computeTicketMetrics(r) {
-      const openDt = parseOmnixDate(r.date_open);
-      const resDt = parseOmnixDate(r.date_resolved);
-      const reopDt = parseOmnixDate(r.date_reopen);
-      const updDt = parseOmnixDate(r.date_last_update);
-      const closeDt = parseOmnixDate(r.date_close);
-      const pendDt = parseOmnixDate(r.date_pending);
+  function parseWorkbook(fileBuffer, fileName){
+    const isCsv = /\.csv$/i.test(fileName || '');
+    const wb = isCsv
+      ? XLSX.read(new TextDecoder('utf-8').decode(fileBuffer), { type: 'string', cellDates: true })
+      : XLSX.read(fileBuffer, { type: 'array', cellDates: true });
+    const sheetName = wb.SheetNames.includes('Dbase') ? 'Dbase' : wb.SheetNames[0];
+    const ws = wb.Sheets[sheetName];
+    const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
+    const headerIdx = findHeaderRowIndex(aoa);
+    if(headerIdx === -1){
+      throw new Error('Kolom "ticket_id" tidak ditemukan di sheet "' + sheetName + '".');
+    }
+    const header = aoa[headerIdx];
+    const colIndex = {};
+    header.forEach((h, i) => { const k = safeStr(h).toLowerCase(); if(k) colIndex[k] = i; });
+    const col = (row, name) => { const idx = colIndex[name]; return idx !== undefined ? row[idx] : null; };
 
-      // Waktu selesai efektif (handle date_resolved kosong & kasus reopen)
-      let endUser = resDt;
-      if (!endUser) {
-        endUser = updDt || closeDt;
-      } else if (reopDt && reopDt > endUser) {
-        endUser = updDt || closeDt || endUser;
+    const out = new Map();
+    let skippedNotEscalated = 0;
+    for(let r = headerIdx + 1; r < aoa.length; r++){
+      const row = aoa[r];
+      if(!row) continue;
+      const id = safeStr(col(row, 'ticket_id'));
+      if(!id) continue;
+
+      if(colIndex['is_escalated'] !== undefined){
+        const escVal = safeStr(col(row, 'is_escalated')).toLowerCase();
+        if(escVal.indexOf('not') === 0 || escVal === 'no' || escVal === '0' || escVal === 'false' || escVal === ''){
+          skippedNotEscalated++;
+          continue;
+        }
       }
 
-      const validChronology = openDt && endUser && endUser >= openDt;
-      const hoursUser = validChronology ? (endUser - openDt) / 3600000 : null;
+      let doRes = toISO(col(row, 'date_resolved'));
+      if(!doRes) doRes = toISO(col(row, 'date_last_update'));
 
-      // Potong usia pending jika valid secara kronologis
-      const hasValidPending = validChronology && pendDt && pendDt > openDt && pendDt < endUser;
-      const endInternal = hasValidPending ? pendDt : endUser;
-      const hoursInternal = validChronology ? (endInternal - openDt) / 3600000 : null;
+      const raw = {};
+      header.forEach((h, i) => {
+        const k = safeStr(h);
+        if(!k) return;
+        const v = row[i];
+        raw[k] = (v instanceof Date) ? toISO(v) : v;
+      });
+
+      out.set(id, {
+        id: id,
+        sj: safeStr(col(row, 'subject')),
+        sc: safeStr(col(row, 'subcategory')),
+        mc: safeStr(col(row, 'maincategory')),
+        dsc: safeStr(col(row, 'detailsubcategory')),
+        pr: safeStr(col(row, 'priority_name')).toUpperCase(),
+        st: safeStr(col(row, 'ticket_status_name')),
+        un: safeStr(col(row, 'unit_name')),
+        cn: safeStr(col(row, 'ticket_company_name')),
+        ch: safeStr(col(row, 'channel_name')),
+        sn: safeStr(col(row, 'source_name')),
+        ag: safeStr(col(row, 'ticket_solver_name')) || safeStr(col(row, 'updated_by_name')),
+        doStart: toISO(col(row, 'date_start_interaction')),
+        doOpen: toISO(col(row, 'date_open')),
+        doRes: doRes,
+        doPending: toISO(col(row, 'date_pending')),
+        raw: raw,
+      });
+    }
+    out._skippedNotEscalated = skippedNotEscalated;
+    return out;
+  }
+
+  function getPendingCutoff(rec){
+    if(!rec.doPending) return null;
+    const openT = rec.doOpen ? new Date(rec.doOpen).getTime() : null;
+    const pendingT = new Date(rec.doPending).getTime();
+    if(openT !== null && pendingT <= openT) return null;
+    return pendingT;
+  }
+
+  function classifyPct(pct){
+    if(pct >= 100) return 'breach';
+    if(pct >= 90) return 'warning';
+    return 'aman';
+  }
+
+  function computeSla(rec, nowMs){
+    const target = SLA_TARGET[rec.pr] || null;
+    const isFinished = FINISHED_STATUSES.has((rec.st || '').toLowerCase());
+    const pendingCutoff = getPendingCutoff(rec);
+
+    if(isFinished && rec.doOpen && rec.doRes && target){
+      const openT = new Date(rec.doOpen).getTime();
+      const resT = new Date(rec.doRes).getTime();
+      const usesPending = pendingCutoff !== null && pendingCutoff < resT;
+      const pendingHours = usesPending ? (resT - pendingCutoff) / 3600000 : 0;
+
+      const hoursExclude = ((usesPending ? pendingCutoff : resT) - openT) / 3600000;
+      const hoursInclude = (resT - openT) / 3600000;
+      const resultExclude = hoursExclude <= target ? 'aman' : 'breach';
+      const resultInclude = hoursInclude <= target ? 'aman' : 'breach';
+      const hours = slaViewMode === 'include' ? hoursInclude : hoursExclude;
+      const result = slaViewMode === 'include' ? resultInclude : resultExclude;
 
       return {
-        ...r,
-        _openDt: openDt,
-        _hasPending: Boolean(hasValidPending),
-        _hoursInternal: hoursInternal,
-        _hoursUser: hoursUser,
-        _forcedRule: resolveTicketSlaRule(r)
+        finished: true, target: target, pendingExcluded: usesPending, pendingHours: pendingHours,
+        hours: hours, pct: (hours / target) * 100, result: result,
+        hoursExclude: hoursExclude, hoursInclude: hoursInclude, resultExclude: resultExclude, resultInclude: resultInclude
       };
     }
+    if(!isFinished && rec.doOpen && target){
+      const openT = new Date(rec.doOpen).getTime();
+      const isCurrentlyPending = (rec.st || '').toLowerCase() === 'pending';
+      const usesPending = pendingCutoff !== null && isCurrentlyPending;
+      const pendingHours = usesPending ? (nowMs - pendingCutoff) / 3600000 : 0;
 
-    function populateProductDropdown(rows) {
-      const select = document.getElementById('filter-product');
-      const products = Array.from(
-        new Set(rows.map(r => String(r.subCategory || '').trim()).filter(v => v && v !== '-'))
-      ).sort();
+      const hoursExclude = ((usesPending ? pendingCutoff : nowMs) - openT) / 3600000;
+      const hoursInclude = (nowMs - openT) / 3600000;
+      const pctExclude = (hoursExclude / target) * 100;
+      const pctInclude = (hoursInclude / target) * 100;
+      const resultExclude = classifyPct(pctExclude);
+      const resultInclude = classifyPct(pctInclude);
+      const hours = slaViewMode === 'include' ? hoursInclude : hoursExclude;
+      const pct = slaViewMode === 'include' ? pctInclude : pctExclude;
+      const result = slaViewMode === 'include' ? resultInclude : resultExclude;
 
-      select.innerHTML = '<option value="ALL">Semua Produk</option>' +
-        products.map(p => `<option value="${p}">${p}</option>`).join('');
+      return {
+        finished: false, target: target, pendingExcluded: usesPending, pendingHours: pendingHours,
+        hours: hours, pct: pct, result: result,
+        hoursExclude: hoursExclude, hoursInclude: hoursInclude, resultExclude: resultExclude, resultInclude: resultInclude
+      };
+    }
+    return { finished: isFinished, hours: null, target: target, pct: null, result: 'unknown' };
+  }
 
-      if (products.includes('E-Meterai')) {
-        select.value = 'E-Meterai';
+  function computeEscalation(rec){
+    const eligible = ESCALATION_ELIGIBLE.has((rec.st || '').toLowerCase());
+    const channelOk = ESCALATION_CHANNELS.has((rec.ch || '').toLowerCase());
+    if(eligible && channelOk && rec.doOpen && rec.doStart){
+      const hrs = (new Date(rec.doOpen).getTime() - new Date(rec.doStart).getTime()) / 3600000;
+      return { hours: hrs, result: hrs <= ESCALATION_TARGET_HOURS ? 'aman' : 'breach' };
+    }
+    return { hours: null, result: 'unknown' };
+  }
+
+  function bucketOf(hours){
+    for(const b of DURATION_BUCKETS){ if(hours <= b.max) return b.label; }
+    return DURATION_BUCKETS[DURATION_BUCKETS.length - 1].label;
+  }
+
+  function monthKeyOf(iso){
+    const d = new Date(iso);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  }
+
+  function monthLabel(key){
+    const [y, m] = key.split('-').map(Number);
+    return new Date(y, m - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+  }
+
+  function fmtHours(hrs){
+    if(hrs === null || hrs === undefined || isNaN(hrs)) return '—';
+    if(hrs < 24) return hrs.toFixed(2) + ' jam';
+    return hrs.toFixed(2) + ' jam (' + (hrs / 24).toFixed(1) + ' hari)';
+  }
+
+  // =========================================================================
+  // 2. RENDER EVALUASI DATA TIKET AKTUAL
+  // =========================================================================
+  function updateFilters(allComputed){
+    const products = Array.from(new Set(allComputed.map(c => c.rec.sc).filter(Boolean))).sort();
+    let pHtml = '<option value="ALL">Semua Produk (' + allComputed.length + ')</option>';
+    if(products.includes('E-Meterai') && products.includes('Perisai')){
+      pHtml += '<option value="' + COMBINED_VALUE + '">E-Meterai + Perisai (Gabungan)</option>';
+    }
+    pHtml += products.map(p => '<option value="' + p + '">' + p + '</option>').join('');
+    document.getElementById('productFilter').innerHTML = pHtml;
+    if(['ALL', COMBINED_VALUE].concat(products).includes(selectedProduct)){
+      document.getElementById('productFilter').value = selectedProduct;
+    } else {
+      selectedProduct = 'ALL';
+    }
+
+    const byProd = applyProductFilter(allComputed, selectedProduct);
+    const cats = Array.from(new Set(byProd.map(c => c.rec.dsc).filter(Boolean))).sort();
+    document.getElementById('categoryFilter').innerHTML = '<option value="ALL">Semua Kategori</option>' +
+      cats.map(cat => '<option value="' + cat + '">' + cat + '</option>').join('');
+    if(selectedCategory === 'ALL' || cats.includes(selectedCategory)){
+      document.getElementById('categoryFilter').value = selectedCategory;
+    } else {
+      selectedCategory = 'ALL';
+    }
+
+    const months = Array.from(new Set(byProd.filter(c => c.rec.doOpen).map(c => monthKeyOf(c.rec.doOpen)))).sort().reverse();
+    document.getElementById('monthFilter').innerHTML = '<option value="ALL">Semua Bulan</option>' +
+      months.map(m => '<option value="' + m + '">' + monthLabel(m) + '</option>').join('');
+    if(selectedMonth === 'ALL' || months.includes(selectedMonth)){
+      document.getElementById('monthFilter').value = selectedMonth;
+    } else {
+      selectedMonth = 'ALL';
+    }
+  }
+
+  function applyProductFilter(list, sel){
+    if(sel === 'ALL') return list;
+    if(sel.indexOf('COMBINED:') === 0){
+      const names = sel.slice(9).split('|');
+      return list.filter(c => names.includes(c.rec.sc));
+    }
+    return list.filter(c => c.rec.sc === sel);
+  }
+
+  let currentScopedRows = [];
+
+  function renderActual(){
+    if(ticketsMap.size === 0){
+      document.getElementById('emptyState').style.display = '';
+      document.getElementById('actualDashboard').style.display = 'none';
+      return;
+    }
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('actualDashboard').style.display = '';
+    document.getElementById('filterBar').style.display = 'flex';
+    document.getElementById('modeSubtitle').textContent = slaViewMode === 'include'
+      ? 'Mode Aktif: User (Include Pending — Waktu Kalender Penuh)'
+      : 'Mode Aktif: Internal (Exclude Pending — Performa Solver)';
+
+    const now = Date.now();
+    const allComputed = Array.from(ticketsMap.values()).map(rec => ({ rec: rec, sla: computeSla(rec, now) }));
+    updateFilters(allComputed);
+
+    let scoped = applyProductFilter(allComputed, selectedProduct);
+    if(selectedCategory !== 'ALL') scoped = scoped.filter(c => c.rec.dsc === selectedCategory);
+    if(selectedMonth !== 'ALL') scoped = scoped.filter(c => c.rec.doOpen && monthKeyOf(c.rec.doOpen) === selectedMonth);
+    currentScopedRows = scoped;
+
+    // 1. Overview Cards
+    const finished = scoped.filter(c => c.sla.finished);
+    const outstanding = scoped.filter(c => !c.sla.finished);
+    const compliant = finished.filter(c => c.sla.result === 'aman').length;
+    const breachFinished = finished.filter(c => c.sla.result === 'breach').length;
+    const compliancePct = finished.length ? ((compliant / finished.length) * 100).toFixed(1) : '—';
+    const outWarning = outstanding.filter(c => c.sla.result === 'warning').length;
+    const outBreach = outstanding.filter(c => c.sla.result === 'breach').length;
+
+    const cards = [
+      { label: 'Total Tiket', value: scoped.length, cls: '' },
+      { label: 'Selesai (Resolved+)', value: finished.length, cls: '' },
+      { label: 'SLA Compliance', value: compliancePct + (compliancePct !== '—' ? '%' : ''), cls: compliancePct !== '—' && +compliancePct >= 90 ? 'aman' : 'warning' },
+      { label: 'Breach (Selesai)', value: breachFinished, cls: breachFinished > 0 ? 'breach' : 'aman' },
+      { label: 'Outstanding — Warning', value: outWarning, cls: outWarning > 0 ? 'warning' : 'aman' },
+      { label: 'Outstanding — Breach', value: outBreach, cls: outBreach > 0 ? 'breach' : 'aman' },
+    ];
+    document.getElementById('overviewCards').innerHTML = cards.map(c =>
+      '<div class="card ' + c.cls + '"><div class="label">' + c.label + '</div><div class="value">' + c.value + '</div></div>'
+    ).join('');
+
+    // 2. Achievement Table per Priority
+    let totFin = 0, totComp = 0, totBreach = 0;
+    const allValidHrs = [];
+    const achRows = PRIORITY_ORDER.map(pr => {
+      const items = finished.filter(c => c.rec.pr === pr);
+      const comp = items.filter(c => c.sla.result === 'aman').length;
+      const br = items.filter(c => c.sla.result === 'breach').length;
+      const validHrs = items.filter(c => c.sla.hours !== null && c.sla.hours >= 0).map(c => c.sla.hours);
+      validHrs.forEach(h => allValidHrs.push(h));
+      const mttr = validHrs.length ? (validHrs.reduce((s, h) => s + h, 0) / validHrs.length).toFixed(2) + ' jam' : '—';
+      totFin += items.length; totComp += comp; totBreach += br;
+      const pct = items.length ? ((comp / items.length) * 100).toFixed(1) : '—';
+      const badgeCls = pct === '—' ? 'muted' : (+pct >= 90 ? 'aman' : 'breach');
+      return '<tr><td><strong>' + pr + '</strong></td><td>' + items.length + '</td><td>' + comp + '</td><td>' + br + '</td>' +
+        '<td><span class="badge ' + badgeCls + '">' + pct + (pct !== '—' ? '%' : '') + '</span></td><td>' + mttr + '</td></tr>';
+    }).join('');
+    const totPct = totFin ? ((totComp / totFin) * 100).toFixed(1) : '—';
+    const totMttr = allValidHrs.length ? (allValidHrs.reduce((s, h) => s + h, 0) / allValidHrs.length).toFixed(2) + ' jam' : '—';
+    document.getElementById('achievementBody').innerHTML = achRows +
+      '<tr style="font-weight:700;background:var(--surface-2);"><td>Total</td><td>' + totFin + '</td><td>' + totComp + '</td><td>' + totBreach + '</td><td>' + totPct + (totPct !== '—' ? '%' : '') + '</td><td>' + totMttr + '</td></tr>';
+
+    // 3. Achieved Chart
+    const achData = PRIORITY_ORDER.map(pr => finished.filter(c => c.rec.pr === pr && c.sla.result === 'aman').length);
+    const breachData = PRIORITY_ORDER.map(pr => finished.filter(c => c.rec.pr === pr && c.sla.result === 'breach').length);
+    if(achievedChart) achievedChart.destroy();
+    achievedChart = new Chart(document.getElementById('achievedChart'), {
+      type: 'bar',
+      data: {
+        labels: PRIORITY_ORDER,
+        datasets: [
+          { label: 'Achieved', data: achData, backgroundColor: '#0F8B58', borderRadius: 4 },
+          { label: 'Not Achieved (Breach)', data: breachData, backgroundColor: '#DC2626', borderRadius: 4 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        onClick: (evt, els) => {
+          if(!els.length) return;
+          document.getElementById('ticketPriorityFilter').value = PRIORITY_ORDER[els[0].index];
+          document.getElementById('ticketStatusFilter').value = els[0].datasetIndex === 0 ? 'achieved' : 'not_achieved';
+          drawTicketTable();
+          document.getElementById('ticketListPanel').scrollIntoView({ behavior: 'smooth' });
+        },
+        scales: { y: { beginAtZero: true } },
+        plugins: { legend: { position: 'bottom' } }
       }
-    }
-
-    function getFilteredTickets() {
-      const prodFilter = document.getElementById('filter-product').value;
-      const escFilter = document.getElementById('filter-escalation').value;
-      const startVal = document.getElementById('filter-date-start').value;
-      const endVal = document.getElementById('filter-date-end').value;
-
-      const startDt = startVal ? new Date(startVal + 'T00:00:00') : null;
-      const endDt = endVal ? new Date(endVal + 'T23:59:59') : null;
-
-      return rawRows.filter(t => {
-        if (escFilter === 'escalated') {
-          if (String(t.is_escalated || '').trim().toLowerCase() !== 'escalated') return false;
-        }
-        if (prodFilter !== 'ALL') {
-          if (String(t.subCategory || '').trim() !== prodFilter) return false;
-        }
-        if (startDt && (!t._openDt || t._openDt < startDt)) return false;
-        if (endDt && (!t._openDt || t._openDt > endDt)) return false;
-        return true;
-      });
-    }
-
-    function refreshDashboard() {
-      if (rawRows.length === 0) return;
-
-      const filtered = getFilteredTickets();
-      const finished = filtered.filter(t =>
-        FINISHED_STATUSES.has(String(t.ticket_status_name || '').trim().toLowerCase())
-      );
-
-      document.getElementById('kpi-total').textContent = filtered.length.toLocaleString('id-ID');
-      document.getElementById('kpi-finished').textContent = finished.length.toLocaleString('id-ID');
-      document.getElementById('kpi-open').textContent = (filtered.length - finished.length).toLocaleString('id-ID');
-
-      renderSlaSummaryTable(finished);
-      renderDetailTable(finished);
-    }
-
-    function renderSlaSummaryTable(finishedTickets) {
-      const tbody = document.getElementById('casn-sla-tbody');
-      const tfoot = document.getElementById('casn-sla-tfoot');
-      const priorities = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
-
-      let grandSelesai = 0;
-      let grandValid = 0;
-      let grandAchieved = 0;
-      let grandBreach = 0;
-      let grandHours = 0;
-
-      tbody.innerHTML = priorities.map(pr => {
-        const target = SLA_TARGETS[pr];
-        const items = finishedTickets.filter(
-          t => String(t.priority_name || '').trim().toUpperCase() === pr
-        );
-
-        const selesai = items.length;
-        if (selesai === 0) {
-          return `
-            <tr>
-              <td><strong>${pr}</strong></td>
-              <td>0</td>
-              <td>${target}h</td>
-              <td class="text-right mono">0.00h</td>
-              <td class="text-right">0</td>
-              <td class="text-right">0</td>
-              <td class="text-center"><span class="badge empty">-</span></td>
-            </tr>
-          `;
-        }
-
-        let totalHours = 0;
-        let validCount = 0;
-        let achievedCount = 0;
-
-        items.forEach(item => {
-          const effectiveMode = item._forcedRule || currentSlaMode;
-          const dur = effectiveMode === 'internal' ? item._hoursInternal : item._hoursUser;
-          if (dur !== null && !isNaN(dur)) {
-            totalHours += dur;
-            validCount++;
-            if (dur < target) achievedCount++;
-          }
-        });
-
-        const breachCount = validCount - achievedCount;
-        const mttr = validCount > 0 ? (totalHours / validCount).toFixed(2) : '0.00';
-        const pct = validCount > 0 ? ((achievedCount / validCount) * 100).toFixed(1) : '0.0';
-        const badgeClass = Number(pct) >= 85 ? 'pass' : 'fail';
-
-        grandSelesai += selesai;
-        grandValid += validCount;
-        grandAchieved += achievedCount;
-        grandBreach += breachCount;
-        grandHours += totalHours;
-
-        return `
-          <tr>
-            <td><strong>${pr}</strong></td>
-            <td>${selesai}</td>
-            <td>${target}h</td>
-            <td class="text-right mono">${mttr}h</td>
-            <td class="text-right">${achievedCount}</td>
-            <td class="text-right">${breachCount}</td>
-            <td class="text-center"><span class="badge ${badgeClass}">${pct}%</span></td>
-          </tr>
-        `;
-      }).join('');
-
-      const totalMttr = grandValid > 0 ? (grandHours / grandValid).toFixed(2) : '0.00';
-      const totalPct = grandValid > 0 ? ((grandAchieved / grandValid) * 100).toFixed(1) + '%' : '-';
-
-      tfoot.innerHTML = `
-        <tr>
-          <td>Total</td>
-          <td>${grandSelesai}</td>
-          <td>-</td>
-          <td class="text-right mono">${totalMttr}h</td>
-          <td class="text-right">${grandAchieved}</td>
-          <td class="text-right">${grandBreach}</td>
-          <td class="text-center">${totalPct}</td>
-        </tr>
-      `;
-
-      document.getElementById('kpi-sla-pct').textContent = totalPct;
-      document.getElementById('kpi-sla-detail').textContent = `${grandAchieved} Achieved / ${grandBreach} Breach`;
-    }
-
-    function renderDetailTable(finishedTickets) {
-      const tbody = document.getElementById('detail-tbody');
-      const filterMode = document.getElementById('filter-detail-status').value;
-
-      const enriched = finishedTickets.map(item => {
-        const pr = String(item.priority_name || '').trim().toUpperCase();
-        const target = SLA_TARGETS[pr] || 24;
-        const effectiveMode = item._forcedRule || currentSlaMode;
-        const activeDur = effectiveMode === 'internal' ? item._hoursInternal : item._hoursUser;
-        const isAchieved = activeDur !== null && activeDur < target;
-        return { ...item, _target: target, _activeDur: activeDur, _isAchieved: isAchieved };
-      });
-
-      let list = enriched;
-      if (filterMode === 'BREACH') {
-        list = enriched.filter(t => t._activeDur !== null && !t._isAchieved);
-      } else if (filterMode === 'PENDING') {
-        list = enriched.filter(t => t._hasPending);
-      }
-
-      document.getElementById('detail-table-subtitle').textContent =
-        `Menampilkan ${list.length} tiket (status badge mengikuti mode ${currentSlaMode === 'internal' ? 'Potong Pending' : 'Hitung Pending'}).`;
-
-      if (list.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="7" class="text-center" style="color:#94a3b8;padding:20px;">
-              Tidak ada tiket yang sesuai kriteria tampilan ini.
-            </td>
-          </tr>
-        `;
-        return;
-      }
-
-      tbody.innerHTML = list.slice(0, 200).map(t => {
-        const pr = String(t.priority_name || '-').toUpperCase();
-        const intBreach = t._hoursInternal !== null && t._hoursInternal >= t._target;
-        const usrBreach = t._hoursUser !== null && t._hoursUser >= t._target;
-
-        return `
-          <tr>
-            <td class="mono" style="white-space:nowrap;">${t.ticket_id || '-'}</td>
-            <td>${t.subject || '-'}</td>
-            <td>${t.category || t.subCategory || '-'}</td>
-            <td><strong>${pr}</strong></td>
-            <td class="text-right">
-              <div class="${intBreach ? 'text-danger' : 'text-success'}">${formatDuration(t._hoursInternal)}</div>
-              ${t._hasPending ? '<span class="tag-pending">PENDING</span>' : ''}
-            </td>
-            <td class="text-right">
-              <div class="${usrBreach ? 'text-danger' : 'text-success'}">${formatDuration(t._hoursUser)}</div>
-            </td>
-            <td class="text-center">
-              <span class="badge ${t._isAchieved ? 'pass' : 'fail'}">
-                ${t._isAchieved ? 'ACHIEVED' : 'NOT ACHIEVED'}
-              </span>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    function setSlaPendingMode(mode) {
-      currentSlaMode = mode;
-      document.querySelectorAll('.sla-toggle-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.mode === mode);
-      });
-      document.getElementById('sla-mode-desc').textContent = mode === 'internal'
-        ? 'Mode Internal: usia tiket berstatus Pending dipotong dari durasi penyelesaian.'
-        : 'Mode User: usia tiket berstatus Pending tetap dihitung penuh hingga Resolved.';
-      refreshDashboard();
-    }
-
-    document.getElementById('csv-input').addEventListener('change', e => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: results => {
-          rawRows = results.data.map(computeTicketMetrics);
-          document.getElementById('file-status').textContent =
-            `File aktif: ${file.name} (${rawRows.length.toLocaleString('id-ID')} baris)`;
-          populateProductDropdown(rawRows);
-          refreshDashboard();
-        }
-      });
     });
 
-    ['filter-product', 'filter-escalation', 'filter-date-start', 'filter-date-end', 'filter-detail-status']
-      .forEach(id => document.getElementById(id).addEventListener('change', refreshDashboard));
-  </script>
+    // 4. Distribution Table
+    const finWithHours = finished.filter(c => c.sla.hours !== null);
+    document.getElementById('distTableHead').innerHTML = '<th>Priority</th>' + DURATION_BUCKETS.map(b => '<th>' + b.label + '</th>').join('') + '<th>Total</th>';
+    const distRows = PRIORITY_ORDER.map(pr => {
+      const items = finWithHours.filter(c => c.rec.pr === pr);
+      const counts = DURATION_BUCKETS.map(b => items.filter(c => bucketOf(c.sla.hours) === b.label).length);
+      return '<tr><td><strong>' + pr + '</strong></td>' + counts.map(n => '<td>' + n + '</td>').join('') + '<td><strong>' + items.length + '</strong></td></tr>';
+    }).join('');
+    const distTotals = DURATION_BUCKETS.map(b => finWithHours.filter(c => bucketOf(c.sla.hours) === b.label).length);
+    document.getElementById('distTableBody').innerHTML = distRows +
+      '<tr style="font-weight:700;background:var(--surface-2);"><td>Total</td>' + distTotals.map(n => '<td>' + n + '</td>').join('') + '<td>' + finWithHours.length + '</td></tr>';
+
+    // 5. TOP 10 Chart
+    const catCounts = new Map();
+    scoped.forEach(c => {
+      const lbl = (c.rec.mc || '-') + ' - ' + (c.rec.sc || '-') + ' - ' + (c.rec.dsc || '-');
+      catCounts.set(lbl, (catCounts.get(lbl) || 0) + 1);
+    });
+    const top10 = Array.from(catCounts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    if(top10Chart) top10Chart.destroy();
+    top10Chart = new Chart(document.getElementById('top10Chart'), {
+      type: 'bar',
+      data: {
+        labels: top10.map(x => x[0]),
+        datasets: [{ label: 'Jumlah Tiket', data: top10.map(x => x[1]), backgroundColor: '#1A73E8', borderRadius: 3 }]
+      },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true } }
+      }
+    });
+
+    // 6. Escalation Cards & Breakdown
+    const escItems = scoped.map(c => ({ rec: c.rec, esc: computeEscalation(c.rec) })).filter(x => x.esc.hours !== null);
+    const escAman = escItems.filter(x => x.esc.result === 'aman').length;
+    const escBreach = escItems.filter(x => x.esc.result === 'breach').length;
+    const escAvgMin = escItems.length ? (escItems.reduce((s, x) => s + x.esc.hours, 0) / escItems.length) * 60 : null;
+    document.getElementById('escalationCards').innerHTML = [
+      { label: 'Rata-rata Waktu Eskalasi', value: escAvgMin !== null ? escAvgMin.toFixed(1) + ' menit' : '—', cls: '' },
+      { label: 'Dalam Target (≤15 menit)', value: escAman, cls: 'aman' },
+      { label: 'Breach (>15 menit)', value: escBreach, cls: escBreach > 0 ? 'breach' : 'aman' },
+    ].map(c => '<div class="card ' + c.cls + '"><div class="label">' + c.label + '</div><div class="value" style="font-size:19px;">' + c.value + '</div></div>').join('');
+
+    const escByProd = new Map();
+    escItems.forEach(x => {
+      const p = x.rec.sc || '(Tidak diketahui)';
+      if(!escByProd.has(p)) escByProd.set(p, { total: 0, aman: 0 });
+      const g = escByProd.get(p);
+      g.total++;
+      if(x.esc.result === 'aman') g.aman++;
+    });
+    const maxEsc = Math.max(1, ...Array.from(escByProd.values()).map(g => g.total));
+    document.getElementById('escalationByProduct').innerHTML = Array.from(escByProd.entries()).sort((a, b) => b[1].total - a[1].total).map(([name, g]) => {
+      const pct = g.total ? ((g.aman / g.total) * 100).toFixed(0) : '0';
+      return '<div class="breakdown-row"><div class="name">' + name + '</div><div class="barbg"><div class="barfg" style="width:' + (g.total / maxEsc * 100) + '%"></div></div><div class="num">' + g.total + ' tiket · ' + pct + '%</div></div>';
+    }).join('') || '<p class="table-note">Tidak ada data eskalasi Email/WhatsApp.</p>';
+
+    // 7. Product x Priority Table
+    const prods = Array.from(new Set(scoped.map(c => c.rec.sc).filter(Boolean))).sort();
+    document.getElementById('productPriorityTables').innerHTML = prods.map(prod => {
+      const rows = PRIORITY_ORDER.map(pr => {
+        const inGroup = scoped.filter(c => c.rec.sc === prod && c.rec.pr === pr);
+        const eValid = inGroup.map(c => computeEscalation(c.rec)).filter(e => e.hours !== null && e.hours >= 0);
+        const avgResp = eValid.length ? ((eValid.reduce((s, e) => s + e.hours, 0) / eValid.length) * 60).toFixed(2) + ' Menit' : '-';
+        const rValid = inGroup.filter(c => c.sla.finished && c.sla.hours !== null && c.sla.hours >= 0);
+        const avgRes = rValid.length ? (rValid.reduce((s, c) => s + c.sla.hours, 0) / rValid.length).toFixed(2) + ' Jam' : '-';
+        return '<tr><td><strong>' + pr + '</strong></td><td>15 menit</td><td>' + SLA_TARGET[pr] + ' jam</td><td>' + avgResp + '</td><td>' + avgRes + '</td></tr>';
+      }).join('');
+      return '<div style="margin-bottom:16px;"><div style="font-weight:700;font-size:13px;margin-bottom:6px;color:var(--heading);">' + prod + '</div>' +
+        '<div class="table-scroll table-scroll--full"><table><thead><tr><th>Priority</th><th>Target Respons</th><th>Target Resolusi</th><th>Rata-rata Respons Aktual</th><th>Rata-rata Resolusi Aktual</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+    }).join('');
+
+    drawTicketTable();
+  }
+
+  function getFilteredTickets(){
+    const q = (document.getElementById('ticketSearch').value || '').toLowerCase().trim();
+    const st = document.getElementById('ticketStatusFilter').value;
+    const pr = document.getElementById('ticketPriorityFilter').value;
+    return currentScopedRows.filter(c => {
+      if(st === 'achieved' && !(c.sla.finished && c.sla.result === 'aman')) return false;
+      if(st === 'not_achieved' && !(c.sla.finished && c.sla.result === 'breach')) return false;
+      if(st === 'outstanding' && c.sla.finished) return false;
+      if(pr !== 'ALL' && c.rec.pr !== pr) return false;
+      if(q && !(c.rec.id + ' ' + c.rec.sj + ' ' + c.rec.dsc + ' ' + c.rec.sc).toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }
+
+  function drawTicketTable(){
+    const list = getFilteredTickets();
+    const shown = list.slice(0, 300);
+    document.getElementById('ticketListBody').innerHTML = shown.map(c => {
+      let badge = '<span class="badge muted">—</span>';
+      if(c.sla.finished){
+        badge = c.sla.result === 'aman' ? '<span class="badge aman">Achieved</span>' : '<span class="badge breach">Not Achieved</span>';
+      } else if(c.sla.result !== 'unknown'){
+        const lbl = c.sla.result === 'breach' ? 'Outstanding — Breach' : (c.sla.result === 'warning' ? 'Outstanding — Warning' : 'Outstanding — Aman');
+        badge = '<span class="badge ' + c.sla.result + '">' + lbl + '</span>';
+      }
+      const pendingBadge = c.sla.pendingExcluded ? '<span class="pending-mark" title="Pending ' + c.sla.pendingHours.toFixed(2) + ' jam">pending</span>' : '';
+      const exclStyle = c.sla.resultExclude === 'breach' ? ' style="color:var(--breach);font-weight:700;"' : '';
+      const inclStyle = c.sla.resultInclude === 'breach' ? ' style="color:var(--breach);font-weight:700;"' : '';
+      return '<tr><td class="tid">' + c.rec.id + '</td><td>' + (c.rec.sc || '—') + '</td><td>' + (c.rec.sj || '—') + '</td><td>' + (c.rec.dsc || '—') + '</td>' +
+        '<td><strong>' + (c.rec.pr || '—') + '</strong></td><td>' + (c.rec.st || '—') + '</td>' +
+        '<td' + exclStyle + '>' + fmtHours(c.sla.hoursExclude) + pendingBadge + '</td>' +
+        '<td' + inclStyle + '>' + fmtHours(c.sla.hoursInclude) + '</td><td>' + badge + '</td></tr>';
+    }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:20px;">Tidak ada tiket yang cocok.</td></tr>';
+
+    document.getElementById('ticketListCount').textContent = list.length + ' tiket';
+    document.getElementById('ticketListNote').textContent = 'Menampilkan ' + shown.length + ' dari ' + list.length + ' tiket. Kolom "Internal" mengecualikan durasi pending; kolom "User" menghitung waktu penuh.';
+  }
+
+  // =========================================================================
+  // 3. SIMULATOR CASN 2026 & BENCHMARK HISTORIS (CatatanSkenarioCASN.xlsx)
+  // =========================================================================
+  function runSimulation(){
+    const vol = +document.getElementById('inVolume').value;
+    const agents = +document.getElementById('inAgents').value;
+    const baseAht = +document.getElementById('inAht').value;
+    const escRate = +document.getElementById('inEscRate').value / 100;
+    const useSegment = document.getElementById('chkSegment').checked;
+    const useCanned = document.getElementById('chkCanned').checked;
+    const useLifo = document.getElementById('chkLifo').checked;
+    const highSev = document.getElementById('chkSeverity').checked;
+
+    const otAgents = Math.max(0, agents - 6);
+    document.getElementById('valVolume').textContent = vol.toLocaleString('id-ID') + ' interaksi/hari';
+    document.getElementById('valAgents').textContent = agents + ' agent (' + otAgents + ' OT)';
+    document.getElementById('valAht').textContent = baseAht.toFixed(1) + ' menit';
+    document.getElementById('valEscRate').textContent = Math.round(escRate * 100) + '%';
+
+    const effAht = useCanned ? baseAht * 0.75 : baseAht;
+    const capInteractions = Math.floor((agents * 480) / effAht);
+    const backlog = Math.max(0, vol - capInteractions);
+    const estTickets = Math.round(vol * escRate);
+
+    // Estimasi SLA E-Meterai CASN berdasarkan rasio kapasitas & skenario mitigasi
+    const loadRatio = vol / Math.max(1, capInteractions);
+    let emetSla = 95 - Math.max(0, (loadRatio - 0.85) * 48);
+    if(useLifo) emetSla += 4.5;
+    if(useCanned) emetSla += 3.0;
+    if(highSev) emetSla -= 6.5; // target 8j/12j lebih ketat saat lonjakan
+    emetSla = Math.max(18.7, Math.min(98.5, emetSla));
+
+    // Estimasi SLA Perisai (terlindungi bila segmentasi antrean aktif)
+    let perisaiSla = useSegment
+      ? Math.max(91.0, 98.0 - Math.max(0, (loadRatio - 1.2) * 3.5))
+      : Math.max(68.5, emetSla + 8.0);
+
+    const recAgents = Math.ceil((vol * effAht) / (480 * 0.88));
+
+    document.getElementById('simCards').innerHTML = [
+      { label: 'Kapasitas Layan / Hari', value: capInteractions.toLocaleString('id-ID'), hint: 'AHT Efektif: ' + effAht.toFixed(1) + ' mnt · Backlog: ' + backlog, cls: backlog === 0 ? 'aman' : 'warning' },
+      { label: 'Proyeksi Tiket Eskalasi', value: estTickets + ' tiket', hint: highSev ? 'Severity Critical/High (8j–12j)' : 'Severity Standar (Medium 24j)', cls: '' },
+      { label: 'Proyeksi SLA E-Meterai', value: emetSla.toFixed(1) + '%', hint: emetSla >= 85 ? 'Terkendali (Target ≥85%)' : 'Risiko Breach Tinggi!', cls: emetSla >= 85 ? 'aman' : (emetSla >= 70 ? 'warning' : 'breach') },
+      { label: 'Proyeksi SLA Perisai', value: perisaiSla.toFixed(1) + '%', hint: useSegment ? 'Antrean VIP Terisolasi' : 'Tercampur Antrean CASN! · Ideal: ' + recAgents + ' agent', cls: perisaiSla >= 90 ? 'aman' : 'warning' }
+    ].map(c => '<div class="card ' + c.cls + '"><div class="label">' + c.label + '</div><div class="value">' + c.value + '</div><div class="hint">' + c.hint + '</div></div>').join('');
+  }
+
+  function renderHistoricalChart(){
+    const labels = [
+      'Jan 24','Feb 24','Mar 24','Apr 24','Mei 24','Jun 24','Jul 24','Agu 24','Sep 24 (CASN)','Okt 24','Nov 24','Des 24',
+      'Jan 25','Feb 25','Mar 25','Apr 25','Mei 25','Jun 25','Jul 25','Agu 25','Sep 25','Okt 25','Nov 25','Des 25',
+      'Jan 26','Feb 26','Mar 26','Apr 26','Mei 26','Jun 26','Jul 26'
+    ];
+    const emetData = [
+      79.8,48.6,53.0,61.3,69.0,72.5,47.7,55.2,18.7,45.9,39.2,26.3,
+      36.0,42.7,77.1,81.1,65.9,57.6,61.5,65.2,70.3,68.4,57.9,74.3,
+      70.1,70.9,63.4,73.0,78.1,70.7,75.7
+    ];
+    const perisaiData = [
+      95.0,95.2,94.8,92.2,93.4,83.6,68.5,88.6,86.2,92.2,96.1,95.4,
+      97.9,97.8,99.3,98.4,99.0,97.8,95.5,98.3,97.4,96.6,97.5,98.1,
+      97.6,98.2,98.1,99.0,97.9,99.4,98.3
+    ];
+    if(histChart) histChart.destroy();
+    histChart = new Chart(document.getElementById('histChart'), {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'E-Meterai SLA %', data: emetData, borderColor: '#00529B', backgroundColor: 'rgba(0,82,155,0.1)', tension: 0.25, fill: true },
+          { label: 'Perisai SLA %', data: perisaiData, borderColor: '#6A1B9A', backgroundColor: 'transparent', tension: 0.25 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: { y: { min: 0, max: 100, title: { display: true, text: 'SLA Achievement %' } } },
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
+
+  // =========================================================================
+  // 4. EVENT LISTENERS
+  // =========================================================================
+  function switchTab(tabName){
+    document.querySelectorAll('.main-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'tab-' + tabName));
+  }
+
+  document.querySelectorAll('.main-tab').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  document.getElementById('fileInput').addEventListener('change', async (ev) => {
+    const file = ev.target.files[0];
+    if(!file) return;
+    const statusEl = document.getElementById('statusLine');
+    statusEl.textContent = 'Membaca file "' + file.name + '"...';
+    statusEl.className = 'status-line';
+    try{
+      const buf = await file.arrayBuffer();
+      const parsed = parseWorkbook(buf, file.name);
+      if(parsed.size === 0) throw new Error('Tidak ada tiket valid yang ditemukan.');
+      ticketsMap = parsed;
+      const skipTxt = parsed._skippedNotEscalated ? (' (' + parsed._skippedNotEscalated + ' not escalated dilewati)') : '';
+      document.getElementById('metaBadge').textContent = file.name + ' · ' + parsed.size + ' tiket eskalasi';
+      statusEl.textContent = 'Berhasil memuat ' + parsed.size + ' tiket eskalasi' + skipTxt + '.';
+      statusEl.className = 'status-line ok';
+      switchTab('aktual');
+      renderActual();
+    }catch(e){
+      statusEl.textContent = 'Gagal membaca file: ' + e.message;
+      statusEl.className = 'status-line error';
+    }
+    ev.target.value = '';
+  });
+
+  document.getElementById('slaViewToggle').addEventListener('click', () => {
+    slaViewMode = slaViewMode === 'exclude' ? 'include' : 'exclude';
+    document.getElementById('slaViewToggle').innerHTML = slaViewMode === 'include'
+      ? '&#128065; User (Include Pending)'
+      : '&#128065; Internal (Exclude Pending)';
+    if(ticketsMap.size > 0) renderActual();
+  });
+
+  let isDark = false;
+  document.getElementById('themeToggleBtn').addEventListener('click', () => {
+    isDark = !isDark;
+    if(isDark){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.getElementById('themeToggleBtn').innerHTML = '&#9790; Gelap';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      document.getElementById('themeToggleBtn').innerHTML = '&#9788; Terang';
+    }
+  });
+
+  document.getElementById('productFilter').addEventListener('change', (e) => { selectedProduct = e.target.value; renderActual(); });
+  document.getElementById('categoryFilter').addEventListener('change', (e) => { selectedCategory = e.target.value; renderActual(); });
+  document.getElementById('monthFilter').addEventListener('change', (e) => { selectedMonth = e.target.value; renderActual(); });
+
+  document.getElementById('ticketSearch').addEventListener('input', drawTicketTable);
+  document.getElementById('ticketStatusFilter').addEventListener('change', drawTicketTable);
+  document.getElementById('ticketPriorityFilter').addEventListener('change', drawTicketTable);
+
+  document.getElementById('exportCsvBtn').addEventListener('click', () => {
+    const list = getFilteredTickets();
+    if(!list.length) return;
+    const esc = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    const header = ['Ticket ID','Produk','Subject','Kategori','Priority','Status','Durasi Internal (Jam)','Durasi User (Jam)','Hasil SLA'];
+    const lines = [header.join(',')];
+    list.forEach(c => {
+      const resLbl = c.sla.finished ? (c.sla.result === 'aman' ? 'Achieved' : 'Not Achieved') : c.sla.result;
+      lines.push([
+        c.rec.id, c.rec.sc, c.rec.sj, c.rec.dsc, c.rec.pr, c.rec.st,
+        c.sla.hoursExclude != null ? c.sla.hoursExclude.toFixed(2) : '',
+        c.sla.hoursInclude != null ? c.sla.hoursInclude.toFixed(2) : '',
+        resLbl
+      ].map(esc).join(','));
+    });
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'evaluasi_sla_' + new Date().toISOString().slice(0,10) + '.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  ['inVolume','inAgents','inAht','inEscRate','chkSegment','chkCanned','chkLifo','chkSeverity'].forEach(id => {
+    document.getElementById(id).addEventListener('input', runSimulation);
+    document.getElementById(id).addEventListener('change', runSimulation);
+  });
+
+  document.getElementById('simResetBtn').addEventListener('click', () => {
+    document.getElementById('inVolume').value = 1800;
+    document.getElementById('inAgents').value = 12;
+    document.getElementById('inAht').value = 6.5;
+    document.getElementById('inEscRate').value = 18;
+    document.getElementById('chkSegment').checked = true;
+    document.getElementById('chkCanned').checked = true;
+    document.getElementById('chkLifo').checked = true;
+    document.getElementById('chkSeverity').checked = false;
+    runSimulation();
+  });
+
+  runSimulation();
+  renderHistoricalChart();
+})();
+</script>
 </body>
 </html>

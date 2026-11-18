@@ -30,7 +30,7 @@
         .tab-btn { border-bottom: 3px solid transparent; transition: all 0.2s; }
         .tab-btn.active { border-bottom-color: #1E40AF; color: #1E3A8A; font-weight: 700; background-color: #EFF6FF; }
 
-        /* Styling khusus Executive Report SSCASN (Dark Slide Mode & Light Mode) */
+        /* Styling Executive Report SSCASN */
         .exec-dark { background-color: #070A12; color: #F9FAFB; }
         .exec-dark .exec-card { background-color: #0D1322; border-color: #1E3A8A; }
         .exec-dark .exec-th-blue { background-color: #163E8C; color: #FFFFFF; border-color: #2B59B5; }
@@ -56,19 +56,35 @@
     <header class="bg-white border-b-2 border-blue-800 p-4 shadow-sm">
         <div class="max-w-7xl mx-auto flex justify-between items-center flex-wrap gap-4">
             <div>
-                <h1 class="text-xl font-bold text-blue-900 uppercase tracking-wide">CASN 2026 Operational & SLA Dashboard</h1>
-                <p class="text-xs text-gray-500 font-medium mt-1">
-                    Executive Summary Interaksi SSCASN, Monitoring Tiket Escalated &amp; SLA, AHT &amp; Kapasitas Shift
-                </p>
+                <h1 class="text-xl font-bold text-blue-900 uppercase tracking-wide">CASN 2026 Operational &amp; SLA Dashboard</h1>
+                <div class="flex flex-wrap items-center gap-2 mt-1">
+                    <span id="dbStatusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300">
+                        <span id="dbStatusDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+                        <span id="dbStatusText">Memeriksa Database...</span>
+                    </span>
+                    <span id="dbMetaText" class="text-xs text-gray-500"></span>
+                </div>
             </div>
+
             <div class="flex items-center gap-2 flex-wrap">
-                <button id="copyReportBtn" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-2 px-3 rounded shadow transition">
-                    Salin Daily Report (WA/Email)
-                </button>
-                <label for="csvFileInput" class="cursor-pointer bg-blue-700 hover:bg-blue-800 text-white text-sm font-semibold py-2 px-4 rounded shadow transition">
+                <select id="uploadModeSelect" title="Pilih cara penyimpanan saat upload CSV baru" class="rounded border-gray-300 text-xs font-semibold p-2 border bg-gray-50 text-gray-700">
+                    <option value="upsert">Mode: Gabung &amp; Update (Upsert)</option>
+                    <option value="replace">Mode: Timpa Semua Data</option>
+                </select>
+                <label for="csvFileInput" class="cursor-pointer bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold py-2 px-3.5 rounded shadow transition">
                     Upload Raw CSV
                 </label>
                 <input type="file" id="csvFileInput" accept=".csv" class="hidden">
+
+                <button id="copyReportBtn" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-2 px-3 rounded shadow transition">
+                    Salin Report
+                </button>
+                <button id="exportDbBtn" class="hidden bg-slate-700 hover:bg-slate-800 text-white text-xs font-semibold py-2 px-3 rounded shadow transition">
+                    Backup DB
+                </button>
+                <button id="clearDbBtn" class="hidden bg-red-50 hover:bg-red-100 text-red-700 border border-red-300 text-xs font-semibold py-2 px-3 rounded transition">
+                    Hapus DB
+                </button>
             </div>
         </div>
     </header>
@@ -100,7 +116,7 @@
                 </button>
             </div>
             <div class="ml-auto text-right text-xs text-gray-500">
-                <div>Total Baris Raw Terfilter: <span id="filteredRawCount" class="font-bold text-gray-800">0</span></div>
+                <div>Total Baris Terfilter: <span id="filteredRawCount" class="font-bold text-gray-800">0</span></div>
                 <div>Tiket Escalated Terfilter: <span id="filteredEscCount" class="font-bold text-blue-800">0</span></div>
             </div>
         </div>
@@ -126,9 +142,9 @@
 
     <!-- Initial State -->
     <div id="emptyState" class="max-w-7xl mx-auto mt-8 p-12 bg-white border border-dashed border-gray-300 rounded-lg text-center">
-        <h2 class="text-lg font-bold text-gray-700 mb-2">Belum Ada Data yang Diupload</h2>
+        <h2 class="text-lg font-bold text-gray-700 mb-2">Database Masih Kosong</h2>
         <p class="text-sm text-gray-500 max-w-lg mx-auto mb-4">
-            Silakan upload file raw report CSV dari Omnix. Dashboard akan otomatis menyajikan <strong>Executive Summary Interaksi SSCASN (Daily &amp; MTD)</strong>, <strong>Daily Report Ticketing CASN (Escalated &amp; SLA)</strong>, serta <strong>Monitoring Antrian &amp; AHT</strong>.
+            Silakan upload file raw report CSV dari Omnix. Data akan <strong>otomatis disimpan ke database</strong> sehingga tidak hilang saat browser ditutup atau di-reload.
         </p>
         <button id="viewSkenarioOnlyBtn" class="text-xs font-semibold text-blue-700 hover:underline">
             Lihat Skenario Penanganan CASN 2026 &amp; Benchmark Historis SLA terlebih dahulu →
@@ -143,7 +159,6 @@
         <!-- ========================================================= -->
         <div id="tabExecutive" class="tab-content space-y-4">
 
-            <!-- Control Bar Khusus Executive Report -->
             <div class="bg-white p-3 rounded shadow-sm border flex flex-wrap items-center justify-between gap-3">
                 <div class="flex flex-wrap items-center gap-3 text-xs">
                     <div>
@@ -179,14 +194,13 @@
                 </div>
             </div>
 
-            <!-- Executive Slide Canvas (Dark Mode Default seperti Referensi Gambar) -->
+            <!-- Executive Slide Canvas -->
             <div id="execSlideWrapper" class="exec-dark rounded-lg p-5 shadow-lg border border-slate-800 transition-colors">
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
                     <!-- KOLOM KIRI (7/12): Matriks Interaksi + TOP 10 Daily + TOP 10 MTD -->
                     <div class="lg:col-span-7 space-y-5">
 
-                        <!-- 1. Header Date / Time Interval / Prosentase & Matrix Interaksi SSCASN -->
                         <div class="overflow-x-auto">
                             <table class="w-full border-collapse text-xs">
                                 <thead>
@@ -213,13 +227,10 @@
                                         <th class="exec-th-blue border py-2.5 px-3 text-center font-bold">Permintaan</th>
                                     </tr>
                                 </thead>
-                                <tbody id="execMatrixBody" class="font-semibold text-sm">
-                                    <!-- Diisi via JS -->
-                                </tbody>
+                                <tbody id="execMatrixBody" class="font-semibold text-sm"></tbody>
                             </table>
                         </div>
 
-                        <!-- 2. TOP 10 Interaksi (Daily) -->
                         <div class="overflow-x-auto">
                             <table class="w-full border-collapse text-xs">
                                 <thead>
@@ -241,7 +252,6 @@
                             </table>
                         </div>
 
-                        <!-- 3. TOP 10 Interaksi (Month to Date) -->
                         <div class="overflow-x-auto">
                             <table class="w-full border-collapse text-xs">
                                 <thead>
@@ -264,7 +274,7 @@
                         </div>
                     </div>
 
-                    <!-- KOLOM KANAN (5/12): 2 Stacked Bar Charts Pergerakan TOP 5 -->
+                    <!-- KOLOM KANAN (5/12): 2 Stacked Bar Charts -->
                     <div class="lg:col-span-5 space-y-6">
                         <div class="exec-card border rounded-lg p-4">
                             <div class="flex justify-between items-center mb-3">
@@ -295,7 +305,6 @@
         <!-- ========================================================= -->
         <div id="tabTicketing" class="tab-content hidden space-y-6">
 
-            <!-- KPI Cards Ticketing -->
             <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
                 <div class="bg-white p-4 rounded shadow-sm border card-primary">
                     <div class="text-xs font-semibold text-gray-500 uppercase mb-1">Tiket Masuk (Escalated)</div>
@@ -329,7 +338,6 @@
                 </div>
             </section>
 
-            <!-- Charts Ticketing -->
             <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="bg-white p-4 rounded shadow-sm border">
                     <h2 class="text-sm font-bold text-blue-900 mb-4 border-b pb-2">Daily Report Ticketing CASN (Volume Masuk Harian)</h2>
@@ -341,7 +349,6 @@
                 </div>
             </section>
 
-            <!-- Tables Ticketing: Outstanding Alert & MTTR Priority -->
             <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="bg-white p-4 rounded shadow-sm border">
                     <div class="flex justify-between items-center border-b pb-2 mb-4">
@@ -385,7 +392,6 @@
                 </div>
             </section>
 
-            <!-- Pengawasan Real-Time Resolusi Tiket -->
             <section class="bg-white p-4 rounded shadow-sm border">
                 <div class="flex justify-between items-center border-b pb-2 mb-3 flex-wrap gap-2">
                     <div>
@@ -432,7 +438,6 @@
                 </div>
             </div>
 
-            <!-- KPI Cards Interaksi -->
             <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div class="bg-white p-4 rounded shadow-sm border card-primary">
                     <div class="text-xs font-semibold text-gray-500 uppercase mb-1">Total Antrian (WA &amp; Email)</div>
@@ -461,7 +466,6 @@
                 </div>
             </section>
 
-            <!-- Charts Interaksi -->
             <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="bg-white p-4 rounded shadow-sm border">
                     <h2 class="text-sm font-bold text-blue-900 mb-4 border-b pb-2">Volume Interaksi Harian (WA vs Email)</h2>
@@ -473,7 +477,6 @@
                 </div>
             </section>
 
-            <!-- Hourly Peak Traffic & Longest Queue Table -->
             <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="bg-white p-4 rounded shadow-sm border">
                     <div class="border-b pb-2 mb-4">
@@ -588,7 +591,138 @@
 
     <script>
         // =========================================================================
-        // 1. KONFIGURASI SLA & REFERENSI HISTORIS
+        // 1. KONFIGURASI DATABASE (INDEXEDDB + AUTO CLOUDFLARE D1 SYNC)
+        // =========================================================================
+        const IDB_NAME = 'casn_ticketing_db_v1';
+        const IDB_VERSION = 1;
+        const STORE_TICKETS = 'tickets';
+        const STORE_META = 'meta';
+
+        function openIDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(IDB_NAME, IDB_VERSION);
+                req.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_TICKETS)) {
+                        db.createObjectStore(STORE_TICKETS, { keyPath: 'id' });
+                    }
+                    if (!db.objectStoreNames.contains(STORE_META)) {
+                        db.createObjectStore(STORE_META, { keyPath: 'key' });
+                    }
+                };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        async function saveToIDB(records, mode, fileName) {
+            const db = await openIDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction([STORE_TICKETS, STORE_META], 'readwrite');
+                const tStore = tx.objectStore(STORE_TICKETS);
+                const mStore = tx.objectStore(STORE_META);
+
+                if (mode === 'replace') {
+                    tStore.clear();
+                }
+                records.forEach(rec => tStore.put(rec));
+
+                const info = {
+                    key: 'info',
+                    lastUpdated: new Date().toLocaleString('id-ID'),
+                    lastFileName: fileName || 'CSV Upload'
+                };
+                mStore.put(info);
+
+                tx.oncomplete = () => resolve(info);
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+
+        async function loadFromIDB() {
+            const db = await openIDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction([STORE_TICKETS, STORE_META], 'readonly');
+                const tReq = tx.objectStore(STORE_TICKETS).getAll();
+                const mReq = tx.objectStore(STORE_META).get('info');
+                tx.oncomplete = () => resolve({ records: tReq.result || [], meta: mReq.result || null });
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+
+        async function clearIDB() {
+            const db = await openIDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction([STORE_TICKETS, STORE_META], 'readwrite');
+                tx.objectStore(STORE_TICKETS).clear();
+                tx.objectStore(STORE_META).clear();
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+
+        // Optional Sync ke Cloudflare D1 API (/api/tickets) jika sudah di-bind di Cloudflare Pages
+        async function syncPushToCloudD1(records, mode) {
+            try {
+                const chunkSize = 500;
+                for (let i = 0; i < records.length; i += chunkSize) {
+                    const batch = records.slice(i, i + chunkSize);
+                    const batchMode = (i === 0 && mode === 'replace') ? 'replace' : 'upsert';
+                    const res = await fetch('/api/tickets', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ mode: batchMode, records: batch })
+                    });
+                    if (!res.ok) return false;
+                }
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function syncPullFromCloudD1() {
+            try {
+                const res = await fetch('/api/tickets', { headers: { 'Accept': 'application/json' } });
+                if (!res.ok) return null;
+                const data = await res.json();
+                if (data && data.ok && Array.isArray(data.records)) {
+                    return data.records;
+                }
+                return null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function clearCloudD1() {
+            try {
+                await fetch('/api/tickets', { method: 'DELETE' });
+            } catch (e) {}
+        }
+
+        function updateDbStatusUI(statusType, count, meta) {
+            const dot = document.getElementById('dbStatusDot');
+            const text = document.getElementById('dbStatusText');
+            const metaEl = document.getElementById('dbMetaText');
+
+            if (statusType === 'EMPTY') {
+                dot.className = 'w-2 h-2 rounded-full bg-amber-500';
+                text.textContent = 'Database Kosong (Siap Upload)';
+                metaEl.textContent = '';
+            } else if (statusType === 'CLOUD') {
+                dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+                text.textContent = `Cloudflare D1 + Lokal (${count.toLocaleString('id-ID')} Tiket)`;
+                metaEl.textContent = meta ? `• Update: ${meta.lastUpdated} (${meta.lastFileName})` : '';
+            } else {
+                dot.className = 'w-2 h-2 rounded-full bg-blue-600';
+                text.textContent = `Database Lokal Tersimpan (${count.toLocaleString('id-ID')} Tiket)`;
+                metaEl.textContent = meta ? `• Update: ${meta.lastUpdated} (${meta.lastFileName})` : '';
+            }
+        }
+
+        // =========================================================================
+        // 2. KONFIGURASI SLA & REFERENSI HISTORIS
         // =========================================================================
         const SLA_TARGET = { 'CRITICAL': 8, 'HIGH': 12, 'MEDIUM': 24, 'LOW': 48 };
         const FINISHED_STATUSES = new Set(['close', 'resolved', 'return']);
@@ -609,6 +743,7 @@
         let maxDatasetMs = 0;
         let charts = {};
         let isExecDark = true;
+        let activeDbMode = 'LOCAL';
         let latestReportSummaryText = '';
 
         // Populate Hour Selectors (0:00 - 23:00)
@@ -625,17 +760,96 @@
         })();
 
         // =========================================================================
-        // 2. EVENT LISTENERS
+        // 3. STARTUP AUTO-LOAD DARI DATABASE (INDEXEDDB / CLOUDFLARE D1)
+        // =========================================================================
+        window.addEventListener('DOMContentLoaded', async () => {
+            renderHistoricalBenchmark();
+            try {
+                const { records, meta } = await loadFromIDB();
+                if (records && records.length > 0) {
+                    activeDbMode = 'LOCAL';
+                    hydrateDashboardFromRecords(records, meta, 'LOCAL');
+                } else {
+                    updateDbStatusUI('EMPTY', 0, null);
+                }
+
+                // Cek apakah backend Cloudflare D1 aktif
+                const cloudRecords = await syncPullFromCloudD1();
+                if (cloudRecords !== null) {
+                    activeDbMode = 'CLOUD';
+                    if (cloudRecords.length > 0) {
+                        const cloudMeta = { lastUpdated: new Date().toLocaleString('id-ID'), lastFileName: 'Cloudflare D1 Sync' };
+                        await saveToIDB(cloudRecords, 'replace', 'Cloudflare D1 Sync');
+                        hydrateDashboardFromRecords(cloudRecords, cloudMeta, 'CLOUD');
+                    } else if (records && records.length > 0) {
+                        // Push data lokal pertama kali ke D1 jika D1 masih kosong
+                        await syncPushToCloudD1(records, 'upsert');
+                        updateDbStatusUI('CLOUD', records.length, meta);
+                    }
+                }
+            } catch (err) {
+                console.error('Database init error:', err);
+                updateDbStatusUI('EMPTY', 0, null);
+            }
+        });
+
+        // =========================================================================
+        // 4. EVENT LISTENERS
         // =========================================================================
         document.getElementById('csvFileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
+            const mode = document.getElementById('uploadModeSelect').value;
+
             Papa.parse(file, {
                 header: true,
                 skipEmptyLines: true,
-                complete: function(results) { ingestCsvData(results.data); },
-                error: function(err) { alert("Gagal membaca CSV: " + err.message); }
+                complete: async function(results) {
+                    const parsedRecords = normalizeRawRows(results.data);
+                    if (parsedRecords.length === 0) {
+                        alert('File CSV kosong atau format kolom tidak sesuai.');
+                        return;
+                    }
+                    const meta = await saveToIDB(parsedRecords, mode, file.name);
+                    const { records: mergedRecords } = await loadFromIDB();
+
+                    const cloudOk = await syncPushToCloudD1(parsedRecords, mode);
+                    if (cloudOk) activeDbMode = 'CLOUD';
+
+                    hydrateDashboardFromRecords(mergedRecords, meta, activeDbMode);
+                    e.target.value = '';
+                },
+                error: function(err) {
+                    alert("Gagal membaca CSV: " + err.message);
+                }
             });
+        });
+
+        document.getElementById('exportDbBtn').addEventListener('click', () => {
+            if (!allRowsNormalized.length) return;
+            const blob = new Blob([JSON.stringify(allRowsNormalized, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `casn_database_backup_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        document.getElementById('clearDbBtn').addEventListener('click', async () => {
+            const ok = confirm('Hapus seluruh data tersimpan di database? Tindakan ini tidak dapat dibatalkan.');
+            if (!ok) return;
+            await clearIDB();
+            if (activeDbMode === 'CLOUD') await clearCloudD1();
+            allRowsNormalized = [];
+            document.getElementById('filterSection').classList.add('hidden');
+            document.getElementById('tabNav').classList.add('hidden');
+            document.getElementById('dashboardContainer').classList.add('hidden');
+            document.getElementById('copyReportBtn').classList.add('hidden');
+            document.getElementById('exportDbBtn').classList.add('hidden');
+            document.getElementById('clearDbBtn').classList.add('hidden');
+            document.getElementById('emptyState').classList.remove('hidden');
+            updateDbStatusUI('EMPTY', 0, null);
         });
 
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -656,15 +870,11 @@
 
         document.getElementById('filterDate').addEventListener('change', () => {
             const val = document.getElementById('filterDate').value;
-            if (val !== 'ALL') {
-                document.getElementById('execDateSelect').value = val;
-            }
+            if (val !== 'ALL') document.getElementById('execDateSelect').value = val;
             applyAllFilters();
         });
 
-        document.getElementById('execDateSelect').addEventListener('change', () => {
-            renderExecutiveReport();
-        });
+        document.getElementById('execDateSelect').addEventListener('change', renderExecutiveReport);
         document.getElementById('execStartHour').addEventListener('change', renderExecutiveReport);
         document.getElementById('execEndHour').addEventListener('change', renderExecutiveReport);
         document.getElementById('execScopeMode').addEventListener('change', renderExecutiveReport);
@@ -704,15 +914,13 @@
             navigator.clipboard.writeText(latestReportSummaryText).then(() => {
                 const btn = document.getElementById('copyReportBtn');
                 const orig = btn.textContent;
-                btn.textContent = 'Tersalin ke Clipboard!';
+                btn.textContent = 'Tersalin!';
                 setTimeout(() => { btn.textContent = orig; }, 2000);
             });
         });
 
-        renderHistoricalBenchmark();
-
         // =========================================================================
-        // 3. HELPER PARSING TANGGAL, DURASI & KOLOM CSV
+        // 5. HELPER PARSING TANGGAL, DURASI & KOLOM CSV
         // =========================================================================
         function getCol(row, keys) {
             for (let k of keys) {
@@ -798,25 +1006,10 @@
         }
 
         // =========================================================================
-        // 4. INGESTION & NORMALISASI DATA CSV
+        // 6. NORMALISASI & HYDRATION DARI DATABASE
         // =========================================================================
-        function ingestCsvData(rawRows) {
-            maxDatasetMs = 0;
-            rawRows.forEach(r => {
-                [
-                    parseSafeDate(getCol(r, ['date_open'])),
-                    parseSafeDate(getCol(r, ['date_resolved'])),
-                    parseSafeDate(getCol(r, ['date_close'])),
-                    parseSafeDate(getCol(r, ['date_origin_interaction'])),
-                    parseSafeDate(getCol(r, ['date_last_update']))
-                ].forEach(ms => { if (ms && ms > maxDatasetMs) maxDatasetMs = ms; });
-            });
-
-            const dateSet = new Set();
-            const subCatSet = new Set();
-            let casnKeywordHits = 0;
-
-            allRowsNormalized = rawRows.map(r => {
+        function normalizeRawRows(rawRows) {
+            return rawRows.map(r => {
                 const id = getCol(r, ['ticket_id']);
                 const isEscalated = getCol(r, ['is_escalated']).toLowerCase() === 'escalated';
                 const channelRaw = getCol(r, ['channel_name']);
@@ -827,12 +1020,9 @@
                 const subCat = getCol(r, ['subCategory', 'subcategory', 'sub_category', 'subcategory_name']);
                 const detailCat = getCol(r, ['detailSubCategory', 'detailcategory', 'detail_category', 'detailSubCategory2']);
                 const subject = getCol(r, ['subject']);
-
                 const hasCasnKeyword = /casn/i.test(`${subCat} ${detailCat} ${subject}`);
-                if (hasCasnKeyword) casnKeywordHits++;
 
                 const priority = getCol(r, ['priority_name']).toUpperCase();
-                const target = SLA_TARGET[priority] || null;
                 const statusName = getCol(r, ['ticket_status_name']);
                 const statusLower = statusName.toLowerCase();
                 const isFinished = FINISHED_STATUSES.has(statusLower);
@@ -840,24 +1030,11 @@
                 const openMs = parseSafeDate(getCol(r, ['date_open']));
                 const resMs = parseSafeDate(getCol(r, ['date_resolved'])) || parseSafeDate(getCol(r, ['date_close']));
                 const originMs = parseSafeDate(getCol(r, ['date_origin_interaction'])) || openMs || parseSafeDate(getCol(r, ['date_created_at']));
+                const lastUpdateMs = parseSafeDate(getCol(r, ['date_last_update']));
 
                 const ticketDateYMD = toLocalYMD(openMs || originMs);
                 const interactionDateYMD = toLocalYMD(originMs);
                 const primaryDateYMD = isEscalated ? ticketDateYMD : interactionDateYMD;
-
-                if (interactionDateYMD) dateSet.add(interactionDateYMD);
-                if (ticketDateYMD) dateSet.add(ticketDateYMD);
-                if (subCat && subCat !== '-') subCatSet.add(subCat);
-
-                let hours = null, pct = null, slaResult = 'unknown';
-                if (openMs && target) {
-                    hours = (isFinished && resMs) ? (resMs - openMs) / 3600000 : (maxDatasetMs - openMs) / 3600000;
-                    if (hours < 0) hours = 0;
-                    pct = (hours / target) * 100;
-                    if (pct >= 100) slaResult = 'breach';
-                    else if (pct >= 90) slaResult = 'warning';
-                    else slaResult = 'aman';
-                }
 
                 return {
                     id,
@@ -876,17 +1053,48 @@
                     resRaw: getCol(r, ['date_resolved']),
                     originMs,
                     originRaw: getCol(r, ['date_origin_interaction']),
+                    lastUpdateMs,
                     ticketDateYMD,
                     interactionDateYMD,
                     primaryDateYMD,
                     originHour: originMs ? new Date(originMs).getHours() : null,
-                    hours,
-                    pct,
-                    slaResult,
                     waitSec: parseHmsToSec(getCol(r, ['waitingTime'])),
                     ahtSec: parseHmsToSec(getCol(r, ['handlingTime']))
                 };
             }).filter(r => r.id && r.id !== '-');
+        }
+
+        function hydrateDashboardFromRecords(records, meta, dbType) {
+            maxDatasetMs = 0;
+            records.forEach(r => {
+                [r.openMs, r.resMs, r.originMs, r.lastUpdateMs].forEach(ms => {
+                    if (ms && ms > maxDatasetMs) maxDatasetMs = ms;
+                });
+            });
+
+            const dateSet = new Set();
+            const subCatSet = new Set();
+            let casnKeywordHits = 0;
+
+            allRowsNormalized = records.map(r => {
+                if (r.interactionDateYMD) dateSet.add(r.interactionDateYMD);
+                if (r.ticketDateYMD) dateSet.add(r.ticketDateYMD);
+                if (r.subCategory && r.subCategory !== '-') subCatSet.add(r.subCategory);
+                if (r.hasCasnKeyword) casnKeywordHits++;
+
+                const target = SLA_TARGET[r.priority] || null;
+                let hours = null, pct = null, slaResult = 'unknown';
+                if (r.openMs && target) {
+                    hours = (r.isFinished && r.resMs) ? (r.resMs - r.openMs) / 3600000 : (maxDatasetMs - r.openMs) / 3600000;
+                    if (hours < 0) hours = 0;
+                    pct = (hours / target) * 100;
+                    if (pct >= 100) slaResult = 'breach';
+                    else if (pct >= 90) slaResult = 'warning';
+                    else slaResult = 'aman';
+                }
+
+                return { ...r, hours, pct, slaResult };
+            });
 
             sortedUniqueDates = Array.from(dateSet).sort();
 
@@ -903,7 +1111,6 @@
                 execDateSelect.value = sortedUniqueDates[sortedUniqueDates.length - 1];
             }
 
-            // Otomatis pilih mode CASN_KEYWORD jika dataset sudah mengandung tag CASN/SSCASN secara masif, jika tidak default ke E-Meterai
             document.getElementById('execScopeMode').value = casnKeywordHits >= 10 ? 'CASN_KEYWORD' : 'EMETERAI';
 
             const subSelect = document.getElementById('filterSubcategory');
@@ -911,12 +1118,15 @@
             Array.from(subCatSet).sort().forEach(sc => subSelect.appendChild(new Option(sc, sc)));
 
             updateDetailCategoryDropdown();
+            updateDbStatusUI(dbType, allRowsNormalized.length, meta);
 
             document.getElementById('emptyState').classList.add('hidden');
             document.getElementById('filterSection').classList.remove('hidden');
             document.getElementById('tabNav').classList.remove('hidden');
             document.getElementById('dashboardContainer').classList.remove('hidden');
             document.getElementById('copyReportBtn').classList.remove('hidden');
+            document.getElementById('exportDbBtn').classList.remove('hidden');
+            document.getElementById('clearDbBtn').classList.remove('hidden');
 
             applyAllFilters();
         }
@@ -939,7 +1149,7 @@
         }
 
         // =========================================================================
-        // 5. EXECUTIVE SUMMARY INTERAKSI SSCASN (SESUAI SCREENSHOT REFERENSI)
+        // 7. EXECUTIVE SUMMARY INTERAKSI SSCASN
         // =========================================================================
         function renderExecutiveReport() {
             const targetDate = document.getElementById('execDateSelect').value;
@@ -951,15 +1161,13 @@
             const globalDet = document.getElementById('filterDetailCategory').value;
 
             if (!targetDate) return null;
-            const targetMonthPrefix = targetDate.slice(0, 7); // YYYY-MM
+            const targetMonthPrefix = targetDate.slice(0, 7);
 
-            // Filter channel scope
             const channelFiltered = allRowsNormalized.filter(r => {
                 if (channelScope === 'WA_EMAIL') return r.channel === 'Whatsapp' || r.channel === 'Email';
                 return true;
             });
 
-            // Predikat SSCASN / CASN Scope
             const isSscasnRow = (r) => {
                 if (scopeMode === 'CASN_KEYWORD') return r.hasCasnKeyword;
                 if (scopeMode === 'FOLLOW_GLOBAL') {
@@ -967,7 +1175,6 @@
                     if (globalDet !== 'ALL' && r.detailCategory !== globalDet) return false;
                     return true;
                 }
-                // Default: EMETERAI
                 return r.subCategory.toLowerCase() === 'e-meterai' || r.hasCasnKeyword;
             };
 
@@ -976,13 +1183,10 @@
                 return r.originHour >= startH && r.originHour <= endH;
             };
 
-            // 4 Subset sesuai Tabel Matriks di Gambar:
-            // 1. Daily Interaction SSCASN (Tanggal terpilih + Time Interval + Scope SSCASN)
             const dailySscasn = channelFiltered.filter(r =>
                 r.interactionDateYMD === targetDate && inTimeWindow(r) && isSscasnRow(r)
             );
 
-            // 2. Month to Date (Bulan yang sama, tgl <= targetDate, pada targetDate ikuti <= endH, + Scope SSCASN)
             const mtdSscasn = channelFiltered.filter(r => {
                 if (!r.interactionDateYMD || !r.interactionDateYMD.startsWith(targetMonthPrefix)) return false;
                 if (r.interactionDateYMD > targetDate) return false;
@@ -990,12 +1194,10 @@
                 return isSscasnRow(r);
             });
 
-            // 3. Daily All Interaction (Tanggal terpilih + Time Interval, Semua Kategori)
             const dailyAll = channelFiltered.filter(r =>
                 r.interactionDateYMD === targetDate && inTimeWindow(r)
             );
 
-            // 4. MTD All Interaction (Bulan yang sama, tgl <= targetDate, Semua Kategori)
             const mtdAll = channelFiltered.filter(r => {
                 if (!r.interactionDateYMD || !r.interactionDateYMD.startsWith(targetMonthPrefix)) return false;
                 if (r.interactionDateYMD > targetDate) return false;
@@ -1018,7 +1220,6 @@
             const sDailyAll = calcStats(dailyAll);
             const sMtdAll = calcStats(mtdAll);
 
-            // Update Header Date, Time Interval, & Prosentase Interaksi SSCASN
             const humanDate = formatHumanDate(targetDate);
             document.getElementById('execDisplayDate').textContent = humanDate;
             document.getElementById('execChartDateLabel').textContent = humanDate;
@@ -1033,7 +1234,6 @@
             document.getElementById('execPctKeluhan').textContent = `${pctKel}%`;
             document.getElementById('execPctPermintaan').textContent = `${pctPerm}%`;
 
-            // Render 4 Baris Matriks
             const matrixRows = [
                 { label: 'Daily Interaction SSCASN', st: sDailySscasn },
                 { label: 'Month to Date', st: sMtdSscasn },
@@ -1053,7 +1253,6 @@
                 </tr>
             `).join('');
 
-            // Helper Top 10 Table
             function buildTopList(arr) {
                 const counts = {};
                 arr.forEach(r => {
@@ -1105,11 +1304,9 @@
             document.getElementById('execTopMtdTotal').textContent = sMtdSscasn.total;
             document.getElementById('execTopMtdPct').textContent = `${top10MtdCumPct}%`;
 
-            // Chart Colors sesuai Tema Dark/Light
             const textColor = isExecDark ? '#D1D5DB' : '#374151';
             const gridColor = isExecDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
 
-            // Chart 1 (Top Right): Pergerakan TOP 5 Interaksi SSCASN per Jam (0:00 - 23:00)
             const top5DailyNames = dailySorted.slice(0, 5).map(x => x[0]);
             const hourLabels = Array.from({ length: 24 }, (_, h) => `${h}:00`);
             const hourlyDatasets = top5DailyNames.map((catName, idx) => {
@@ -1120,12 +1317,7 @@
                         dataPerHour[r.originHour]++;
                     }
                 });
-                return {
-                    label: catName,
-                    data: dataPerHour,
-                    backgroundColor: STACK_COLORS[idx % STACK_COLORS.length],
-                    barPercentage: 0.55
-                };
+                return { label: catName, data: dataPerHour, backgroundColor: STACK_COLORS[idx % STACK_COLORS.length], barPercentage: 0.55 };
             });
 
             if (charts.execHourlyTop5) charts.execHourlyTop5.destroy();
@@ -1138,31 +1330,18 @@
                         x: { stacked: true, ticks: { color: textColor, font: { size: 10 } }, grid: { display: false } },
                         y: { stacked: true, beginAtZero: true, ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }
                     },
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { color: textColor, boxWidth: 10, font: { size: 10 } }
-                        }
-                    }
+                    plugins: { legend: { position: 'bottom', labels: { color: textColor, boxWidth: 10, font: { size: 10 } } } }
                 }
             });
 
-            // Chart 2 (Bottom Right): Pergerakan TOP 5 Interaksi Harian periode SSCASN (MTD Dates)
             const top5MtdNames = mtdSorted.slice(0, 5).map(x => x[0]);
             const periodDates = sortedUniqueDates.filter(d => d.startsWith(targetMonthPrefix) && d <= targetDate);
             const dailyDatasets = top5MtdNames.map((catName, idx) => {
-                const dataPerDay = periodDates.map(d => {
-                    return mtdSscasn.filter(r => {
-                        const label = r.detailCategory && r.detailCategory !== '-' ? r.detailCategory : r.subCategory;
-                        return r.interactionDateYMD === d && label === catName;
-                    }).length;
-                });
-                return {
-                    label: catName,
-                    data: dataPerDay,
-                    backgroundColor: STACK_COLORS[idx % STACK_COLORS.length],
-                    barPercentage: 0.55
-                };
+                const dataPerDay = periodDates.map(d => mtdSscasn.filter(r => {
+                    const label = r.detailCategory && r.detailCategory !== '-' ? r.detailCategory : r.subCategory;
+                    return r.interactionDateYMD === d && label === catName;
+                }).length);
+                return { label: catName, data: dataPerDay, backgroundColor: STACK_COLORS[idx % STACK_COLORS.length], barPercentage: 0.55 };
             });
 
             if (charts.execDailyTop5) charts.execDailyTop5.destroy();
@@ -1175,32 +1354,18 @@
                         x: { stacked: true, ticks: { color: textColor, font: { size: 10 } }, grid: { display: false } },
                         y: { stacked: true, beginAtZero: true, ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } }
                     },
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { color: textColor, boxWidth: 10, font: { size: 10 } }
-                        }
-                    }
+                    plugins: { legend: { position: 'bottom', labels: { color: textColor, boxWidth: 10, font: { size: 10 } } } }
                 }
             });
 
             return {
-                targetDate,
-                startH,
-                endH,
-                sDailySscasn,
-                sMtdSscasn,
-                sDailyAll,
-                sMtdAll,
-                pctInfo,
-                pctKel,
-                pctPerm,
+                targetDate, startH, endH, sDailySscasn, sMtdSscasn, sDailyAll, sMtdAll, pctInfo, pctKel, pctPerm,
                 top3Daily: top10Daily.slice(0, 3).map(x => `${x[0]} (${x[1]})`).join(', ') || '-'
             };
         }
 
         // =========================================================================
-        // 6. APPLY GLOBAL FILTERS KE SEMUA TAB
+        // 8. APPLY GLOBAL FILTERS KE SEMUA TAB
         // =========================================================================
         function applyAllFilters() {
             const fDate = document.getElementById('filterDate').value;
@@ -1234,11 +1399,11 @@
             const execStats = renderExecutiveReport();
             const tickStats = renderTicketingView(ticketsEscalated);
             const intStats = renderInteraksiView(interactionsWaEmail);
-            buildCopyableSummary(fDate, fSub, fDet, execStats, tickStats, intStats);
+            buildCopyableSummary(execStats, tickStats, intStats);
         }
 
         // =========================================================================
-        // 7. RENDER TAB 2: TICKETING ESCALATED & SLA
+        // 9. RENDER TAB 2: TICKETING ESCALATED & SLA
         // =========================================================================
         function renderTicketingView(tickets) {
             const finished = tickets.filter(t => t.isFinished);
@@ -1299,12 +1464,7 @@
                 type: 'bar',
                 data: {
                     labels: sortedCats.map(c => c[0]),
-                    datasets: [{
-                        label: 'Jumlah Tiket',
-                        data: sortedCats.map(c => c[1]),
-                        backgroundColor: '#D97706',
-                        borderRadius: 4
-                    }]
+                    datasets: [{ label: 'Jumlah Tiket', data: sortedCats.map(c => c[1]), backgroundColor: '#D97706', borderRadius: 4 }]
                 },
                 options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
@@ -1369,20 +1529,13 @@
             `).join('') : '<tr><td colspan="7" class="py-4 text-center text-gray-500 text-xs">Tidak ada tiket berstatus Resolved yang menunggu konfirmasi</td></tr>';
 
             return {
-                total: tickets.length,
-                finished: finished.length,
-                resolvedOnly: resolvedOnly.length,
-                closedOnly: closedOnly.length,
-                avgMTTR: formatHours(avgMTTR),
-                slaAchPct,
-                outAman,
-                outWarning,
-                outBreach
+                total: tickets.length, finished: finished.length, resolvedOnly: resolvedOnly.length, closedOnly: closedOnly.length,
+                avgMTTR: formatHours(avgMTTR), slaAchPct, outAman, outWarning, outBreach
             };
         }
 
         // =========================================================================
-        // 8. RENDER TAB 3: MONITORING ANTRIAN & AHT (WA & EMAIL)
+        // 10. RENDER TAB 3: MONITORING ANTRIAN & AHT (WA & EMAIL)
         // =========================================================================
         function renderInteraksiView(interactions) {
             const waItems = interactions.filter(i => i.channel === 'Whatsapp');
@@ -1491,17 +1644,14 @@
             `).join('') : '<tr><td colspan="5" class="py-4 text-center text-gray-500 text-xs">Tidak ada data antrian interaksi</td></tr>';
 
             return {
-                total: interactions.length,
-                wa: waItems.length,
-                email: emItems.length,
+                total: interactions.length, wa: waItems.length, email: emItems.length,
                 maxWait: maxWaitItem ? formatSecToDuration(maxWaitItem.waitSec) : '00:00',
-                avgWait: formatSecToDuration(avgWaitSec),
-                avgAht: formatSecToDuration(avgAhtSec)
+                avgWait: formatSecToDuration(avgWaitSec), avgAht: formatSecToDuration(avgAhtSec)
             };
         }
 
         // =========================================================================
-        // 9. RENDER TAB 4: BENCHMARK HISTORIS & SUMMARY GENERATOR
+        // 11. RENDER TAB 4: BENCHMARK HISTORIS & SUMMARY GENERATOR
         // =========================================================================
         function renderHistoricalBenchmark() {
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
@@ -1512,18 +1662,10 @@
                 data: {
                     labels: months,
                     datasets: HISTORICAL_BENCHMARK.slice(0, 3).map((row, idx) => ({
-                        label: row.label,
-                        data: row.values,
-                        borderColor: colors[idx],
-                        backgroundColor: colors[idx],
-                        tension: 0.25,
-                        spanGaps: false
+                        label: row.label, data: row.values, borderColor: colors[idx], backgroundColor: colors[idx], tension: 0.25, spanGaps: false
                     }))
                 },
-                options: {
-                    maintainAspectRatio: false,
-                    scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } } }
-                }
+                options: { maintainAspectRatio: false, scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } } } }
             });
 
             document.getElementById('benchmarkTableBody').innerHTML = HISTORICAL_BENCHMARK.map(row => `
@@ -1539,7 +1681,7 @@
             `).join('');
         }
 
-        function buildCopyableSummary(fDate, fSub, fDet, execStats, tickStats, intStats) {
+        function buildCopyableSummary(execStats, tickStats, intStats) {
             const lines = [`*DAILY REPORT PENANGANAN CASN 2026*`];
             if (execStats) {
                 lines.push(

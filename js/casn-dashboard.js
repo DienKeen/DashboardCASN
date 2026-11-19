@@ -54,7 +54,7 @@
         copyDashBtn.id = 'copyDashboardBtn';
         copyDashBtn.type = 'button';
         copyDashBtn.className = 'btn btn-success btn-sm';
-        copyDashBtn.innerHTML = '<i class="fas fa-copy me-1"></i> Copy Dashboard & Summary';
+        copyDashBtn.innerHTML = '<i class="fas fa-copy me-1"></i> Copy Report & Summary';
         copyDashBtn.addEventListener('click', handleCopyDashboardAndSummary);
 
         const clearBtn = document.createElement('button');
@@ -372,23 +372,29 @@
         lastCapturedBlob = null;
         previewWrap.innerHTML = '<div class="text-muted small py-5"><i class="fas fa-spinner fa-spin me-2"></i>Mengambil gambar dashboard...</div>';
 
+        if(window.bootstrap && window.bootstrap.Modal){
+            const modal = window.bootstrap.Modal.getOrCreateInstance(document.getElementById('copySummaryModal'));
+            modal.show();
+        }
+
         let textCopied = false;
         try {
             await navigator.clipboard.writeText(summaryText);
             textCopied = true;
         } catch (e) {
-            textCopied = false;
+            try {
+                textarea.focus();
+                textarea.select();
+                textCopied = document.execCommand('copy');
+            } catch (_) {
+                textCopied = false;
+            }
         }
 
         toast.className = 'alert alert-success py-2 px-3 small mb-3';
         toast.textContent = textCopied
             ? 'Teks summary otomatis tersalin ke Clipboard! Tinggal Paste (Ctrl+V) di WhatsApp/Email.'
             : 'Summary siap disalin. Klik "Copy Teks" atau "Copy Gambar Dashboard" di bawah.';
-
-        if(window.bootstrap && window.bootstrap.Modal){
-            const modal = window.bootstrap.Modal.getOrCreateInstance(document.getElementById('copySummaryModal'));
-            modal.show();
-        }
 
         try {
             const h2c = await ensureHtml2Canvas();

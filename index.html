@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>CASN 2026 Command Center &amp; SLA Ticket Evaluator — Helpdesk Peruri Digital</title>
+<title>CASN 2026 Command Center — Daily Interaction &amp; SLA Ticket Evaluator</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
@@ -11,34 +11,33 @@
   --peruri-blue: #00529B;
   --peruri-violet: #6A1B9A;
   --peruri-purple: #3A1059;
-  --table-header: #512DA8;
+  --table-header: #1B3B73;
+  --table-header-sla: #512DA8;
   --table-accent: #1A73E8;
 
   --bg: #F4F6F9;
   --surface: #FFFFFF;
   --surface-2: #F8F9FA;
-  --text: #333333;
-  --text-muted: #666666;
-  --border: #D1D5DB;
+  --text: #22252A;
+  --text-muted: #5F6672;
+  --border: #CBD2D9;
   --brand-ink: #00529B;
-  --heading: #3A1059;
+  --heading: #1B3B73;
   --primary: #00529B;
   --primary-hover: #003F7A;
 
-  --grid-line: #E5E7EA;
+  --grid-line: #D9E2EC;
   --row-odd: #FFFFFF;
-  --row-even: #FAFAFA;
-  --row-hover: #F1ECFA;
+  --row-even: #F8FAFC;
+  --row-hover: #EEF4FF;
   --hover-bg: #F1F3F5;
-  --selected-bg: #E8F0FE;
-  --info-bg: #EEF4FF;
 
   --aman: #0F8B58;       --aman-bg: #E6F4EA;
   --warning: #D97706;    --warning-bg: #FEF3C7;
   --breach: #DC2626;     --breach-bg: #FEE2E2;
   --unknown: #6B7280;    --unknown-bg: #F3F4F6;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
   --corporate-gradient: linear-gradient(90deg, var(--peruri-blue) 0%, var(--peruri-violet) 50%, var(--peruri-purple) 100%);
   --ctl-h: 32px;
   --radius: 3px;
@@ -47,38 +46,53 @@
 }
 
 :root[data-theme="dark"] {
-  --bg: #121417;  --surface: #1B1E23;  --surface-2: #23272E;
-  --text: #E4E6EA;  --text-muted: #9AA1AC;  --border: #363B44;
-  --brand-ink: #7DB4F0;  --heading: #D2BDF2;
-  --primary: #1F5FA8;  --primary-hover: #2A70BE;
-  --grid-line: #2E333B;  --row-odd: #1B1E23;  --row-even: #20242A;  --row-hover: #2A2540;
-  --hover-bg: #2A2F37;  --selected-bg: #1F3358;  --info-bg: #1C2A44;
-  --aman-bg: rgba(15, 139, 88, 0.2);  --warning-bg: rgba(217, 119, 6, 0.2);  --breach-bg: rgba(220, 38, 38, 0.2);
-  --unknown-bg: rgba(107, 114, 128, 0.2);
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --bg: #07090D;
+  --surface: #0F131A;
+  --surface-2: #151B24;
+  --text: #F1F5F9;
+  --text-muted: #94A3B8;
+  --border: #2A3548;
+  --brand-ink: #60A5FA;
+  --heading: #93C5FD;
+  --primary: #1D4ED8;
+  --primary-hover: #2563EB;
+  --table-header: #163669;
+  --table-header-sla: #3B1E78;
+
+  --grid-line: #232E40;
+  --row-odd: #0D1117;
+  --row-even: #121822;
+  --row-hover: #1B2638;
+  --hover-bg: #1E293B;
+
+  --aman-bg: rgba(15, 139, 88, 0.22);
+  --warning-bg: rgba(217, 119, 6, 0.22);
+  --breach-bg: rgba(220, 38, 38, 0.22);
+  --unknown-bg: rgba(107, 114, 128, 0.22);
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.55);
 }
 
 * { box-sizing: border-box; }
 html, body {
   margin: 0; padding: 0; background: var(--bg); color: var(--text);
-  font-family: var(--font-ui); font-size: 13px; line-height: 1.5; -webkit-font-smoothing: antialiased;
+  font-family: var(--font-ui); font-size: 13px; line-height: 1.45; -webkit-font-smoothing: antialiased;
 }
 input[type=file] { display: none; }
 
-.wrap { max-width: 1380px; margin: 0 auto; padding: 0 20px 44px; }
+.wrap { max-width: 1460px; margin: 0 auto; padding: 0 18px 44px; }
 
 .topbar {
   background: var(--surface); border-bottom: 2px solid var(--peruri-blue);
-  padding: 12px 24px; margin-bottom: 20px; box-shadow: var(--shadow-sm);
+  padding: 12px 22px; margin-bottom: 16px; box-shadow: var(--shadow-sm);
 }
-.topbar-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+.topbar-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 .topbar-filters { justify-content: flex-start; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--grid-line); }
 .topbar-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .topbar-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
-.brand h1 { font-size: 17px; font-weight: 700; margin: 0; color: var(--brand-ink); text-transform: uppercase; letter-spacing: 0.5px; }
-.brand p { margin: 2px 0 0; color: var(--text-muted); font-size: 11.5px; font-weight: 500; }
+.brand h1 { font-size: 16.5px; font-weight: 700; margin: 0; color: var(--brand-ink); text-transform: uppercase; letter-spacing: 0.5px; }
+.brand p { margin: 2px 0 0; color: var(--text-muted); font-size: 11.5px; }
 
-.main-tabs { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
+.main-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
 .main-tab {
   height: 36px; padding: 0 16px; border: 1px solid var(--border); border-radius: var(--radius);
   background: var(--surface); color: var(--text-muted); font-family: var(--font-ui); font-size: 12.5px;
@@ -105,35 +119,89 @@ input[type=file] { display: none; }
   height: var(--ctl-h); font-family: var(--font-ui); font-size: 12px; color: var(--text); background: var(--surface);
   border: 1px solid var(--border); border-radius: var(--radius); padding: 0 10px;
 }
-.filter-select { padding-right: 26px; cursor: pointer; }
+.filter-select { padding-right: 24px; cursor: pointer; }
 .filter-select:focus, .search-input:focus { outline: none; border-color: var(--peruri-blue); }
 .meta-pill { font-size: 11px; color: var(--text-muted); padding: 4px 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); margin-left: auto; }
 
-.status-line { font-size: 12px; font-weight: 600; margin-bottom: 12px; }
+.status-line { font-size: 12px; font-weight: 600; margin-bottom: 10px; }
 .status-line.error { color: var(--breach); }
 .status-line.ok { color: var(--aman); }
 
-.panel { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; box-shadow: var(--shadow-sm); margin-bottom: 18px; overflow: hidden; }
-.section-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 11px 16px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
-.section-head h2 { font-size: 13.5px; font-weight: 700; margin: 0; color: var(--heading); }
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; box-shadow: var(--shadow-sm); margin-bottom: 16px; overflow: hidden; }
+.section-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.section-head h2 { font-size: 13px; font-weight: 700; margin: 0; color: var(--heading); }
 .section-head .sub { font-size: 11px; color: var(--text-muted); font-weight: 500; }
-.panel-body { padding: 16px; }
+.panel-body { padding: 14px; }
 
-.cards { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; padding: 16px; }
+/* ================= DAILY INTERACTION REPORT LAYOUT (MATCH SCREENSHOT) ================= */
+.daily-controls {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  padding: 10px 14px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 4px; margin-bottom: 14px;
+}
+.daily-controls label { font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+
+.daily-pair {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+  align-items: stretch;
+}
+.daily-pair .panel { margin-bottom: 0; display: flex; flex-direction: column; }
+
+.report-tbl { width: 100%; border-collapse: collapse; font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.report-tbl th {
+  background: var(--table-header);
+  color: #FFFFFF;
+  font-weight: 700;
+  padding: 6px 8px;
+  border: 1px solid #2B4C8C;
+  text-align: center;
+  white-space: nowrap;
+}
+.report-tbl th.left { text-align: left; }
+.report-tbl td {
+  padding: 5px 8px;
+  border: 1px solid var(--grid-line);
+  color: var(--text);
+}
+.report-tbl tbody tr:nth-child(odd) { background: var(--row-odd); }
+.report-tbl tbody tr:nth-child(even) { background: var(--row-even); }
+.report-tbl tbody tr:hover { background: var(--row-hover); }
+.report-tbl td.num { text-align: center; font-weight: 600; font-family: var(--font-mono); }
+.report-tbl td.big-num { text-align: center; font-weight: 700; font-size: 13px; font-family: var(--font-mono); }
+.report-tbl td.row-title { font-weight: 700; font-size: 12px; white-space: nowrap; }
+.report-tbl tr.total-row td {
+  background: var(--table-header);
+  color: #FFFFFF;
+  font-weight: 700;
+  border-color: #2B4C8C;
+}
+
+.chart-box-daily {
+  position: relative;
+  flex: 1;
+  min-height: 255px;
+  padding: 10px 12px;
+}
+
+/* ================= SLA & SIMULASI COMPONENTS ================= */
+.cards { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; padding: 14px; }
 .cards.cards-4 { grid-template-columns: repeat(4, 1fr); }
 .cards.cards-3 { grid-template-columns: repeat(3, 1fr); }
-.card { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--peruri-blue); border-radius: var(--radius); padding: 14px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--peruri-blue); border-radius: var(--radius); padding: 12px; }
 .card.aman { border-left-color: var(--aman); }
 .card.warning { border-left-color: var(--warning); }
 .card.breach { border-left-color: var(--breach); }
-.card .label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
-.card .value { font-size: 22px; font-weight: 700; line-height: 1.1; color: var(--text); font-variant-numeric: tabular-nums; }
+.card .label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; }
+.card .value { font-size: 21px; font-weight: 700; line-height: 1.1; color: var(--text); font-variant-numeric: tabular-nums; }
 .card .hint { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
 
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.grid-sim { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 16px; align-items: start; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid-sim { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 14px; align-items: start; }
 
-.badge { display: inline-flex; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: var(--radius); text-transform: uppercase; letter-spacing: 0.4px; border: 1px solid transparent; }
+.badge { display: inline-flex; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: var(--radius); text-transform: uppercase; border: 1px solid transparent; }
 .badge.aman { background: var(--aman-bg); color: var(--aman); border-color: var(--aman); }
 .badge.warning { background: var(--warning-bg); color: var(--warning); border-color: var(--warning); }
 .badge.breach { background: var(--breach-bg); color: var(--breach); border-color: var(--breach); }
@@ -142,18 +210,18 @@ input[type=file] { display: none; }
 
 .table-scroll { max-height: 440px; overflow: auto; }
 .table-scroll--full { max-height: none; }
-.table-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--surface); }
-.table-note { font-size: 11.5px; color: var(--text-muted); padding: 10px 16px; margin: 0; }
+.table-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.table-note { font-size: 11.5px; color: var(--text-muted); padding: 10px 14px; margin: 0; }
 
-table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
-thead th {
-  position: sticky; top: 0; z-index: 1; padding: 8px 12px; white-space: nowrap; text-align: left; font-weight: 600; color: #FFFFFF;
-  background: var(--table-header); border: 1px solid var(--table-header); border-right-color: rgba(255, 255, 255, 0.25);
+table.sla-tbl { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+table.sla-tbl thead th {
+  position: sticky; top: 0; z-index: 1; padding: 8px 10px; white-space: nowrap; text-align: left; font-weight: 600; color: #FFFFFF;
+  background: var(--table-header-sla); border: 1px solid var(--table-header-sla); border-right-color: rgba(255, 255, 255, 0.25);
 }
-tbody td { padding: 7px 12px; vertical-align: middle; color: var(--text); border: 1px solid var(--grid-line); }
-tbody tr:nth-child(odd) { background-color: var(--row-odd); }
-tbody tr:nth-child(even) { background-color: var(--row-even); }
-tbody tr:hover { background-color: var(--row-hover); }
+table.sla-tbl tbody td { padding: 7px 10px; vertical-align: middle; color: var(--text); border: 1px solid var(--grid-line); }
+table.sla-tbl tbody tr:nth-child(odd) { background-color: var(--row-odd); }
+table.sla-tbl tbody tr:nth-child(even) { background-color: var(--row-even); }
+table.sla-tbl tbody tr:hover { background-color: var(--row-hover); }
 .tid { white-space: nowrap; font-family: var(--font-mono); font-weight: 600; }
 
 .chart-holder { position: relative; height: 270px; padding: 14px; }
@@ -166,7 +234,6 @@ tbody tr:hover { background-color: var(--row-hover); }
 .breakdown-row .barfg { height: 100%; background: var(--corporate-gradient); }
 .breakdown-row .num { flex: 0 0 auto; width: 105px; font-family: var(--font-mono); font-size: 11px; text-align: right; }
 
-/* Simulator controls */
 .sim-group { margin-bottom: 14px; }
 .sim-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; margin-bottom: 5px; }
 .sim-val { color: var(--brand-ink); font-family: var(--font-mono); font-weight: 700; }
@@ -181,11 +248,12 @@ input[type=range] { width: 100%; accent-color: var(--peruri-blue); cursor: point
 
 .empty-box { text-align: center; padding: 48px 20px; border: 1px dashed var(--border); background: var(--surface); border-radius: 4px; margin-bottom: 18px; }
 .empty-box h3 { margin: 0 0 8px; font-size: 15px; color: var(--heading); }
-.empty-box p { max-width: 500px; margin: 0 auto 14px; color: var(--text-muted); font-size: 12.5px; }
+.empty-box p { max-width: 520px; margin: 0 auto 14px; color: var(--text-muted); font-size: 12.5px; }
 
 footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-line); color: var(--text-muted); font-size: 11px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
 
-@media (max-width: 1100px) {
+@media (max-width: 1120px) {
+  .daily-pair { grid-template-columns: 1fr; }
   .cards { grid-template-columns: repeat(3, 1fr); }
   .grid-sim { grid-template-columns: 1fr; }
 }
@@ -201,22 +269,22 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
 <header class="topbar">
   <div class="topbar-row">
     <div class="brand">
-      <h1>CASN 2026 Command Center &amp; SLA Ticket Evaluator</h1>
-      <p>Helpdesk Peruri Digital — Simulasi Kapasitas CASN E-Meterai &amp; Evaluasi SLA Aktual (Rumus Presisi Website)</p>
+      <h1>CASN 2026 Command Center — Daily Interaction &amp; SLA Evaluator</h1>
+      <p>Helpdesk Peruri Digital — Monitoring Interaksi Harian CASN, Evaluasi SLA Aktual &amp; Simulasi Kapasitas</p>
     </div>
     <div class="topbar-actions">
       <label class="btn btn-primary" for="fileInput">&#128228; Upload CSV / Excel</label>
       <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
       <span class="topbar-sep"></span>
       <button class="btn btn-ghost" id="slaViewToggle" title="Ganti cara hitung waktu pending">&#128065; Internal (Exclude Pending)</button>
-      <button class="btn btn-ghost" id="themeToggleBtn">&#9788; Terang</button>
+      <button class="btn btn-ghost" id="themeToggleBtn">&#9790; Gelap</button>
     </div>
   </div>
   <div class="topbar-row topbar-filters" id="filterBar" style="display:none;">
     <select class="filter-select" id="productFilter" style="min-width:210px;"><option value="ALL">Semua Produk</option></select>
     <select class="filter-select" id="categoryFilter" style="min-width:260px;"><option value="ALL">Semua Kategori</option></select>
     <select class="filter-select" id="monthFilter" style="min-width:190px;"><option value="ALL">Semua Bulan</option></select>
-    <span class="meta-pill" id="metaBadge">Belum ada file diunggah</span>
+    <span class="meta-pill" id="metaBadge">Mode Preview Data Referensi CASN</span>
   </div>
 </header>
 
@@ -224,12 +292,317 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
   <div class="status-line" id="statusLine"></div>
 
   <div class="main-tabs">
-    <button class="main-tab active" data-tab="simulasi">&#128202; Simulasi &amp; Skenario CASN 2026</button>
-    <button class="main-tab" data-tab="aktual">&#9989; Evaluasi Data Tiket Aktual (CSV / Excel)</button>
+    <button class="main-tab active" data-tab="daily">&#128200; Daily Report Interaksi CASN</button>
+    <button class="main-tab" data-tab="aktual">&#9989; Evaluasi SLA Tiket Aktual</button>
+    <button class="main-tab" data-tab="simulasi">&#128202; Simulasi &amp; Skenario CASN 2026</button>
   </div>
 
-  <!-- ================= TAB 1: SIMULASI & SKENARIO CASN 2026 ================= -->
-  <div class="tab-pane active" id="tab-simulasi">
+  <!-- ================= TAB 1: DAILY REPORT INTERAKSI CASN (PERSIS GAMBAR) ================= -->
+  <div class="tab-pane active" id="tab-daily">
+    <div class="daily-controls">
+      <label for="dailyDateSelect">Tanggal Laporan:</label>
+      <select class="filter-select" id="dailyDateSelect" style="min-width:170px;"></select>
+
+      <label for="dailyHourStart">Time Interval:</label>
+      <select class="filter-select" id="dailyHourStart"></select>
+      <span style="font-weight:700;">s/d</span>
+      <select class="filter-select" id="dailyHourEnd"></select>
+
+      <label for="dailyCasnScope">Filter Produk CASN:</label>
+      <select class="filter-select" id="dailyCasnScope" style="min-width:180px;">
+        <option value="EMETERAI">E-Meterai / CASN</option>
+        <option value="ALL">Semua Produk</option>
+      </select>
+
+      <span class="meta-pill" id="dailySourceBadge">Menampilkan Data Referensi CASN (Upload CSV/Excel untuk data real)</span>
+    </div>
+
+    <!-- PAIR 1: SUMMARY TABLE + PERGERAKAN TOP 5 INTERAKSI CASN (PER JAM) -->
+    <div class="daily-pair">
+      <div class="panel">
+        <div class="panel-body" style="padding:10px;">
+          <table class="report-tbl" style="margin-bottom:10px;">
+            <thead>
+              <tr>
+                <th style="width:16%;">Date</th>
+                <th colspan="2" id="tblDateVal" style="background:#0B192C;">September 6, 2024</th>
+                <th colspan="3">Prosentase Interaksi CASN</th>
+              </tr>
+              <tr>
+                <th>Time Interval</th>
+                <th id="tblHourStart" style="background:#0B192C;">0:00</th>
+                <th id="tblHourEnd" style="background:#0B192C;">11:00</th>
+                <th>Informasi</th>
+                <th>Keluhan</th>
+                <th>Permintaan</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="3" style="background:var(--surface-2);font-weight:700;text-align:center;color:var(--heading);">Komposisi Kategori Utama (Daily CASN)</td>
+                <td class="num" id="pctInfo">7.48%</td>
+                <td class="num" id="pctKeluhan">80.52%</td>
+                <td class="num" id="pctPermintaan">11.91%</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <table class="report-tbl">
+            <thead>
+              <tr>
+                <th class="left">Interaksi CASN</th>
+                <th>Total</th>
+                <th>Escalated</th>
+                <th>Not Escalated</th>
+                <th>Informasi</th>
+                <th>Keluhan</th>
+                <th>Permintaan</th>
+              </tr>
+            </thead>
+            <tbody id="dailySummaryBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="section-head">
+          <h2 id="chart1Title">Pergerakan TOP 5 Interaksi CASN</h2>
+          <span class="sub" id="chart1Sub">Per Interval Jam (0:00 – 23:00)</span>
+        </div>
+        <div class="chart-box-daily"><canvas id="dailyChart1"></canvas></div>
+      </div>
+    </div>
+
+    <!-- PAIR 2: TOP INTERAKSI (DAILY) + PERGERAKAN TOP 5 INTERAKSI HARIAN -->
+    <div class="daily-pair">
+      <div class="panel">
+        <div class="panel-body" style="padding:10px;">
+          <table class="report-tbl">
+            <thead>
+              <tr>
+                <th style="width:36px;">No</th>
+                <th class="left">TOP Interaksi (Daily)</th>
+                <th style="width:74px;">Total</th>
+                <th style="width:74px;">%</th>
+              </tr>
+            </thead>
+            <tbody id="topDailyCasnBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="section-head">
+          <h2>Pergerakan TOP 5 Interaksi Harian Periode CASN</h2>
+          <span class="sub">Tren Harian (MTD)</span>
+        </div>
+        <div class="chart-box-daily"><canvas id="dailyChart2"></canvas></div>
+      </div>
+    </div>
+
+    <!-- PAIR 3: TOP INTERAKSI (MONTH TO DATE) + PERGERAKAN TOP ALL INTERAKSI PER INTERVAL -->
+    <div class="daily-pair">
+      <div class="panel">
+        <div class="panel-body" style="padding:10px;">
+          <table class="report-tbl">
+            <thead>
+              <tr>
+                <th style="width:36px;">No</th>
+                <th class="left">TOP Interaksi (Month to Date)</th>
+                <th style="width:74px;">Total</th>
+                <th style="width:74px;">%</th>
+              </tr>
+            </thead>
+            <tbody id="topMtdCasnBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="section-head">
+          <h2>Pergerakan TOP All Interaksi Per Interval</h2>
+          <span class="sub">Grafik Garis Per Jam (0:00 – 23:00)</span>
+        </div>
+        <div class="chart-box-daily"><canvas id="dailyChart3"></canvas></div>
+      </div>
+    </div>
+
+    <!-- PAIR 4: TOP INTERAKSI (DAILY) ALL INTERACTION & (MTD) ALL INTERACTION + PERGERAKAN TOP ALL INTERAKSI HARIAN -->
+    <div class="daily-pair">
+      <div class="panel">
+        <div class="panel-body" style="padding:10px;">
+          <table class="report-tbl" style="margin-bottom:12px;">
+            <thead>
+              <tr>
+                <th style="width:36px;">No</th>
+                <th class="left">TOP Interaksi (Daily) All Interaction</th>
+                <th style="width:74px;">Total</th>
+                <th style="width:74px;">%</th>
+              </tr>
+            </thead>
+            <tbody id="topDailyAllBody"></tbody>
+          </table>
+
+          <table class="report-tbl">
+            <thead>
+              <tr>
+                <th style="width:36px;">No</th>
+                <th class="left">TOP Interaksi (Month to Date) All Interaction</th>
+                <th style="width:74px;">Total</th>
+                <th style="width:74px;">%</th>
+              </tr>
+            </thead>
+            <tbody id="topMtdAllBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="section-head">
+          <h2>Pergerakan TOP All Interaksi Harian</h2>
+          <span class="sub">Tren Harian Seluruh Produk</span>
+        </div>
+        <div class="chart-box-daily" style="min-height:420px;"><canvas id="dailyChart4"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TAB 2: EVALUASI SLA TIKET AKTUAL ================= -->
+  <div class="tab-pane" id="tab-aktual">
+    <div id="emptyState" class="empty-box">
+      <h3>Belum Ada File Data Tiket yang Diunggah</h3>
+      <p>Klik tombol <strong>Upload CSV / Excel</strong> di pojok kanan atas untuk memuat file tarikan sistem ticketing (CSV atau sheet <code>Dbase</code>). Perhitungan SLA otomatis mengikuti rumus presisi website.</p>
+      <label class="btn btn-primary" for="fileInput">&#128228; Pilih File CSV / Excel</label>
+    </div>
+
+    <div id="actualDashboard" style="display:none;">
+      <div class="panel">
+        <div class="section-head">
+          <h2>Ringkasan Eksekutif Tiket Eskalasi</h2>
+          <span class="sub" id="modeSubtitle">Mode Aktif: Internal (Exclude Pending)</span>
+        </div>
+        <div class="cards" id="overviewCards"></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="section-head">
+            <h2>Pencapaian SLA per Priority</h2>
+            <span class="sub">Target: Critical ≤8j · High ≤12j · Medium ≤24j · Low ≤48j</span>
+          </div>
+          <div class="table-scroll table-scroll--full">
+            <table class="sla-tbl">
+              <thead>
+                <tr>
+                  <th>Priority</th>
+                  <th>Selesai</th>
+                  <th>Dibawah SLA</th>
+                  <th>Breach</th>
+                  <th>% Achievement</th>
+                  <th>MTTR Aktual</th>
+                </tr>
+              </thead>
+              <tbody id="achievementBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="section-head">
+            <h2>Achieved vs Not Achieved per Severity</h2>
+            <span class="sub">Klik bar untuk filter daftar tiket</span>
+          </div>
+          <div class="chart-holder"><canvas id="achievedChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="section-head">
+          <h2>Distribusi Waktu Resolusi per Priority</h2>
+          <span class="sub">Pengelompokan durasi penyelesaian tiket selesai</span>
+        </div>
+        <div class="table-scroll table-scroll--full">
+          <table class="sla-tbl">
+            <thead><tr id="distTableHead"></tr></thead>
+            <tbody id="distTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="section-head">
+            <h2>TOP 10 Kategori Tiket Eskalasi</h2>
+            <span class="sub">mainCategory - subCategory - detailSubCategory</span>
+          </div>
+          <div class="chart-holder chart-holder--340"><canvas id="top10Chart"></canvas></div>
+        </div>
+
+        <div class="panel">
+          <div class="section-head">
+            <h2>Waktu Eskalasi (Interaksi Masuk → Tiket Dibuat)</h2>
+            <span class="sub">Target: ≤15 menit · Channel Email &amp; WhatsApp</span>
+          </div>
+          <div class="cards cards-3" id="escalationCards"></div>
+          <div class="panel-body" style="padding-top:0;" id="escalationByProduct"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="section-head">
+          <h2>Rata-rata Respons &amp; Resolusi per Produk × Priority</h2>
+          <span class="sub">Hanya menghitung durasi valid (≥ 0)</span>
+        </div>
+        <div class="panel-body" id="productPriorityTables"></div>
+      </div>
+
+      <div class="panel" id="ticketListPanel">
+        <div class="section-head">
+          <h2>Daftar Detail Tiket (Perbandingan Waktu Internal vs User)</h2>
+          <span class="sub" id="ticketListCount"></span>
+        </div>
+        <div class="table-toolbar">
+          <input class="search-input" id="ticketSearch" placeholder="Cari Ticket ID / Subject / Kategori..." style="min-width:240px;">
+          <select class="filter-select" id="ticketStatusFilter">
+            <option value="ALL">Semua Tiket</option>
+            <option value="achieved">Selesai — Achieved</option>
+            <option value="not_achieved">Selesai — Not Achieved (Breach)</option>
+            <option value="outstanding">Outstanding (Belum Selesai)</option>
+          </select>
+          <select class="filter-select" id="ticketPriorityFilter">
+            <option value="ALL">Semua Priority</option>
+            <option value="CRITICAL">Critical</option>
+            <option value="HIGH">High</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="LOW">Low</option>
+          </select>
+          <button class="btn btn-ghost" id="exportCsvBtn" style="margin-left:auto;">&#128229; Export CSV</button>
+        </div>
+        <div class="table-scroll">
+          <table class="sla-tbl">
+            <thead>
+              <tr>
+                <th>Ticket ID</th>
+                <th>Produk</th>
+                <th>Subject</th>
+                <th>Kategori</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Waktu (Internal)</th>
+                <th>Waktu (User)</th>
+                <th>Hasil SLA</th>
+              </tr>
+            </thead>
+            <tbody id="ticketListBody"></tbody>
+          </table>
+        </div>
+        <p class="table-note" id="ticketListNote"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TAB 3: SIMULASI & SKENARIO CASN 2026 ================= -->
+  <div class="tab-pane" id="tab-simulasi">
     <div class="grid-sim">
       <div class="panel">
         <div class="section-head">
@@ -323,143 +696,9 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
     </div>
   </div>
 
-  <!-- ================= TAB 2: EVALUASI DATA TIKET AKTUAL ================= -->
-  <div class="tab-pane" id="tab-aktual">
-    <div id="emptyState" class="empty-box">
-      <h3>Belum Ada File Data Tiket yang Diunggah</h3>
-      <p>Klik tombol <strong>Upload CSV / Excel</strong> di pojok kanan atas untuk memuat file tarikan sistem ticketing (CSV atau sheet <code>Dbase</code>). Perhitungan otomatis menggunakan rumus presisi website.</p>
-      <label class="btn btn-primary" for="fileInput">&#128228; Pilih File CSV / Excel</label>
-    </div>
-
-    <div id="actualDashboard" style="display:none;">
-      <div class="panel">
-        <div class="section-head">
-          <h2>Ringkasan Eksekutif Tiket</h2>
-          <span class="sub" id="modeSubtitle">Mode Aktif: Internal (Exclude Pending)</span>
-        </div>
-        <div class="cards" id="overviewCards"></div>
-      </div>
-
-      <div class="grid-2">
-        <div class="panel">
-          <div class="section-head">
-            <h2>Pencapaian SLA per Priority</h2>
-            <span class="sub">Target: Critical ≤8j · High ≤12j · Medium ≤24j · Low ≤48j</span>
-          </div>
-          <div class="table-scroll table-scroll--full">
-            <table>
-              <thead>
-                <tr>
-                  <th>Priority</th>
-                  <th>Selesai</th>
-                  <th>Dibawah SLA</th>
-                  <th>Breach</th>
-                  <th>% Achievement</th>
-                  <th>MTTR Aktual</th>
-                </tr>
-              </thead>
-              <tbody id="achievementBody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="panel">
-          <div class="section-head">
-            <h2>Achieved vs Not Achieved per Severity</h2>
-            <span class="sub">Klik bar untuk filter daftar tiket</span>
-          </div>
-          <div class="chart-holder"><canvas id="achievedChart"></canvas></div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="section-head">
-          <h2>Distribusi Waktu Resolusi per Priority</h2>
-          <span class="sub">Pengelompokan durasi penyelesaian tiket selesai</span>
-        </div>
-        <div class="table-scroll table-scroll--full">
-          <table>
-            <thead><tr id="distTableHead"></tr></thead>
-            <tbody id="distTableBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="grid-2">
-        <div class="panel">
-          <div class="section-head">
-            <h2>TOP 10 Kategori Tiket</h2>
-            <span class="sub">mainCategory - subCategory - detailSubCategory</span>
-          </div>
-          <div class="chart-holder chart-holder--340"><canvas id="top10Chart"></canvas></div>
-        </div>
-
-        <div class="panel">
-          <div class="section-head">
-            <h2>Waktu Eskalasi (Interaksi Masuk → Tiket Dibuat)</h2>
-            <span class="sub">Target: ≤15 menit · Channel Email &amp; WhatsApp</span>
-          </div>
-          <div class="cards cards-3" id="escalationCards"></div>
-          <div class="panel-body" style="padding-top:0;" id="escalationByProduct"></div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="section-head">
-          <h2>Rata-rata Respons &amp; Resolusi per Produk × Priority</h2>
-          <span class="sub">Hanya menghitung durasi valid (≥ 0)</span>
-        </div>
-        <div class="panel-body" id="productPriorityTables"></div>
-      </div>
-
-      <div class="panel" id="ticketListPanel">
-        <div class="section-head">
-          <h2>Daftar Detail Tiket (Perbandingan Waktu Internal vs User)</h2>
-          <span class="sub" id="ticketListCount"></span>
-        </div>
-        <div class="table-toolbar">
-          <input class="search-input" id="ticketSearch" placeholder="Cari Ticket ID / Subject / Kategori..." style="min-width:240px;">
-          <select class="filter-select" id="ticketStatusFilter">
-            <option value="ALL">Semua Tiket</option>
-            <option value="achieved">Selesai — Achieved</option>
-            <option value="not_achieved">Selesai — Not Achieved (Breach)</option>
-            <option value="outstanding">Outstanding (Belum Selesai)</option>
-          </select>
-          <select class="filter-select" id="ticketPriorityFilter">
-            <option value="ALL">Semua Priority</option>
-            <option value="CRITICAL">Critical</option>
-            <option value="HIGH">High</option>
-            <option value="MEDIUM">Medium</option>
-            <option value="LOW">Low</option>
-          </select>
-          <button class="btn btn-ghost" id="exportCsvBtn" style="margin-left:auto;">&#128229; Export CSV</button>
-        </div>
-        <div class="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Ticket ID</th>
-                <th>Produk</th>
-                <th>Subject</th>
-                <th>Kategori</th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>Waktu (Internal)</th>
-                <th>Waktu (User)</th>
-                <th>Hasil SLA</th>
-              </tr>
-            </thead>
-            <tbody id="ticketListBody"></tbody>
-          </table>
-        </div>
-        <p class="table-note" id="ticketListNote"></p>
-      </div>
-    </div>
-  </div>
-
   <footer>
     <span>Target SLA — Critical: 8j · High: 12j · Medium: 24j · Low: 48j (jam kalender penuh, dihitung sampai resolved)</span>
-    <span>Helpdesk Peruri Digital — Formula Identik Website Produksi</span>
+    <span>Helpdesk Peruri Digital — Daily Interaction &amp; SLA Ticket Evaluator</span>
   </footer>
 </div>
 
@@ -471,7 +710,7 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
   const SLA_TARGET = { CRITICAL: 8, HIGH: 12, MEDIUM: 24, LOW: 48 };
   const FINISHED_STATUSES = new Set(['close', 'resolved', 'return']);
   const PRIORITY_ORDER = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
-  const ESCALATION_TARGET_HOURS = 0.25; // 15 menit
+  const ESCALATION_TARGET_HOURS = 0.25;
   const ESCALATION_ELIGIBLE = new Set(['close', 'resolved', 'return', 'open', 'on progress']);
   const ESCALATION_CHANNELS = new Set(['email', 'whatsapp']);
   const COMBINED_VALUE = 'COMBINED:E-Meterai|Perisai';
@@ -489,14 +728,15 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
     { label: '>30 Hari', max: Infinity },
   ];
 
-  let ticketsMap = new Map();
-  let slaViewMode = 'exclude'; // 'exclude' = Internal (Exclude Pending) | 'include' = User (Include Pending)
+  let allInteractions = []; // Semua baris (escalated + not escalated) untuk Daily Report Interaksi CASN
+  let ticketsMap = new Map(); // Hanya escalated untuk SLA Ticket Evaluator
+  let slaViewMode = 'exclude';
   let selectedProduct = 'ALL';
   let selectedCategory = 'ALL';
   let selectedMonth = 'ALL';
-  let achievedChart = null;
-  let top10Chart = null;
-  let histChart = null;
+
+  let achievedChart = null, top10Chart = null, histChart = null;
+  let dailyChart1 = null, dailyChart2 = null, dailyChart3 = null, dailyChart4 = null;
 
   function safeStr(v){
     if(v === null || v === undefined) return '';
@@ -547,34 +787,25 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
     header.forEach((h, i) => { const k = safeStr(h).toLowerCase(); if(k) colIndex[k] = i; });
     const col = (row, name) => { const idx = colIndex[name]; return idx !== undefined ? row[idx] : null; };
 
-    const out = new Map();
+    const escalatedOut = new Map();
+    const interactionsOut = [];
     let skippedNotEscalated = 0;
+
     for(let r = headerIdx + 1; r < aoa.length; r++){
       const row = aoa[r];
       if(!row) continue;
       const id = safeStr(col(row, 'ticket_id'));
       if(!id) continue;
 
-      if(colIndex['is_escalated'] !== undefined){
-        const escVal = safeStr(col(row, 'is_escalated')).toLowerCase();
-        if(escVal.indexOf('not') === 0 || escVal === 'no' || escVal === '0' || escVal === 'false' || escVal === ''){
-          skippedNotEscalated++;
-          continue;
-        }
-      }
+      const escRaw = colIndex['is_escalated'] !== undefined ? safeStr(col(row, 'is_escalated')).toLowerCase() : 'escalated';
+      const isNotEscalated = (escRaw.indexOf('not') === 0 || escRaw === 'no' || escRaw === '0' || escRaw === 'false' || escRaw === '');
 
       let doRes = toISO(col(row, 'date_resolved'));
       if(!doRes) doRes = toISO(col(row, 'date_last_update'));
 
-      const raw = {};
-      header.forEach((h, i) => {
-        const k = safeStr(h);
-        if(!k) return;
-        const v = row[i];
-        raw[k] = (v instanceof Date) ? toISO(v) : v;
-      });
+      const doStart = toISO(col(row, 'date_start_interaction')) || toISO(col(row, 'date_origin_interaction')) || toISO(col(row, 'date_created_at'));
 
-      out.set(id, {
+      const rec = {
         id: id,
         sj: safeStr(col(row, 'subject')),
         sc: safeStr(col(row, 'subcategory')),
@@ -587,17 +818,336 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
         ch: safeStr(col(row, 'channel_name')),
         sn: safeStr(col(row, 'source_name')),
         ag: safeStr(col(row, 'ticket_solver_name')) || safeStr(col(row, 'updated_by_name')),
-        doStart: toISO(col(row, 'date_start_interaction')),
+        isEscalated: !isNotEscalated,
+        doStart: doStart,
         doOpen: toISO(col(row, 'date_open')),
         doRes: doRes,
         doPending: toISO(col(row, 'date_pending')),
-        raw: raw,
-      });
+      };
+
+      interactionsOut.push(rec);
+
+      if(isNotEscalated){
+        skippedNotEscalated++;
+        continue;
+      }
+      escalatedOut.set(id, rec);
     }
-    out._skippedNotEscalated = skippedNotEscalated;
-    return out;
+    escalatedOut._skippedNotEscalated = skippedNotEscalated;
+    return { escalated: escalatedOut, interactions: interactionsOut };
   }
 
+  // =========================================================================
+  // 2. TAB 1: DAILY REPORT INTERAKSI CASN (SESUAI SCREENSHOT)
+  // =========================================================================
+  function initHourSelectors(){
+    const sStart = document.getElementById('dailyHourStart');
+    const sEnd = document.getElementById('dailyHourEnd');
+    let hOpts = '';
+    for(let h = 0; h < 24; h++){
+      hOpts += '<option value="' + h + '">' + h + ':00</option>';
+    }
+    sStart.innerHTML = hOpts;
+    sEnd.innerHTML = hOpts;
+    sStart.value = '0';
+    sEnd.value = '23';
+  }
+
+  function renderReferenceDailyReport(){
+    // Data referensi sesuai tampilan gambar laporan harian SSCASN/CASN
+    document.getElementById('dailyDateSelect').innerHTML = '<option value="REF">September 6, 2024 (Referensi)</option>';
+    document.getElementById('dailyHourStart').value = '0';
+    document.getElementById('dailyHourEnd').value = '11';
+    document.getElementById('tblDateVal').textContent = 'September 6, 2024';
+    document.getElementById('tblHourStart').textContent = '0:00';
+    document.getElementById('tblHourEnd').textContent = '11:00';
+    document.getElementById('pctInfo').textContent = '7.48%';
+    document.getElementById('pctKeluhan').textContent = '80.52%';
+    document.getElementById('pctPermintaan').textContent = '11.91%';
+
+    const sumRows = [
+      { label: 'Daily Interaction CASN', total: 1083, esc: 118, notEsc: 965, info: 81, kel: 872, perm: 129 },
+      { label: 'Month to Date', total: 14144, esc: 1214, notEsc: 12930, info: 1773, kel: 12071, perm: 273 },
+      { label: 'Daily All Interaction', total: 2092, esc: 139, notEsc: 1953, info: 680, kel: 1211, perm: 147 },
+      { label: 'MTD All Interaction', total: 35639, esc: 1872, notEsc: 33767, info: 14205, kel: 20346, perm: 608 },
+    ];
+    document.getElementById('dailySummaryBody').innerHTML = sumRows.map(r =>
+      '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.total + '</td><td class="big-num">' + r.esc + '</td>' +
+      '<td class="big-num">' + r.notEsc + '</td><td class="big-num">' + r.info + '</td><td class="big-num">' + r.kel + '</td><td class="big-num">' + r.perm + '</td></tr>'
+    ).join('');
+
+    const fillTopTable = (tbodyId, items, sumTotal, sumPct) => {
+      document.getElementById(tbodyId).innerHTML = items.map((it, i) =>
+        '<tr><td class="num">' + (i + 1) + '</td><td>' + it[0] + '</td><td class="num">' + it[1] + '</td><td class="num">' + it[2] + '</td></tr>'
+      ).join('') + '<tr class="total-row"><td colspan="2" style="text-align:center;">Jumlah</td><td class="num">' + sumTotal + '</td><td class="num">' + sumPct + '</td></tr>';
+    };
+
+    fillTopTable('topDailyCasnBody', [
+      ['CASN METEL-Pembayaran berhasil, kuota tidak bertambah', 424, '44.54%'],
+      ['CASN-Pembayaran berhasil, kuota tidak bertambah', 219, '23.00%'],
+      ['CASN-Failed Upload Document PDF', 70, '7.35%'],
+      ['CASN-Panduan penggunaan e-Meterai', 46, '4.83%'],
+      ['CASN METEL-Tidak bisa Reset Password', 27, '2.84%'],
+      ['CASN METEL-Error Download File', 25, '2.63%'],
+      ['CASN-Pengembalian Kuota', 20, '2.10%'],
+      ['CASN-Informasi seputar E-Meterai SSCASN', 16, '1.68%'],
+      ['CASN METEL-Failed Login E-Meterai', 16, '1.68%'],
+      ['CASN-Error Download File', 11, '1.16%'],
+    ], 952, '91.81%');
+
+    fillTopTable('topMtdCasnBody', [
+      ['CASN-Pembayaran berhasil, kuota tidak bertambah', 4898, '36.81%'],
+      ['CASN METEL-Pembayaran berhasil, kuota tidak bertambah', 2703, '20.32%'],
+      ['CASN-Failed Upload Document PDF', 1375, '10.33%'],
+      ['CASN-Informasi seputar E-Meterai SSCASN', 772, '5.80%'],
+      ['CASN-Panduan penggunaan e-Meterai', 540, '4.06%'],
+      ['CASN-Failed Login E-Meterai', 385, '2.89%'],
+      ['CASN-Pembubuhan Gagal, Kuota berkurang', 287, '2.16%'],
+      ['CASN-Tanya Progress', 240, '1.80%'],
+      ['CASN METEL-Failed Login E-Meterai', 222, '1.67%'],
+      ['CASN METEL-Tidak bisa Reset Password', 208, '1.56%'],
+    ], 13305, '87.41%');
+
+    fillTopTable('topDailyAllBody', [
+      ['CASN METEL-Pembayaran berhasil, kuota tidak bertambah', 424, '25.98%'],
+      ['Deskripsi dan Panduan Produk E-Meterai', 393, '24.08%'],
+      ['CASN-Pembayaran berhasil, kuota tidak bertambah', 219, '13.42%'],
+      ['Deskripsi Produk', 112, '6.86%'],
+      ['Maintenance Layanan E-Meterai', 107, '6.56%'],
+      ['CASN-Failed Upload Document PDF', 70, '4.29%'],
+      ['CASN-Panduan penggunaan e-Meterai', 46, '2.82%'],
+      ['CASN-Panduan penggunaan e-Meterai', 46, '2.82%'],
+      ['CASN METEL-Tidak bisa Reset Password', 27, '1.65%'],
+      ['CASN METEL-Error Download File', 25, '1.53%'],
+    ], 1632, '90.01%');
+
+    fillTopTable('topMtdAllBody', [
+      ['Deskripsi dan Panduan Produk E-Meterai', 8619, '27.07%'],
+      ['CASN-Pembayaran berhasil, kuota tidak bertambah', 4898, '15.38%'],
+      ['CASN METEL-Pembayaran berhasil, kuota tidak bertambah', 2703, '8.49%'],
+      ['Deskripsi Produk', 1503, '4.72%'],
+      ['Maintenance Layanan E-Meterai', 1437, '4.51%'],
+      ['CASN-Failed Upload Document PDF', 1375, '4.32%'],
+      ['CASN-Informasi seputar E-Meterai SSCASN', 772, '2.42%'],
+      ['CASN-Informasi seputar E-Meterai SSCASN', 772, '2.42%'],
+      ['CASN-Panduan penggunaan e-Meterai', 540, '1.70%'],
+      ['CASN-Panduan penggunaan e-Meterai', 540, '1.70%'],
+    ], 31843, '72.73%');
+
+    const hours = Array.from({ length: 24 }, (_, h) => h + ':00');
+    const palette = ['#2563EB', '#F97316', '#94A3B8', '#FACC15', '#38BDF8'];
+
+    drawDailyCharts(
+      hours,
+      [
+        { label: 'CASN METEL-Pembayaran berhasil', data: [4,5,6,8,12,18,35,88,122,110,95,82,0,0,0,0,0,0,0,0,0,0,0,0], backgroundColor: palette[0] },
+        { label: 'CASN-Pembayaran berhasil', data: [2,3,4,5,8,14,26,52,74,68,58,49,0,0,0,0,0,0,0,0,0,0,0,0], backgroundColor: palette[1] },
+        { label: 'CASN-Failed Upload Document PDF', data: [1,1,1,2,3,5,9,16,22,19,15,12,0,0,0,0,0,0,0,0,0,0,0,0], backgroundColor: palette[2] },
+        { label: 'CASN-Panduan penggunaan e-Meterai', data: [0,1,1,1,2,3,6,11,15,13,10,8,0,0,0,0,0,0,0,0,0,0,0,0], backgroundColor: palette[3] },
+        { label: 'CASN METEL-Tidak bisa Reset Password', data: [0,0,1,1,1,2,4,7,9,8,6,5,0,0,0,0,0,0,0,0,0,0,0,0], backgroundColor: palette[4] },
+      ],
+      ['19-Aug','21-Aug','23-Aug','25-Aug','27-Aug','29-Aug','31-Aug','2-Sep','4-Sep','6-Sep'],
+      [
+        { label: 'CASN-Pembayaran berhasil', data: [40,65,90,110,145,180,220,580,1120,980], backgroundColor: palette[0] },
+        { label: 'CASN METEL-Pembayaran berhasil', data: [20,35,50,75,95,120,160,340,680,610], backgroundColor: palette[1] },
+        { label: 'CASN-Failed Upload Document PDF', data: [15,22,30,45,60,80,110,190,340,290], backgroundColor: palette[2] },
+        { label: 'CASN-Informasi seputar E-Meterai', data: [10,18,25,32,45,55,75,130,210,185], backgroundColor: palette[3] },
+        { label: 'CASN-Panduan penggunaan e-Meterai', data: [8,12,18,24,30,42,58,95,160,140], backgroundColor: palette[4] },
+      ],
+      hours,
+      [
+        { label: 'CASN METEL-Pembayaran berhasil', data: [4,5,6,8,12,18,35,88,122,110,95,82,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[0], tension: 0.3, fill: false },
+        { label: 'Deskripsi dan Panduan Produk E-Meterai', data: [12,10,8,11,15,24,42,68,85,79,66,54,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[1], tension: 0.3, fill: false },
+        { label: 'CASN-Pembayaran berhasil', data: [2,3,4,5,8,14,26,52,74,68,58,49,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[2], tension: 0.3, fill: false },
+        { label: 'Deskripsi Produk', data: [3,4,3,5,7,11,18,25,31,28,22,19,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[3], tension: 0.3, fill: false },
+        { label: 'Maintenance Layanan E-Meterai', data: [2,2,3,4,6,9,15,22,29,26,21,17,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[4], tension: 0.3, fill: false },
+      ],
+      ['19-Aug','21-Aug','23-Aug','25-Aug','27-Aug','29-Aug','31-Aug','2-Sep','4-Sep','6-Sep'],
+      [
+        { label: 'Deskripsi dan Panduan Produk E-Meterai', data: [180,240,310,390,480,590,740,1280,2150,1890], backgroundColor: palette[0] },
+        { label: 'CASN-Pembayaran berhasil', data: [40,65,90,110,145,180,220,580,1120,980], backgroundColor: palette[1] },
+        { label: 'CASN METEL-Pembayaran berhasil', data: [20,35,50,75,95,120,160,340,680,610], backgroundColor: palette[2] },
+        { label: 'Deskripsi Produk', data: [45,60,75,95,120,145,180,260,410,370], backgroundColor: palette[3] },
+        { label: 'Maintenance Layanan E-Meterai', data: [35,48,62,80,105,130,165,240,390,350], backgroundColor: palette[4] },
+      ]
+    );
+  }
+
+  function drawDailyCharts(c1Labels, c1Sets, c2Labels, c2Sets, c3Labels, c3Sets, c4Labels, c4Sets){
+    const commonOpts = {
+      responsive: true, maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true } },
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 11, font: { size: 10.5 } } } }
+    };
+    if(dailyChart1) dailyChart1.destroy();
+    dailyChart1 = new Chart(document.getElementById('dailyChart1'), { type: 'bar', data: { labels: c1Labels, datasets: c1Sets }, options: commonOpts });
+
+    if(dailyChart2) dailyChart2.destroy();
+    dailyChart2 = new Chart(document.getElementById('dailyChart2'), { type: 'bar', data: { labels: c2Labels, datasets: c2Sets }, options: commonOpts });
+
+    if(dailyChart3) dailyChart3.destroy();
+    dailyChart3 = new Chart(document.getElementById('dailyChart3'), { type: 'line', data: { labels: c3Labels, datasets: c3Sets }, options: commonOpts });
+
+    if(dailyChart4) dailyChart4.destroy();
+    dailyChart4 = new Chart(document.getElementById('dailyChart4'), { type: 'bar', data: { labels: c4Labels, datasets: c4Sets }, options: commonOpts });
+  }
+
+  function renderDailyFromUploaded(){
+    if(!allInteractions.length){
+      renderReferenceDailyReport();
+      return;
+    }
+
+    // Kumpulkan semua tanggal unik (YYYY-MM-DD) dari doStart / doOpen
+    const dateSet = new Set();
+    allInteractions.forEach(r => {
+      const iso = r.doStart || r.doOpen;
+      if(!iso) return;
+      const d = new Date(iso);
+      const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      dateSet.add(key);
+    });
+    const dates = Array.from(dateSet).sort();
+    const selDateEl = document.getElementById('dailyDateSelect');
+    const prevVal = selDateEl.value;
+    selDateEl.innerHTML = dates.map(dt => {
+      const [y, m, d] = dt.split('-').map(Number);
+      const lbl = new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      return '<option value="' + dt + '">' + lbl + '</option>';
+    }).join('');
+    if(dates.includes(prevVal)){
+      selDateEl.value = prevVal;
+    } else if(dates.length){
+      selDateEl.value = dates[dates.length - 1]; // Default tanggal terbaru dalam file
+    }
+
+    const activeDate = selDateEl.value;
+    const hStart = parseInt(document.getElementById('dailyHourStart').value, 10);
+    const hEnd = parseInt(document.getElementById('dailyHourEnd').value, 10);
+    const casnScope = document.getElementById('dailyCasnScope').value;
+
+    const [ay, am, ad] = activeDate.split('-').map(Number);
+    const activeDateLabel = new Date(ay, am - 1, ad).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    const monthPrefix = activeDate.slice(0, 7);
+
+    document.getElementById('tblDateVal').textContent = activeDateLabel;
+    document.getElementById('tblHourStart').textContent = hStart + ':00';
+    document.getElementById('tblHourEnd').textContent = hEnd + ':00';
+    document.getElementById('chart1Title').textContent = 'Pergerakan TOP 5 Interaksi CASN — ' + activeDateLabel;
+    document.getElementById('dailySourceBadge').textContent = 'Data Aktual CSV/Excel · ' + allInteractions.length.toLocaleString('id-ID') + ' total interaksi';
+
+    const isCasn = (r) => {
+      if(casnScope === 'ALL') return true;
+      const sc = (r.sc || '').toLowerCase();
+      const dsc = (r.dsc || '').toLowerCase();
+      return sc === 'e-meterai' || dsc.includes('casn') || dsc.includes('sscasn') || dsc.includes('e-meterai');
+    };
+
+    const withMeta = allInteractions.map(r => {
+      const iso = r.doStart || r.doOpen;
+      if(!iso) return null;
+      const d = new Date(iso);
+      const dKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      return { r: r, dKey: dKey, hour: d.getHours() };
+    }).filter(Boolean);
+
+    const dailyAll = withMeta.filter(x => x.dKey === activeDate && x.hour >= hStart && x.hour <= hEnd);
+    const dailyCasn = dailyAll.filter(x => isCasn(x.r));
+    const mtdAll = withMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate);
+    const mtdCasn = mtdAll.filter(x => isCasn(x.r));
+
+    const summarize = (list) => {
+      let esc = 0, notEsc = 0, info = 0, kel = 0, perm = 0;
+      list.forEach(x => {
+        if(x.r.isEscalated) esc++; else notEsc++;
+        const mc = (x.r.mc || '').toLowerCase();
+        if(mc === 'informasi') info++;
+        else if(mc === 'keluhan') kel++;
+        else if(mc === 'permintaan') perm++;
+      });
+      return { total: list.length, esc, notEsc, info, kel, perm };
+    };
+
+    const sDailyCasn = summarize(dailyCasn);
+    const sMtdCasn = summarize(mtdCasn);
+    const sDailyAll = summarize(dailyAll);
+    const sMtdAll = summarize(mtdAll);
+
+    const baseDenom = sDailyCasn.total || 1;
+    document.getElementById('pctInfo').textContent = sDailyCasn.total ? ((sDailyCasn.info / baseDenom) * 100).toFixed(2) + '%' : '0.00%';
+    document.getElementById('pctKeluhan').textContent = sDailyCasn.total ? ((sDailyCasn.kel / baseDenom) * 100).toFixed(2) + '%' : '0.00%';
+    document.getElementById('pctPermintaan').textContent = sDailyCasn.total ? ((sDailyCasn.perm / baseDenom) * 100).toFixed(2) + '%' : '0.00%';
+
+    const sumRows = [
+      { label: 'Daily Interaction CASN', ...sDailyCasn },
+      { label: 'Month to Date', ...sMtdCasn },
+      { label: 'Daily All Interaction', ...sDailyAll },
+      { label: 'MTD All Interaction', ...sMtdAll },
+    ];
+    document.getElementById('dailySummaryBody').innerHTML = sumRows.map(r =>
+      '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.total + '</td><td class="big-num">' + r.esc + '</td>' +
+      '<td class="big-num">' + r.notEsc + '</td><td class="big-num">' + r.info + '</td><td class="big-num">' + r.kel + '</td><td class="big-num">' + r.perm + '</td></tr>'
+    ).join('');
+
+    const buildTop10 = (list, tbodyId) => {
+      const counts = new Map();
+      list.forEach(x => {
+        const k = x.r.dsc || x.r.sc || '(Lainnya)';
+        counts.set(k, (counts.get(k) || 0) + 1);
+      });
+      const sorted = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+      const top10 = sorted.slice(0, 10);
+      const topSum = top10.reduce((s, x) => s + x[1], 0);
+      const allSum = list.length || 1;
+      const topPct = list.length ? ((topSum / allSum) * 100).toFixed(2) + '%' : '0.00%';
+
+      document.getElementById(tbodyId).innerHTML = (top10.map((it, idx) =>
+        '<tr><td class="num">' + (idx + 1) + '</td><td>' + it[0] + '</td><td class="num">' + it[1] + '</td><td class="num">' + ((it[1] / allSum) * 100).toFixed(2) + '%</td></tr>'
+      ).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">Tidak ada data pada interval ini.</td></tr>') +
+      '<tr class="total-row"><td colspan="2" style="text-align:center;">Jumlah</td><td class="num">' + topSum + '</td><td class="num">' + topPct + '</td></tr>';
+
+      return top10.slice(0, 5).map(x => x[0]);
+    };
+
+    const top5DailyCasn = buildTop10(dailyCasn, 'topDailyCasnBody');
+    const top5MtdCasn = buildTop10(mtdCasn, 'topMtdCasnBody');
+    const top5DailyAll = buildTop10(dailyAll, 'topDailyAllBody');
+    const top5MtdAll = buildTop10(mtdAll, 'topMtdAllBody');
+
+    const hours = Array.from({ length: 24 }, (_, h) => h + ':00');
+    const mtdDates = dates.filter(dt => dt.startsWith(monthPrefix) && dt <= activeDate);
+    const mtdDateLabels = mtdDates.map(dt => {
+      const [y, m, d] = dt.split('-').map(Number);
+      return new Date(y, m - 1, d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    });
+    const palette = ['#2563EB', '#F97316', '#94A3B8', '#FACC15', '#38BDF8'];
+
+    const makeHourlySets = (list, topCats, isLine) => topCats.map((cat, idx) => ({
+      label: cat,
+      data: Array.from({ length: 24 }, (_, h) => list.filter(x => x.hour === h && (x.r.dsc || x.r.sc || '(Lainnya)') === cat).length),
+      backgroundColor: palette[idx % palette.length],
+      borderColor: palette[idx % palette.length],
+      tension: 0.3,
+      fill: false
+    }));
+
+    const makeDailySets = (list, topCats) => topCats.map((cat, idx) => ({
+      label: cat,
+      data: mtdDates.map(dt => list.filter(x => x.dKey === dt && (x.r.dsc || x.r.sc || '(Lainnya)') === cat).length),
+      backgroundColor: palette[idx % palette.length]
+    }));
+
+    drawDailyCharts(
+      hours, makeHourlySets(dailyCasn, top5DailyCasn, false),
+      mtdDateLabels, makeDailySets(mtdCasn, top5MtdCasn),
+      hours, makeHourlySets(dailyAll, top5DailyAll, true),
+      mtdDateLabels, makeDailySets(mtdAll, top5MtdAll)
+    );
+  }
+
+  // =========================================================================
+  // 3. TAB 2: EVALUASI DATA TIKET AKTUAL (RUMUS PRESISI WEBSITE)
+  // =========================================================================
   function getPendingCutoff(rec){
     if(!rec.doPending) return null;
     const openT = rec.doOpen ? new Date(rec.doOpen).getTime() : null;
@@ -692,9 +1242,6 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
     return hrs.toFixed(2) + ' jam (' + (hrs / 24).toFixed(1) + ' hari)';
   }
 
-  // =========================================================================
-  // 2. RENDER EVALUASI DATA TIKET AKTUAL
-  // =========================================================================
   function updateFilters(allComputed){
     const products = Array.from(new Set(allComputed.map(c => c.rec.sc).filter(Boolean))).sort();
     let pHtml = '<option value="ALL">Semua Produk (' + allComputed.length + ')</option>';
@@ -762,7 +1309,6 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
     if(selectedMonth !== 'ALL') scoped = scoped.filter(c => c.rec.doOpen && monthKeyOf(c.rec.doOpen) === selectedMonth);
     currentScopedRows = scoped;
 
-    // 1. Overview Cards
     const finished = scoped.filter(c => c.sla.finished);
     const outstanding = scoped.filter(c => !c.sla.finished);
     const compliant = finished.filter(c => c.sla.result === 'aman').length;
@@ -783,7 +1329,6 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
       '<div class="card ' + c.cls + '"><div class="label">' + c.label + '</div><div class="value">' + c.value + '</div></div>'
     ).join('');
 
-    // 2. Achievement Table per Priority
     let totFin = 0, totComp = 0, totBreach = 0;
     const allValidHrs = [];
     const achRows = PRIORITY_ORDER.map(pr => {
@@ -804,7 +1349,6 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
     document.getElementById('achievementBody').innerHTML = achRows +
       '<tr style="font-weight:700;background:var(--surface-2);"><td>Total</td><td>' + totFin + '</td><td>' + totComp + '</td><td>' + totBreach + '</td><td>' + totPct + (totPct !== '—' ? '%' : '') + '</td><td>' + totMttr + '</td></tr>';
 
-    // 3. Achieved Chart
     const achData = PRIORITY_ORDER.map(pr => finished.filter(c => c.rec.pr === pr && c.sla.result === 'aman').length);
     const breachData = PRIORITY_ORDER.map(pr => finished.filter(c => c.rec.pr === pr && c.sla.result === 'breach').length);
     if(achievedChart) achievedChart.destroy();
@@ -831,7 +1375,6 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
       }
     });
 
-    // 4. Distribution Table
     const finWithHours = finished.filter(c => c.sla.hours !== null);
     document.getElementById('distTableHead').innerHTML = '<th>Priority</th>' + DURATION_BUCKETS.map(b => '<th>' + b.label + '</th>').join('') + '<th>Total</th>';
     const distRows = PRIORITY_ORDER.map(pr => {
@@ -843,7 +1386,6 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
     document.getElementById('distTableBody').innerHTML = distRows +
       '<tr style="font-weight:700;background:var(--surface-2);"><td>Total</td>' + distTotals.map(n => '<td>' + n + '</td>').join('') + '<td>' + finWithHours.length + '</td></tr>';
 
-    // 5. TOP 10 Chart
     const catCounts = new Map();
     scoped.forEach(c => {
       const lbl = (c.rec.mc || '-') + ' - ' + (c.rec.sc || '-') + ' - ' + (c.rec.dsc || '-');
@@ -864,7 +1406,6 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
       }
     });
 
-    // 6. Escalation Cards & Breakdown
     const escItems = scoped.map(c => ({ rec: c.rec, esc: computeEscalation(c.rec) })).filter(x => x.esc.hours !== null);
     const escAman = escItems.filter(x => x.esc.result === 'aman').length;
     const escBreach = escItems.filter(x => x.esc.result === 'breach').length;
@@ -889,7 +1430,6 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
       return '<div class="breakdown-row"><div class="name">' + name + '</div><div class="barbg"><div class="barfg" style="width:' + (g.total / maxEsc * 100) + '%"></div></div><div class="num">' + g.total + ' tiket · ' + pct + '%</div></div>';
     }).join('') || '<p class="table-note">Tidak ada data eskalasi Email/WhatsApp.</p>';
 
-    // 7. Product x Priority Table
     const prods = Array.from(new Set(scoped.map(c => c.rec.sc).filter(Boolean))).sort();
     document.getElementById('productPriorityTables').innerHTML = prods.map(prod => {
       const rows = PRIORITY_ORDER.map(pr => {
@@ -901,7 +1441,7 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
         return '<tr><td><strong>' + pr + '</strong></td><td>15 menit</td><td>' + SLA_TARGET[pr] + ' jam</td><td>' + avgResp + '</td><td>' + avgRes + '</td></tr>';
       }).join('');
       return '<div style="margin-bottom:16px;"><div style="font-weight:700;font-size:13px;margin-bottom:6px;color:var(--heading);">' + prod + '</div>' +
-        '<div class="table-scroll table-scroll--full"><table><thead><tr><th>Priority</th><th>Target Respons</th><th>Target Resolusi</th><th>Rata-rata Respons Aktual</th><th>Rata-rata Resolusi Aktual</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+        '<div class="table-scroll table-scroll--full"><table class="sla-tbl"><thead><tr><th>Priority</th><th>Target Respons</th><th>Target Resolusi</th><th>Rata-rata Respons Aktual</th><th>Rata-rata Resolusi Aktual</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
     }).join('');
 
     drawTicketTable();
@@ -946,7 +1486,7 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
   }
 
   // =========================================================================
-  // 3. SIMULATOR CASN 2026 & BENCHMARK HISTORIS (CatatanSkenarioCASN.xlsx)
+  // 4. TAB 3: SIMULATOR CASN 2026 & BENCHMARK HISTORIS
   // =========================================================================
   function runSimulation(){
     const vol = +document.getElementById('inVolume').value;
@@ -969,15 +1509,13 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
     const backlog = Math.max(0, vol - capInteractions);
     const estTickets = Math.round(vol * escRate);
 
-    // Estimasi SLA E-Meterai CASN berdasarkan rasio kapasitas & skenario mitigasi
     const loadRatio = vol / Math.max(1, capInteractions);
     let emetSla = 95 - Math.max(0, (loadRatio - 0.85) * 48);
     if(useLifo) emetSla += 4.5;
     if(useCanned) emetSla += 3.0;
-    if(highSev) emetSla -= 6.5; // target 8j/12j lebih ketat saat lonjakan
+    if(highSev) emetSla -= 6.5;
     emetSla = Math.max(18.7, Math.min(98.5, emetSla));
 
-    // Estimasi SLA Perisai (terlindungi bila segmentasi antrean aktif)
     let perisaiSla = useSegment
       ? Math.max(91.0, 98.0 - Math.max(0, (loadRatio - 1.2) * 3.5))
       : Math.max(68.5, emetSla + 8.0);
@@ -1014,8 +1552,8 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
       data: {
         labels: labels,
         datasets: [
-          { label: 'E-Meterai SLA %', data: emetData, borderColor: '#00529B', backgroundColor: 'rgba(0,82,155,0.1)', tension: 0.25, fill: true },
-          { label: 'Perisai SLA %', data: perisaiData, borderColor: '#6A1B9A', backgroundColor: 'transparent', tension: 0.25 }
+          { label: 'E-Meterai SLA %', data: emetData, borderColor: '#2563EB', backgroundColor: 'rgba(37,99,235,0.12)', tension: 0.25, fill: true },
+          { label: 'Perisai SLA %', data: perisaiData, borderColor: '#A855F7', backgroundColor: 'transparent', tension: 0.25 }
         ]
       },
       options: {
@@ -1027,7 +1565,7 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
   }
 
   // =========================================================================
-  // 4. EVENT LISTENERS
+  // 5. EVENT LISTENERS & INITIALIZATION
   // =========================================================================
   function switchTab(tabName){
     document.querySelectorAll('.main-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
@@ -1047,19 +1585,29 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
     try{
       const buf = await file.arrayBuffer();
       const parsed = parseWorkbook(buf, file.name);
-      if(parsed.size === 0) throw new Error('Tidak ada tiket valid yang ditemukan.');
-      ticketsMap = parsed;
-      const skipTxt = parsed._skippedNotEscalated ? (' (' + parsed._skippedNotEscalated + ' not escalated dilewati)') : '';
-      document.getElementById('metaBadge').textContent = file.name + ' · ' + parsed.size + ' tiket eskalasi';
-      statusEl.textContent = 'Berhasil memuat ' + parsed.size + ' tiket eskalasi' + skipTxt + '.';
+      if(parsed.interactions.length === 0) throw new Error('Tidak ada baris interaksi valid yang ditemukan.');
+      allInteractions = parsed.interactions;
+      ticketsMap = parsed.escalated;
+      const skipTxt = parsed.escalated._skippedNotEscalated ? (' (' + parsed.escalated._skippedNotEscalated + ' not escalated tetap dihitung di Daily Interaction)') : '';
+      document.getElementById('metaBadge').textContent = file.name + ' · ' + allInteractions.length + ' interaksi (' + ticketsMap.size + ' eskalasi)';
+      statusEl.textContent = 'Berhasil memuat ' + allInteractions.length + ' interaksi & ' + ticketsMap.size + ' tiket eskalasi' + skipTxt + '.';
       statusEl.className = 'status-line ok';
-      switchTab('aktual');
+
+      document.getElementById('dailyHourStart').value = '0';
+      document.getElementById('dailyHourEnd').value = '23';
+      renderDailyFromUploaded();
       renderActual();
     }catch(e){
       statusEl.textContent = 'Gagal membaca file: ' + e.message;
       statusEl.className = 'status-line error';
     }
     ev.target.value = '';
+  });
+
+  ['dailyDateSelect', 'dailyHourStart', 'dailyHourEnd', 'dailyCasnScope'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => {
+      if(allInteractions.length) renderDailyFromUploaded();
+    });
   });
 
   document.getElementById('slaViewToggle').addEventListener('click', () => {
@@ -1070,7 +1618,7 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
     if(ticketsMap.size > 0) renderActual();
   });
 
-  let isDark = false;
+  let isDark = true;
   document.getElementById('themeToggleBtn').addEventListener('click', () => {
     isDark = !isDark;
     if(isDark){
@@ -1130,6 +1678,8 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
     runSimulation();
   });
 
+  initHourSelectors();
+  renderReferenceDailyReport();
   runSimulation();
   renderHistoricalChart();
 })();

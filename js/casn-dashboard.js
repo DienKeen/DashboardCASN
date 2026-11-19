@@ -34,6 +34,50 @@
     let dailyChart1 = null, dailyChart2 = null, dailyChart3 = null, dailyChart4 = null;
     let tktChart1 = null, tktChart2 = null, tktChart3 = null, tktChart4 = null;
 
+    function injectD1Controls(){
+        const fileInput = document.getElementById('fileInput');
+        if(!fileInput || document.getElementById('uploadSyncMode')) return;
+        const wrap = fileInput.parentElement;
+
+        const modeSel = document.createElement('select');
+        modeSel.id = 'uploadSyncMode';
+        modeSel.className = 'form-select form-select-sm bg-dark text-light border-secondary';
+        modeSel.style.width = 'auto';
+        modeSel.title = 'Mode penyimpanan ke database Cloudflare D1 saat upload file';
+        modeSel.innerHTML =
+            '<option value="replace">D1: Timpa (Replace)</option>' +
+            '<option value="upsert">D1: Gabung (Upsert)</option>';
+
+        const clearBtn = document.createElement('button');
+        clearBtn.id = 'clearD1Btn';
+        clearBtn.type = 'button';
+        clearBtn.className = 'btn btn-outline-danger btn-sm';
+        clearBtn.innerHTML = '<i class="fas fa-trash-alt me-1"></i> Reset D1';
+        clearBtn.addEventListener('click', async () => {
+            if(!confirm('Hapus seluruh data tiket tersimpan di Cloudflare D1?')) return;
+            const alertEl = document.getElementById('statusAlert');
+            try {
+                const res = await fetch('/api/tickets', { method: 'DELETE' });
+                const json = await res.json().catch(() => ({}));
+                if(!res.ok || !json.ok) throw new Error(json.reason || ('HTTP ' + res.status));
+                allInteractions = [];
+                ticketsMap = new Map();
+                document.getElementById('metaBadge').textContent = 'Mode Preview Data Referensi CASN';
+                document.getElementById('dailySourceBadge').textContent = 'Data Referensi CASN (Upload CSV/Excel untuk data real)';
+                alertEl.className = 'alert alert-warning py-2 px-3 small';
+                alertEl.textContent = 'Data di Cloudflare D1 berhasil dikosongkan.';
+                renderReferenceReports();
+                renderActual();
+            } catch (err) {
+                alertEl.className = 'alert alert-danger py-2 px-3 small';
+                alertEl.textContent = 'Gagal menghapus data D1: ' + err.message;
+            }
+        });
+
+        wrap.insertBefore(modeSel, fileInput.nextSibling);
+        wrap.appendChild(clearBtn);
+    }
+
     function safeStr(v){
         if(v === null || v === undefined) return '';
         return String(v).trim();
@@ -54,6 +98,13 @@
             }
         }
         return null;
+    }
+
+    function toYMD(iso){
+        if(!iso) return null;
+        const d = new Date(iso);
+        if(isNaN(d.getTime())) return null;
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     }
 
     function findHeaderRowIndex(aoa){
@@ -98,21 +149,32 @@
             let doRes = toISO(col(row, 'date_resolved'));
             if(!doRes) doRes = toISO(col(row, 'date_last_update'));
             const doStart = toISO(col(row, 'date_start_interaction')) || toISO(col(row, 'date_origin_interaction')) || toISO(col(row, 'date_created_at'));
+            const doOpen = toISO(col(row, 'date_open'));
+            const scVal = safeStr(col(row, 'subcategory'));
+            const dscVal = safeStr(col(row, 'detailsubcategory'));
+            const stVal = safeStr(col(row, 'ticket_status_name'));
+            const chVal = safeStr(col(row, 'channel_name'));
 
             const rec = {
                 id: id,
                 sj: safeStr(col(row, 'subject')),
-                sc: safeStr(col(row, 'subcategory')),
+                sc: scVal,
                 mc: safeStr(col(row, 'maincategory')),
-                dsc: safeStr(col(row, 'detailsubcategory')),
+                dsc: dscVal,
                 pr: safeStr(col(row, 'priority_name')).toUpperCase(),
-                st: safeStr(col(row, 'ticket_status_name')),
-                ch: safeStr(col(row, 'channel_name')),
+                st: stVal,
+                ch: chVal,
                 isEscalated: !isNotEscalated,
                 doStart: doStart,
-                doOpen: toISO(col(row, 'date_open')),
+                doOpen: doOpen,
                 doRes: doRes,
                 doPending: toISO(col(row, 'date_pending')),
+                ticketDateYMD: toYMD(doOpen || doStart),
+                interactionDateYMD: toYMD(doStart),
+                subCategory: scVal,
+                detailCategory: dscVal,
+                statusName: stVal,
+                channel: chVal,
             };
 
             interactionsOut.push(rec);
@@ -121,6 +183,50 @@
         }
         escalatedOut._skippedNotEscalated = skippedNotEscalated;
         return { escalated: escalatedOut, interactions: interactionsOut };
+    }
+
+    async function syncToD1(records, mode){
+        const CHUNK_SIZE = 500;
+        for(let i = 0; i < records.length; i += CHUNK_SIZE){
+            const chunk = records.slice(i, i + CHUNK_SIZE);
+            const chunkMode = (i === 0 && mode === 'replace') ? 'replace' : 'upsert';
+            const res = await fetch('/api/tickets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mode: chunkMode, records: chunk })
+            });
+            const json = await res.json().catch(() => ({}));
+            if(!res.ok || !json.ok){
+                throw new Error(json.reason || ('HTTP ' + res.status));
+            }
+        }
+    }
+
+    async function loadFromD1(){
+        try {
+            const res = await fetch('/api/tickets');
+            if(!res.ok) return;
+            const data = await res.json();
+            if(!data.ok || !Array.isArray(data.records) || data.records.length === 0) return;
+
+            const escalatedOut = new Map();
+            let skippedNotEscalated = 0;
+            data.records.forEach(r => {
+                if(!r || !r.id) return;
+                if(!r.isEscalated) skippedNotEscalated++;
+                else escalatedOut.set(r.id, r);
+            });
+            escalatedOut._skippedNotEscalated = skippedNotEscalated;
+
+            allInteractions = data.records;
+            ticketsMap = escalatedOut;
+            document.getElementById('metaBadge').textContent =
+                'Cloudflare D1 · ' + allInteractions.length.toLocaleString('id-ID') + ' interaksi (' + ticketsMap.size.toLocaleString('id-ID') + ' eskalasi)';
+            renderDailyAndTicketingFromUploaded();
+            renderActual();
+        } catch (err) {
+            console.warn('D1 load skipped:', err);
+        }
     }
 
     function initHourSelectors(){
@@ -1049,23 +1155,42 @@
         const file = ev.target.files[0];
         if(!file) return;
         const alertEl = document.getElementById('statusAlert');
+        const syncMode = (document.getElementById('uploadSyncMode') || {}).value || 'replace';
         alertEl.className = 'alert alert-info py-2 px-3 small';
         alertEl.textContent = 'Membaca file "' + file.name + '"...';
         try{
             const buf = await file.arrayBuffer();
             const parsed = parseWorkbook(buf, file.name);
             if(parsed.interactions.length === 0) throw new Error('Tidak ada baris interaksi valid yang ditemukan.');
-            allInteractions = parsed.interactions;
-            ticketsMap = parsed.escalated;
-            const skipTxt = parsed.escalated._skippedNotEscalated ? (' (' + parsed.escalated._skippedNotEscalated + ' not escalated dihitung di Interaksi)') : '';
-            document.getElementById('metaBadge').textContent = file.name + ' · ' + allInteractions.length + ' interaksi (' + ticketsMap.size + ' eskalasi)';
-            alertEl.className = 'alert alert-success py-2 px-3 small';
-            alertEl.textContent = 'Berhasil memuat ' + allInteractions.length + ' interaksi & ' + ticketsMap.size + ' tiket eskalasi' + skipTxt + '.';
+
+            if(syncMode === 'replace' || allInteractions.length === 0){
+                allInteractions = parsed.interactions;
+                ticketsMap = parsed.escalated;
+            } else {
+                const mergedInt = new Map(allInteractions.map(r => [r.id, r]));
+                parsed.interactions.forEach(r => mergedInt.set(r.id, r));
+                allInteractions = Array.from(mergedInt.values());
+                parsed.escalated.forEach((rec, id) => ticketsMap.set(id, rec));
+            }
 
             document.getElementById('dailyHourStart').value = '0';
             document.getElementById('dailyHourEnd').value = '23';
             renderDailyAndTicketingFromUploaded();
             renderActual();
+
+            alertEl.textContent = 'Menyimpan ' + parsed.interactions.length + ' baris ke Cloudflare D1 (' + syncMode + ')...';
+            try {
+                await syncToD1(parsed.interactions, syncMode);
+                document.getElementById('metaBadge').textContent =
+                    'Cloudflare D1 · ' + allInteractions.length.toLocaleString('id-ID') + ' interaksi (' + ticketsMap.size.toLocaleString('id-ID') + ' eskalasi)';
+                alertEl.className = 'alert alert-success py-2 px-3 small';
+                alertEl.textContent = 'Berhasil memuat & menyimpan ' + parsed.interactions.length + ' interaksi ke Cloudflare D1.';
+            } catch (syncErr) {
+                document.getElementById('metaBadge').textContent =
+                    file.name + ' (Lokal) · ' + allInteractions.length + ' interaksi (' + ticketsMap.size + ' eskalasi)';
+                alertEl.className = 'alert alert-warning py-2 px-3 small';
+                alertEl.textContent = 'Data tampil di layar, namun gagal sync ke D1 (' + syncErr.message + ').';
+            }
         }catch(e){
             alertEl.className = 'alert alert-danger py-2 px-3 small';
             alertEl.textContent = 'Gagal membaca file: ' + e.message;
@@ -1154,8 +1279,10 @@
         runSimulation();
     });
 
+    injectD1Controls();
     initHourSelectors();
     renderReferenceReports();
     runSimulation();
     renderHistoricalChart();
+    loadFromD1();
 })();

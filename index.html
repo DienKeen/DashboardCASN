@@ -79,7 +79,7 @@ html, body {
 }
 input[type=file] { display: none; }
 
-.wrap { max-width: 1460px; margin: 0 auto; padding: 0 18px 44px; }
+.wrap { max-width: 1480px; margin: 0 auto; padding: 0 18px 44px; }
 
 .topbar {
   background: var(--surface); border-bottom: 2px solid var(--peruri-blue);
@@ -95,7 +95,7 @@ input[type=file] { display: none; }
 .main-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
 .main-tab {
   height: 36px; padding: 0 15px; border: 1px solid var(--border); border-radius: var(--radius);
-  background: var(--surface); color: var(--text-muted); font-family: var(--font-ui); font-size: 12px;
+  background: var(--surface); color: var(--text-muted); font-family: var(--font-ui); font-size: 12.5px;
   font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
 }
 .main-tab:hover:not(.active) { background: var(--hover-bg); color: var(--text); }
@@ -133,7 +133,7 @@ input[type=file] { display: none; }
 .section-head .sub { font-size: 11px; color: var(--text-muted); font-weight: 500; }
 .panel-body { padding: 14px; }
 
-/* ================= DAILY REPORT LAYOUT (INTERACTION & TICKETING) ================= */
+/* ================= DAILY REPORT (INTERAKSI & TICKETING) ================= */
 .daily-controls {
   display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
   padding: 10px 14px; background: var(--surface); border: 1px solid var(--border);
@@ -170,7 +170,7 @@ input[type=file] { display: none; }
 .report-tbl tbody tr:nth-child(even) { background: var(--row-even); }
 .report-tbl tbody tr:hover { background: var(--row-hover); }
 .report-tbl td.num { text-align: center; font-weight: 600; font-family: var(--font-mono); }
-.report-tbl td.big-num { text-align: center; font-weight: 700; font-size: 13px; font-family: var(--font-mono); }
+.report-tbl td.big-num { text-align: center; font-weight: 700; font-size: 13.5px; font-family: var(--font-mono); }
 .report-tbl td.row-title { font-weight: 700; font-size: 12px; white-space: nowrap; }
 .report-tbl tr.total-row td {
   background: var(--table-header);
@@ -270,7 +270,7 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
   <div class="topbar-row">
     <div class="brand">
       <h1>CASN 2026 Command Center — Interaction, Ticketing &amp; SLA Evaluator</h1>
-      <p>Helpdesk Peruri Digital — Daily Report Interaksi, Daily Report Ticketing, Evaluasi SLA Aktual &amp; Simulasi Kapasitas</p>
+      <p>Helpdesk Peruri Digital — Daily Report Interaksi &amp; Ticketing CASN, Evaluasi SLA Aktual &amp; Simulasi Kapasitas</p>
     </div>
     <div class="topbar-actions">
       <label class="btn btn-primary" for="fileInput">&#128228; Upload CSV / Excel</label>
@@ -291,34 +291,34 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
 <div class="wrap">
   <div class="status-line" id="statusLine"></div>
 
+  <!-- SHARED FILTER BAR UNTUK DAILY INTERACTION & DAILY TICKETING -->
+  <div class="daily-controls" id="sharedDailyControls">
+    <label for="dailyDateSelect">Tanggal Laporan:</label>
+    <select class="filter-select" id="dailyDateSelect" style="min-width:185px;"></select>
+
+    <label for="dailyHourStart">Time Interval:</label>
+    <select class="filter-select" id="dailyHourStart"></select>
+    <span style="font-weight:700;">s/d</span>
+    <select class="filter-select" id="dailyHourEnd"></select>
+
+    <label for="dailyCasnScope">Filter Produk CASN:</label>
+    <select class="filter-select" id="dailyCasnScope" style="min-width:175px;">
+      <option value="EMETERAI">E-Meterai / CASN</option>
+      <option value="ALL">Semua Produk</option>
+    </select>
+
+    <span class="meta-pill" id="dailySourceBadge">Menampilkan Data Referensi CASN (Upload CSV/Excel untuk data real)</span>
+  </div>
+
   <div class="main-tabs">
-    <button class="main-tab active" data-tab="daily-int">&#128200; Daily Report Interaksi CASN</button>
-    <button class="main-tab" data-tab="daily-tkt">&#127915; Daily Report Ticketing CASN</button>
+    <button class="main-tab active" data-tab="daily">&#128200; Daily Report Interaksi CASN</button>
+    <button class="main-tab" data-tab="ticketing">&#127915; Daily Report Ticketing CASN</button>
     <button class="main-tab" data-tab="aktual">&#9989; Evaluasi SLA Tiket Aktual</button>
     <button class="main-tab" data-tab="simulasi">&#128202; Simulasi &amp; Skenario CASN 2026</button>
   </div>
 
   <!-- ================= TAB 1: DAILY REPORT INTERAKSI CASN ================= -->
-  <div class="tab-pane active" id="tab-daily-int">
-    <div class="daily-controls">
-      <label for="intDateSelect">Tanggal Laporan:</label>
-      <select class="filter-select" id="intDateSelect" style="min-width:170px;"></select>
-
-      <label for="intHourStart">Time Interval:</label>
-      <select class="filter-select" id="intHourStart"></select>
-      <span style="font-weight:700;">s/d</span>
-      <select class="filter-select" id="intHourEnd"></select>
-
-      <label for="intCasnScope">Filter Produk CASN:</label>
-      <select class="filter-select" id="intCasnScope" style="min-width:180px;">
-        <option value="EMETERAI">E-Meterai / CASN</option>
-        <option value="ALL">Semua Produk</option>
-      </select>
-
-      <span class="meta-pill" id="intSourceBadge">Data Referensi CASN (Upload CSV/Excel untuk data real)</span>
-    </div>
-
-    <!-- PAIR 1: SUMMARY TABLE + PERGERAKAN TOP 5 INTERAKSI CASN (PER JAM) -->
+  <div class="tab-pane active" id="tab-daily">
     <div class="daily-pair">
       <div class="panel">
         <div class="panel-body" style="padding:10px;">
@@ -326,13 +326,13 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
             <thead>
               <tr>
                 <th style="width:16%;">Date</th>
-                <th colspan="2" id="intDateVal" style="background:#0B192C;">September 6, 2024</th>
+                <th colspan="2" id="tblDateVal" style="background:#0B192C;">September 6, 2024</th>
                 <th colspan="3">Prosentase Interaksi CASN</th>
               </tr>
               <tr>
                 <th>Time Interval</th>
-                <th id="intHourStartLbl" style="background:#0B192C;">0:00</th>
-                <th id="intHourEndLbl" style="background:#0B192C;">11:00</th>
+                <th id="tblHourStart" style="background:#0B192C;">0:00</th>
+                <th id="tblHourEnd" style="background:#0B192C;">11:00</th>
                 <th>Informasi</th>
                 <th>Keluhan</th>
                 <th>Permintaan</th>
@@ -360,21 +360,20 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
                 <th>Permintaan</th>
               </tr>
             </thead>
-            <tbody id="intSummaryBody"></tbody>
+            <tbody id="dailySummaryBody"></tbody>
           </table>
         </div>
       </div>
 
       <div class="panel">
         <div class="section-head">
-          <h2 id="intChart1Title">Pergerakan TOP 5 Interaksi CASN</h2>
+          <h2 id="chart1Title">Pergerakan TOP 5 Interaksi CASN</h2>
           <span class="sub">Per Interval Jam (0:00 – 23:00)</span>
         </div>
-        <div class="chart-box-daily"><canvas id="intChart1"></canvas></div>
+        <div class="chart-box-daily"><canvas id="dailyChart1"></canvas></div>
       </div>
     </div>
 
-    <!-- PAIR 2: TOP INTERAKSI (DAILY) + PERGERAKAN TOP 5 INTERAKSI HARIAN -->
     <div class="daily-pair">
       <div class="panel">
         <div class="panel-body" style="padding:10px;">
@@ -387,7 +386,7 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
                 <th style="width:74px;">%</th>
               </tr>
             </thead>
-            <tbody id="topDailyCasnIntBody"></tbody>
+            <tbody id="topDailyCasnBody"></tbody>
           </table>
         </div>
       </div>
@@ -397,11 +396,10 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
           <h2>Pergerakan TOP 5 Interaksi Harian Periode CASN</h2>
           <span class="sub">Tren Harian (MTD)</span>
         </div>
-        <div class="chart-box-daily"><canvas id="intChart2"></canvas></div>
+        <div class="chart-box-daily"><canvas id="dailyChart2"></canvas></div>
       </div>
     </div>
 
-    <!-- PAIR 3: TOP INTERAKSI (MTD) + PERGERAKAN TOP ALL INTERAKSI PER INTERVAL -->
     <div class="daily-pair">
       <div class="panel">
         <div class="panel-body" style="padding:10px;">
@@ -414,7 +412,7 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
                 <th style="width:74px;">%</th>
               </tr>
             </thead>
-            <tbody id="topMtdCasnIntBody"></tbody>
+            <tbody id="topMtdCasnBody"></tbody>
           </table>
         </div>
       </div>
@@ -424,11 +422,10 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
           <h2>Pergerakan TOP All Interaksi Per Interval</h2>
           <span class="sub">Grafik Garis Per Jam (0:00 – 23:00)</span>
         </div>
-        <div class="chart-box-daily"><canvas id="intChart3"></canvas></div>
+        <div class="chart-box-daily"><canvas id="dailyChart3"></canvas></div>
       </div>
     </div>
 
-    <!-- PAIR 4: TOP ALL INTERACTION (DAILY & MTD) + PERGERAKAN TOP ALL INTERAKSI HARIAN -->
     <div class="daily-pair">
       <div class="panel">
         <div class="panel-body" style="padding:10px;">
@@ -441,7 +438,7 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
                 <th style="width:74px;">%</th>
               </tr>
             </thead>
-            <tbody id="topDailyAllIntBody"></tbody>
+            <tbody id="topDailyAllBody"></tbody>
           </table>
 
           <table class="report-tbl">
@@ -453,7 +450,7 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
                 <th style="width:74px;">%</th>
               </tr>
             </thead>
-            <tbody id="topMtdAllIntBody"></tbody>
+            <tbody id="topMtdAllBody"></tbody>
           </table>
         </div>
       </div>
@@ -463,31 +460,13 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
           <h2>Pergerakan TOP All Interaksi Harian</h2>
           <span class="sub">Tren Harian Seluruh Produk</span>
         </div>
-        <div class="chart-box-daily" style="min-height:420px;"><canvas id="intChart4"></canvas></div>
+        <div class="chart-box-daily" style="min-height:420px;"><canvas id="dailyChart4"></canvas></div>
       </div>
     </div>
   </div>
 
-  <!-- ================= TAB 2: DAILY REPORT TICKETING CASN (PERSIS GAMBAR 2) ================= -->
-  <div class="tab-pane" id="tab-daily-tkt">
-    <div class="daily-controls">
-      <label for="tktDateSelect">Tanggal Laporan:</label>
-      <select class="filter-select" id="tktDateSelect" style="min-width:170px;"></select>
-
-      <label for="tktHourStart">Time Interval:</label>
-      <select class="filter-select" id="tktHourStart"></select>
-      <span style="font-weight:700;">s/d</span>
-      <select class="filter-select" id="tktHourEnd"></select>
-
-      <label for="tktCasnScope">Filter Produk CASN:</label>
-      <select class="filter-select" id="tktCasnScope" style="min-width:180px;">
-        <option value="EMETERAI">E-Meterai / CASN</option>
-        <option value="ALL">Semua Produk</option>
-      </select>
-
-      <span class="meta-pill" id="tktSourceBadge">Data Referensi Ticketing CASN (Upload CSV/Excel untuk data real)</span>
-    </div>
-
+  <!-- ================= TAB 2: DAILY REPORT TICKETING CASN (BARU DIKOMBINASIKAN) ================= -->
+  <div class="tab-pane" id="tab-ticketing">
     <!-- PAIR 1: SUMMARY TABLE TICKETING + PERGERAKAN TOP 5 TIKET ESKALASI PER INTERVAL -->
     <div class="daily-pair">
       <div class="panel">
@@ -495,15 +474,13 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
           <table class="report-tbl" style="margin-bottom:10px;">
             <thead>
               <tr>
-                <th style="width:28%;">Date</th>
-                <th colspan="2" id="tktDateVal" style="background:#0B192C;">September 6, 2024</th>
-                <th style="width:28%;">Status Monitoring</th>
+                <th style="width:24%;">Date</th>
+                <th colspan="4" id="tktDateVal" style="background:#0B192C;">September 6, 2024</th>
               </tr>
               <tr>
                 <th>Time Interval</th>
-                <th id="tktHourStartLbl" style="background:#0B192C;">0:00</th>
-                <th id="tktHourEndLbl" style="background:#0B192C;">23:59</th>
-                <th id="tktResolutionRateLbl" style="background:#0B192C;">Resolution Rate: 5.88%</th>
+                <th colspan="2" id="tktHourStart" style="background:#0B192C;">0:00</th>
+                <th colspan="2" id="tktHourEnd" style="background:#0B192C;">23:59</th>
               </tr>
             </thead>
           </table>
@@ -526,7 +503,7 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
       <div class="panel">
         <div class="section-head">
           <h2 id="tktChart1Title">Pergerakan TOP 5 Tiket Eskalasi per Interval</h2>
-          <span class="sub">Grafik Garis Per Interval Jam (0:00 – 23:00)</span>
+          <span class="sub">Grafik Garis Per Jam (0:00 – 23:00)</span>
         </div>
         <div class="chart-box-daily"><canvas id="tktChart1"></canvas></div>
       </div>
@@ -545,7 +522,7 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
                 <th style="width:74px;">%</th>
               </tr>
             </thead>
-            <tbody id="topDailyCasnTktBody"></tbody>
+            <tbody id="topDailyTktCasnBody"></tbody>
           </table>
         </div>
       </div>
@@ -553,13 +530,13 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
       <div class="panel">
         <div class="section-head">
           <h2>Pergerakan TOP 5 Tiket Eskalasi Harian pada Periode CASN</h2>
-          <span class="sub">Tren Harian Tiket Eskalasi CASN</span>
+          <span class="sub">Tren Harian (MTD)</span>
         </div>
         <div class="chart-box-daily"><canvas id="tktChart2"></canvas></div>
       </div>
     </div>
 
-    <!-- PAIR 3: TOP TIKET CASN (MTD) + PERGERAKAN TOP ALL TICKET PER INTERVAL -->
+    <!-- PAIR 3: TOP TIKET CASN (MONTH TO DATE) + PERGERAKAN TOP ALL TIKET PER INTERVAL -->
     <div class="daily-pair">
       <div class="panel">
         <div class="panel-body" style="padding:10px;">
@@ -572,21 +549,21 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
                 <th style="width:74px;">%</th>
               </tr>
             </thead>
-            <tbody id="topMtdCasnTktBody"></tbody>
+            <tbody id="topMtdTktCasnBody"></tbody>
           </table>
         </div>
       </div>
 
       <div class="panel">
         <div class="section-head">
-          <h2>Pergerakan TOP All Ticket Per Interval</h2>
-          <span class="sub">Grafik Garis Per Interval Jam (0:00 – 23:00)</span>
+          <h2>Pergerakan TOP All Tiket Per Interval</h2>
+          <span class="sub">Grafik Garis Per Jam (0:00 – 23:00)</span>
         </div>
         <div class="chart-box-daily"><canvas id="tktChart3"></canvas></div>
       </div>
     </div>
 
-    <!-- PAIR 4: TOP ALL TIKET (DAILY & MTD) + PERGERAKAN TOP ALL TICKET HARIAN -->
+    <!-- PAIR 4: TOP ALL TIKET (DAILY & MTD) + PERGERAKAN TOP ALL TIKET HARIAN -->
     <div class="daily-pair">
       <div class="panel">
         <div class="panel-body" style="padding:10px;">
@@ -599,7 +576,7 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
                 <th style="width:74px;">%</th>
               </tr>
             </thead>
-            <tbody id="topDailyAllTktBody"></tbody>
+            <tbody id="topDailyTktAllBody"></tbody>
           </table>
 
           <table class="report-tbl">
@@ -611,15 +588,15 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
                 <th style="width:74px;">%</th>
               </tr>
             </thead>
-            <tbody id="topMtdAllTktBody"></tbody>
+            <tbody id="topMtdTktAllBody"></tbody>
           </table>
         </div>
       </div>
 
       <div class="panel">
         <div class="section-head">
-          <h2>Pergerakan TOP All Ticket Harian</h2>
-          <span class="sub">Tren Harian Seluruh Tiket Eskalasi</span>
+          <h2>Pergerakan TOP All Tiket Harian</h2>
+          <span class="sub">Tren Harian Seluruh Produk</span>
         </div>
         <div class="chart-box-daily" style="min-height:420px;"><canvas id="tktChart4"></canvas></div>
       </div>
@@ -857,7 +834,7 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
 
   <footer>
     <span>Target SLA — Critical: 8j · High: 12j · Medium: 24j · Low: 48j (jam kalender penuh, dihitung sampai resolved)</span>
-    <span>Helpdesk Peruri Digital — Daily Interaction, Daily Ticketing &amp; SLA Evaluator</span>
+    <span>Helpdesk Peruri Digital — Daily Interaction, Ticketing &amp; SLA Evaluator</span>
   </footer>
 </div>
 
@@ -887,24 +864,16 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
     { label: '>30 Hari', max: Infinity },
   ];
 
-  let allInteractions = []; // Seluruh baris (escalated + not escalated) untuk Daily Report Interaksi
-  let ticketsMap = new Map(); // Hanya escalated untuk Daily Report Ticketing & SLA Evaluator
+  let allInteractions = []; // Semua baris (escalated + not escalated) untuk Daily Report Interaksi
+  let ticketsMap = new Map(); // Hanya escalated untuk Daily Report Ticketing & Evaluasi SLA
   let slaViewMode = 'exclude';
   let selectedProduct = 'ALL';
   let selectedCategory = 'ALL';
   let selectedMonth = 'ALL';
 
-  const chartsRegistry = {};
-
-  function createOrReplaceChart(canvasId, config){
-    if(chartsRegistry[canvasId]){
-      chartsRegistry[canvasId].destroy();
-    }
-    const ctx = document.getElementById(canvasId);
-    if(ctx){
-      chartsRegistry[canvasId] = new Chart(ctx, config);
-    }
-  }
+  let achievedChart = null, top10Chart = null, histChart = null;
+  let dailyChart1 = null, dailyChart2 = null, dailyChart3 = null, dailyChart4 = null;
+  let tktChart1 = null, tktChart2 = null, tktChart3 = null, tktChart4 = null;
 
   function safeStr(v){
     if(v === null || v === undefined) return '';
@@ -1005,58 +974,62 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
     return { escalated: escalatedOut, interactions: interactionsOut };
   }
 
+  // =========================================================================
+  // 2. TAB 1 & TAB 2: DAILY INTERACTION + DAILY TICKETING (REFERENSI & AKTUAL)
+  // =========================================================================
   function initHourSelectors(){
-    const pairs = [
-      ['intHourStart', 'intHourEnd', '0', '23'],
-      ['tktHourStart', 'tktHourEnd', '0', '23']
-    ];
-    pairs.forEach(([sId, eId, defS, defE]) => {
-      const sEl = document.getElementById(sId);
-      const eEl = document.getElementById(eId);
-      let optsStart = '', optsEnd = '';
-      for(let h = 0; h < 24; h++){
-        optsStart += '<option value="' + h + '">' + h + ':00</option>';
-        optsEnd += '<option value="' + h + '">' + (h === 23 ? '23:59' : h + ':00') + '</option>';
-      }
-      sEl.innerHTML = optsStart;
-      eEl.innerHTML = optsEnd;
-      sEl.value = defS;
-      eEl.value = defE;
-    });
+    const sStart = document.getElementById('dailyHourStart');
+    const sEnd = document.getElementById('dailyHourEnd');
+    let hOpts = '';
+    for(let h = 0; h < 24; h++){
+      hOpts += '<option value="' + h + '">' + h + ':00</option>';
+    }
+    sStart.innerHTML = hOpts;
+    sEnd.innerHTML = hOpts;
+    sStart.value = '0';
+    sEnd.value = '23';
   }
 
-  // =========================================================================
-  // 2. TAB 1: DAILY REPORT INTERAKSI CASN (SESUAI GAMBAR 1)
-  // =========================================================================
-  function renderReferenceDailyInteraction(){
-    document.getElementById('intDateSelect').innerHTML = '<option value="REF">September 6, 2024 (Referensi)</option>';
-    document.getElementById('intHourStart').value = '0';
-    document.getElementById('intHourEnd').value = '11';
-    document.getElementById('intDateVal').textContent = 'September 6, 2024';
-    document.getElementById('intHourStartLbl').textContent = '0:00';
-    document.getElementById('intHourEndLbl').textContent = '11:00';
+  function fillTopTable(tbodyId, items, sumTotal, sumPct){
+    document.getElementById(tbodyId).innerHTML = (items.map((it, i) =>
+      '<tr><td class="num">' + (i + 1) + '</td><td>' + it[0] + '</td><td class="num">' + it[1] + '</td><td class="num">' + it[2] + '</td></tr>'
+    ).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">Tidak ada data pada interval ini.</td></tr>') +
+    '<tr class="total-row"><td colspan="2" style="text-align:center;">Jumlah</td><td class="num">' + sumTotal + '</td><td class="num">' + sumPct + '</td></tr>';
+  }
+
+  function renderReferenceReports(){
+    document.getElementById('dailyDateSelect').innerHTML = '<option value="REF">September 6, 2024 (Referensi)</option>';
+    document.getElementById('dailyHourStart').value = '0';
+    document.getElementById('dailyHourEnd').value = '23';
+
+    const palette = ['#2563EB', '#F97316', '#94A3B8', '#FACC15', '#38BDF8'];
+    const hours = Array.from({ length: 24 }, (_, h) => h + ':00');
+    const daysRef = ['19-Aug','21-Aug','23-Aug','25-Aug','27-Aug','29-Aug','31-Aug','2-Sep','4-Sep','6-Sep'];
+    const commonOpts = {
+      responsive: true, maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true } },
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 11, font: { size: 10.5 } } } }
+    };
+
+    // --- A. TAB 1: INTERAKSI REFERENSI ---
+    document.getElementById('tblDateVal').textContent = 'September 6, 2024';
+    document.getElementById('tblHourStart').textContent = '0:00';
+    document.getElementById('tblHourEnd').textContent = '11:00';
     document.getElementById('pctInfo').textContent = '7.48%';
     document.getElementById('pctKeluhan').textContent = '80.52%';
     document.getElementById('pctPermintaan').textContent = '11.91%';
 
-    const sumRows = [
+    document.getElementById('dailySummaryBody').innerHTML = [
       { label: 'Daily Interaction CASN', total: 1083, esc: 118, notEsc: 965, info: 81, kel: 872, perm: 129 },
       { label: 'Month to Date', total: 14144, esc: 1214, notEsc: 12930, info: 1773, kel: 12071, perm: 273 },
       { label: 'Daily All Interaction', total: 2092, esc: 139, notEsc: 1953, info: 680, kel: 1211, perm: 147 },
       { label: 'MTD All Interaction', total: 35639, esc: 1872, notEsc: 33767, info: 14205, kel: 20346, perm: 608 },
-    ];
-    document.getElementById('intSummaryBody').innerHTML = sumRows.map(r =>
+    ].map(r =>
       '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.total + '</td><td class="big-num">' + r.esc + '</td>' +
       '<td class="big-num">' + r.notEsc + '</td><td class="big-num">' + r.info + '</td><td class="big-num">' + r.kel + '</td><td class="big-num">' + r.perm + '</td></tr>'
     ).join('');
 
-    const fillTop = (tbodyId, items, sumTotal, sumPct) => {
-      document.getElementById(tbodyId).innerHTML = items.map((it, i) =>
-        '<tr><td class="num">' + (i + 1) + '</td><td>' + it[0] + '</td><td class="num">' + it[1] + '</td><td class="num">' + it[2] + '</td></tr>'
-      ).join('') + '<tr class="total-row"><td colspan="2" style="text-align:center;">Jumlah</td><td class="num">' + sumTotal + '</td><td class="num">' + sumPct + '</td></tr>';
-    };
-
-    fillTop('topDailyCasnIntBody', [
+    fillTopTable('topDailyCasnBody', [
       ['CASN METEL-Pembayaran berhasil, kuota tidak bertambah', 424, '44.54%'],
       ['CASN-Pembayaran berhasil, kuota tidak bertambah', 219, '23.00%'],
       ['CASN-Failed Upload Document PDF', 70, '7.35%'],
@@ -1069,7 +1042,7 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
       ['CASN-Error Download File', 11, '1.16%'],
     ], 952, '91.81%');
 
-    fillTop('topMtdCasnIntBody', [
+    fillTopTable('topMtdCasnBody', [
       ['CASN-Pembayaran berhasil, kuota tidak bertambah', 4898, '36.81%'],
       ['CASN METEL-Pembayaran berhasil, kuota tidak bertambah', 2703, '20.32%'],
       ['CASN-Failed Upload Document PDF', 1375, '10.33%'],
@@ -1082,7 +1055,7 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
       ['CASN METEL-Tidak bisa Reset Password', 208, '1.56%'],
     ], 13305, '87.41%');
 
-    fillTop('topDailyAllIntBody', [
+    fillTopTable('topDailyAllBody', [
       ['CASN METEL-Pembayaran berhasil, kuota tidak bertambah', 424, '25.98%'],
       ['Deskripsi dan Panduan Produk E-Meterai', 393, '24.08%'],
       ['CASN-Pembayaran berhasil, kuota tidak bertambah', 219, '13.42%'],
@@ -1095,7 +1068,7 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
       ['CASN METEL-Error Download File', 25, '1.53%'],
     ], 1632, '90.01%');
 
-    fillTop('topMtdAllIntBody', [
+    fillTopTable('topMtdAllBody', [
       ['Deskripsi dan Panduan Produk E-Meterai', 8619, '27.07%'],
       ['CASN-Pembayaran berhasil, kuota tidak bertambah', 4898, '15.38%'],
       ['CASN METEL-Pembayaran berhasil, kuota tidak bertambah', 2703, '8.49%'],
@@ -1108,15 +1081,8 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
       ['CASN-Panduan penggunaan e-Meterai', 540, '1.70%'],
     ], 31843, '72.73%');
 
-    const hours = Array.from({ length: 24 }, (_, h) => h + ':00');
-    const palette = ['#2563EB', '#F97316', '#94A3B8', '#FACC15', '#38BDF8'];
-    const opts = {
-      responsive: true, maintainAspectRatio: false,
-      scales: { y: { beginAtZero: true } },
-      plugins: { legend: { position: 'bottom', labels: { boxWidth: 11, font: { size: 10.5 } } } }
-    };
-
-    createOrReplaceChart('intChart1', {
+    if(dailyChart1) dailyChart1.destroy();
+    dailyChart1 = new Chart(document.getElementById('dailyChart1'), {
       type: 'bar',
       data: {
         labels: hours,
@@ -1128,13 +1094,14 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
           { label: 'CASN METEL-Tidak bisa Reset Password', data: [0,0,1,1,1,2,4,7,9,8,6,5,0,0,0,0,0,0,0,0,0,0,0,0], backgroundColor: palette[4] },
         ]
       },
-      options: opts
+      options: commonOpts
     });
 
-    createOrReplaceChart('intChart2', {
+    if(dailyChart2) dailyChart2.destroy();
+    dailyChart2 = new Chart(document.getElementById('dailyChart2'), {
       type: 'bar',
       data: {
-        labels: ['19-Aug','21-Aug','23-Aug','25-Aug','27-Aug','29-Aug','31-Aug','2-Sep','4-Sep','6-Sep'],
+        labels: daysRef,
         datasets: [
           { label: 'CASN-Pembayaran berhasil', data: [40,65,90,110,145,180,220,580,1120,980], backgroundColor: palette[0] },
           { label: 'CASN METEL-Pembayaran berhasil', data: [20,35,50,75,95,120,160,340,680,610], backgroundColor: palette[1] },
@@ -1143,10 +1110,11 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
           { label: 'CASN-Panduan penggunaan e-Meterai', data: [8,12,18,24,30,42,58,95,160,140], backgroundColor: palette[4] },
         ]
       },
-      options: opts
+      options: commonOpts
     });
 
-    createOrReplaceChart('intChart3', {
+    if(dailyChart3) dailyChart3.destroy();
+    dailyChart3 = new Chart(document.getElementById('dailyChart3'), {
       type: 'line',
       data: {
         labels: hours,
@@ -1158,13 +1126,14 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
           { label: 'Maintenance Layanan E-Meterai', data: [2,2,3,4,6,9,15,22,29,26,21,17,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[4], tension: 0.3, fill: false },
         ]
       },
-      options: opts
+      options: commonOpts
     });
 
-    createOrReplaceChart('intChart4', {
+    if(dailyChart4) dailyChart4.destroy();
+    dailyChart4 = new Chart(document.getElementById('dailyChart4'), {
       type: 'bar',
       data: {
-        labels: ['19-Aug','21-Aug','23-Aug','25-Aug','27-Aug','29-Aug','31-Aug','2-Sep','4-Sep','6-Sep'],
+        labels: daysRef,
         datasets: [
           { label: 'Deskripsi dan Panduan Produk E-Meterai', data: [180,240,310,390,480,590,740,1280,2150,1890], backgroundColor: palette[0] },
           { label: 'CASN-Pembayaran berhasil', data: [40,65,90,110,145,180,220,580,1120,980], backgroundColor: palette[1] },
@@ -1173,191 +1142,25 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
           { label: 'Maintenance Layanan E-Meterai', data: [35,48,62,80,105,130,165,240,390,350], backgroundColor: palette[4] },
         ]
       },
-      options: opts
+      options: commonOpts
     });
-  }
 
-  function renderDailyInteractionFromUploaded(){
-    if(!allInteractions.length){
-      renderReferenceDailyInteraction();
-      return;
-    }
-
-    const dateSet = new Set();
-    allInteractions.forEach(r => {
-      const iso = r.doStart || r.doOpen;
-      if(!iso) return;
-      const d = new Date(iso);
-      dateSet.add(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'));
-    });
-    const dates = Array.from(dateSet).sort();
-    const selDateEl = document.getElementById('intDateSelect');
-    const prevVal = selDateEl.value;
-    selDateEl.innerHTML = dates.map(dt => {
-      const [y, m, d] = dt.split('-').map(Number);
-      const lbl = new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-      return '<option value="' + dt + '">' + lbl + '</option>';
-    }).join('');
-    if(dates.includes(prevVal)) selDateEl.value = prevVal;
-    else if(dates.length) selDateEl.value = dates[dates.length - 1];
-
-    const activeDate = selDateEl.value;
-    const hStart = parseInt(document.getElementById('intHourStart').value, 10);
-    const hEnd = parseInt(document.getElementById('intHourEnd').value, 10);
-    const casnScope = document.getElementById('intCasnScope').value;
-
-    const [ay, am, ad] = activeDate.split('-').map(Number);
-    const activeDateLabel = new Date(ay, am - 1, ad).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-    const monthPrefix = activeDate.slice(0, 7);
-
-    document.getElementById('intDateVal').textContent = activeDateLabel;
-    document.getElementById('intHourStartLbl').textContent = hStart + ':00';
-    document.getElementById('intHourEndLbl').textContent = hEnd === 23 ? '23:59' : hEnd + ':00';
-    document.getElementById('intChart1Title').textContent = 'Pergerakan TOP 5 Interaksi CASN — ' + activeDateLabel;
-    document.getElementById('intSourceBadge').textContent = 'Data Aktual CSV/Excel · ' + allInteractions.length.toLocaleString('id-ID') + ' interaksi';
-
-    const isCasn = (r) => {
-      if(casnScope === 'ALL') return true;
-      const sc = (r.sc || '').toLowerCase();
-      const dsc = (r.dsc || '').toLowerCase();
-      return sc === 'e-meterai' || dsc.includes('casn') || dsc.includes('sscasn') || dsc.includes('e-meterai');
-    };
-
-    const withMeta = allInteractions.map(r => {
-      const iso = r.doStart || r.doOpen;
-      if(!iso) return null;
-      const d = new Date(iso);
-      const dKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-      return { r: r, dKey: dKey, hour: d.getHours() };
-    }).filter(Boolean);
-
-    const dailyAll = withMeta.filter(x => x.dKey === activeDate && x.hour >= hStart && x.hour <= hEnd);
-    const dailyCasn = dailyAll.filter(x => isCasn(x.r));
-    const mtdAll = withMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate);
-    const mtdCasn = mtdAll.filter(x => isCasn(x.r));
-
-    const summarize = (list) => {
-      let esc = 0, notEsc = 0, info = 0, kel = 0, perm = 0;
-      list.forEach(x => {
-        if(x.r.isEscalated) esc++; else notEsc++;
-        const mc = (x.r.mc || '').toLowerCase();
-        if(mc === 'informasi') info++;
-        else if(mc === 'keluhan') kel++;
-        else if(mc === 'permintaan') perm++;
-      });
-      return { total: list.length, esc, notEsc, info, kel, perm };
-    };
-
-    const sDailyCasn = summarize(dailyCasn);
-    const sMtdCasn = summarize(mtdCasn);
-    const sDailyAll = summarize(dailyAll);
-    const sMtdAll = summarize(mtdAll);
-
-    const denom = sDailyCasn.total || 1;
-    document.getElementById('pctInfo').textContent = sDailyCasn.total ? ((sDailyCasn.info / denom) * 100).toFixed(2) + '%' : '0.00%';
-    document.getElementById('pctKeluhan').textContent = sDailyCasn.total ? ((sDailyCasn.kel / denom) * 100).toFixed(2) + '%' : '0.00%';
-    document.getElementById('pctPermintaan').textContent = sDailyCasn.total ? ((sDailyCasn.perm / denom) * 100).toFixed(2) + '%' : '0.00%';
-
-    const sumRows = [
-      { label: 'Daily Interaction CASN', ...sDailyCasn },
-      { label: 'Month to Date', ...sMtdCasn },
-      { label: 'Daily All Interaction', ...sDailyAll },
-      { label: 'MTD All Interaction', ...sMtdAll },
-    ];
-    document.getElementById('intSummaryBody').innerHTML = sumRows.map(r =>
-      '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.total + '</td><td class="big-num">' + r.esc + '</td>' +
-      '<td class="big-num">' + r.notEsc + '</td><td class="big-num">' + r.info + '</td><td class="big-num">' + r.kel + '</td><td class="big-num">' + r.perm + '</td></tr>'
-    ).join('');
-
-    const buildTop10 = (list, tbodyId) => {
-      const counts = new Map();
-      list.forEach(x => {
-        const k = x.r.dsc || x.r.sc || '(Lainnya)';
-        counts.set(k, (counts.get(k) || 0) + 1);
-      });
-      const sorted = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
-      const top10 = sorted.slice(0, 10);
-      const topSum = top10.reduce((s, x) => s + x[1], 0);
-      const allSum = list.length || 1;
-      const topPct = list.length ? ((topSum / allSum) * 100).toFixed(2) + '%' : '0.00%';
-
-      document.getElementById(tbodyId).innerHTML = (top10.map((it, idx) =>
-        '<tr><td class="num">' + (idx + 1) + '</td><td>' + it[0] + '</td><td class="num">' + it[1] + '</td><td class="num">' + ((it[1] / allSum) * 100).toFixed(2) + '%</td></tr>'
-      ).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">Tidak ada data pada interval ini.</td></tr>') +
-      '<tr class="total-row"><td colspan="2" style="text-align:center;">Jumlah</td><td class="num">' + topSum + '</td><td class="num">' + topPct + '</td></tr>';
-
-      return top10.slice(0, 5).map(x => x[0]);
-    };
-
-    const top5DailyCasn = buildTop10(dailyCasn, 'topDailyCasnIntBody');
-    const top5MtdCasn = buildTop10(mtdCasn, 'topMtdCasnIntBody');
-    const top5DailyAll = buildTop10(dailyAll, 'topDailyAllIntBody');
-    const top5MtdAll = buildTop10(mtdAll, 'topMtdAllIntBody');
-
-    const hours = Array.from({ length: 24 }, (_, h) => h + ':00');
-    const mtdDates = dates.filter(dt => dt.startsWith(monthPrefix) && dt <= activeDate);
-    const mtdDateLabels = mtdDates.map(dt => {
-      const [y, m, d] = dt.split('-').map(Number);
-      return new Date(y, m - 1, d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-    });
-    const palette = ['#2563EB', '#F97316', '#94A3B8', '#FACC15', '#38BDF8'];
-    const opts = {
-      responsive: true, maintainAspectRatio: false,
-      scales: { y: { beginAtZero: true } },
-      plugins: { legend: { position: 'bottom', labels: { boxWidth: 11, font: { size: 10.5 } } } }
-    };
-
-    const hourlySets = (list, cats) => cats.map((cat, idx) => ({
-      label: cat,
-      data: Array.from({ length: 24 }, (_, h) => list.filter(x => x.hour === h && (x.r.dsc || x.r.sc || '(Lainnya)') === cat).length),
-      backgroundColor: palette[idx % palette.length],
-      borderColor: palette[idx % palette.length],
-      tension: 0.3,
-      fill: false
-    }));
-
-    const dailySets = (list, cats) => cats.map((cat, idx) => ({
-      label: cat,
-      data: mtdDates.map(dt => list.filter(x => x.dKey === dt && (x.r.dsc || x.r.sc || '(Lainnya)') === cat).length),
-      backgroundColor: palette[idx % palette.length]
-    }));
-
-    createOrReplaceChart('intChart1', { type: 'bar', data: { labels: hours, datasets: hourlySets(dailyCasn, top5DailyCasn) }, options: opts });
-    createOrReplaceChart('intChart2', { type: 'bar', data: { labels: mtdDateLabels, datasets: dailySets(mtdCasn, top5MtdCasn) }, options: opts });
-    createOrReplaceChart('intChart3', { type: 'line', data: { labels: hours, datasets: hourlySets(dailyAll, top5DailyAll) }, options: opts });
-    createOrReplaceChart('intChart4', { type: 'bar', data: { labels: mtdDateLabels, datasets: dailySets(mtdAll, top5MtdAll) }, options: opts });
-  }
-
-  // =========================================================================
-  // 3. TAB 2: DAILY REPORT TICKETING CASN (SESUAI GAMBAR 2 YANG BARU DIKIRIM)
-  // =========================================================================
-  function renderReferenceDailyTicketing(){
-    document.getElementById('tktDateSelect').innerHTML = '<option value="REF">September 6, 2024 (Referensi)</option>';
-    document.getElementById('tktHourStart').value = '0';
-    document.getElementById('tktHourEnd').value = '23';
+    // --- B. TAB 2: TICKETING REFERENSI (PERSIS GAMBAR BARU) ---
     document.getElementById('tktDateVal').textContent = 'September 6, 2024';
-    document.getElementById('tktHourStartLbl').textContent = '0:00';
-    document.getElementById('tktHourEndLbl').textContent = '23:59';
-    document.getElementById('tktResolutionRateLbl').textContent = 'Resolution Rate CASN: 5.88%';
+    document.getElementById('tktHourStart').textContent = '0:00';
+    document.getElementById('tktHourEnd').textContent = '23:59';
 
-    const sumRows = [
+    document.getElementById('tktSummaryBody').innerHTML = [
       { label: 'Daily Ticket CASN', created: 119, resolved: 7, outstanding: 112, pending: 0 },
       { label: 'MTD Ticket CASN', created: 1214, resolved: 310, outstanding: 904, pending: 0 },
       { label: 'Daily All Ticket', created: 140, resolved: 8, outstanding: 132, pending: 0 },
       { label: 'MTD All Ticket', created: 1872, resolved: 534, outstanding: 1338, pending: 0 },
-    ];
-    document.getElementById('tktSummaryBody').innerHTML = sumRows.map(r =>
+    ].map(r =>
       '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.created + '</td><td class="big-num">' + r.resolved + '</td>' +
       '<td class="big-num">' + r.outstanding + '</td><td class="big-num">' + r.pending + '</td></tr>'
     ).join('');
 
-    const fillTop = (tbodyId, items, sumTotal, sumPct) => {
-      document.getElementById(tbodyId).innerHTML = items.map((it, i) =>
-        '<tr><td class="num">' + (i + 1) + '</td><td>' + it[0] + '</td><td class="num">' + it[1] + '</td><td class="num">' + it[2] + '</td></tr>'
-      ).join('') + '<tr class="total-row"><td colspan="2" style="text-align:center;">Jumlah</td><td class="num">' + sumTotal + '</td><td class="num">' + sumPct + '</td></tr>';
-    };
-
-    fillTop('topDailyCasnTktBody', [
+    fillTopTable('topDailyTktCasnBody', [
       ['CASN METEL-Pembayaran berhasil, kuota tidak bertambah', 53, '58.24%'],
       ['CASN-Pembayaran berhasil, kuota tidak bertambah', 24, '26.37%'],
       ['CASN METEL-Tidak bisa Reset Password', 5, '5.49%'],
@@ -1365,14 +1168,14 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
       ['CASN-Tidak bisa Reset Password', 2, '2.20%'],
       ['CASN METEL-Failed Login E-Meterai', 1, '1.10%'],
       ['CASN-Error Download File', 1, '1.10%'],
-      ['[CASN_E-METERAI] ERROR DOWNLOAD FILE (EKS-PORTAL)', 1, '1.10%'],
+      ['(CASN_E-METERAI) ERROR DOWNLOAD FILE (EKS-PORTAL)', 1, '1.10%'],
       ['CASN METEL-Error Kuota', 1, '1.10%'],
       ['CASN METEL-Informasi seputar E-Meterai SSCASN', 0, '0.00%'],
     ], 91, '100.00%');
 
-    fillTop('topMtdCasnTktBody', [
+    fillTopTable('topMtdTktCasnBody', [
       ['CASN METEL-Pembayaran berhasil, kuota tidak bertambah', 509, '44.65%'],
-      ['CASN-Pembayaran berhasil, kuota tidak bertambah', 501, '43.95%'],
+      ['CASN-Pembayaran berhasil, kuota tidak bertambah', 504, '44.21%'],
       ['CASN METEL-Tidak bisa Reset Password', 47, '4.12%'],
       ['CASN-Tidak bisa Reset Password', 20, '1.75%'],
       ['CASN METEL-Error Download File', 16, '1.40%'],
@@ -1383,8 +1186,8 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
       ['CASN-Pengembalian Kuota', 4, '0.35%'],
     ], 1140, '98.95%');
 
-    fillTop('topDailyAllTktBody', [
-      ['Pembayaran Berhasil Kuota tidak bertambah', 10, '11.90%'],
+    fillTopTable('topDailyTktAllBody', [
+      ['Pembayaran Berhasil Kuota Tidak Bertambah', 10, '11.90%'],
       ['Error Download File', 2, '2.38%'],
       ['API-Error Generate SN', 1, '1.19%'],
       ['Pengembalian Kuota e-Meterai', 1, '1.19%'],
@@ -1396,8 +1199,8 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
       ['OTP tidak terkirim', 1, '1.19%'],
     ], 84, '23.81%');
 
-    fillTop('topMtdAllTktBody', [
-      ['Pembayaran Berhasil Kuota tidak bertambah', 326, '50.78%'],
+    fillTopTable('topMtdTktAllBody', [
+      ['Pembayaran Berhasil Kuota Tidak Bertambah', 326, '50.78%'],
       ['Rekonsiliasi Data', 98, '15.26%'],
       ['Pengembalian Kuota e-Meterai', 63, '9.81%'],
       ['Mutasi Data Usage User', 19, '2.96%'],
@@ -1409,114 +1212,121 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
       ['Pembubuhan Gagal, Kuota berkurang', 9, '1.40%'],
     ], 642, '89.72%');
 
-    const hours = Array.from({ length: 24 }, (_, h) => h + ':00');
-    const palette = ['#2563EB', '#F97316', '#94A3B8', '#FACC15', '#38BDF8'];
-    const opts = {
-      responsive: true, maintainAspectRatio: false,
-      scales: { y: { beginAtZero: true } },
-      plugins: { legend: { position: 'bottom', labels: { boxWidth: 11, font: { size: 10.5 } } } }
-    };
-
-    createOrReplaceChart('tktChart1', {
+    if(tktChart1) tktChart1.destroy();
+    tktChart1 = new Chart(document.getElementById('tktChart1'), {
       type: 'line',
       data: {
         labels: hours,
         datasets: [
-          { label: 'CASN METEL-Pembayaran berhasil', data: [0,0,1,0,1,3,1,8,20,17,2,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[0], tension: 0.3, fill: false },
-          { label: 'CASN-Pembayaran berhasil', data: [0,0,0,0,0,0,1,4,7,7,5,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[1], tension: 0.3, fill: false },
+          { label: 'CASN METEL-Pembayaran berhasil', data: [0,0,1,0,0,0,2,8,19,14,9,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[0], tension: 0.3, fill: false },
+          { label: 'CASN-Pembayaran berhasil', data: [0,0,0,0,1,0,1,4,9,6,3,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[1], tension: 0.3, fill: false },
           { label: 'CASN METEL-Tidak bisa Reset Password', data: [0,0,0,0,0,0,0,1,2,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[2], tension: 0.3, fill: false },
-          { label: 'CASN METEL-Error Download File', data: [0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[3], tension: 0.3, fill: false },
+          { label: 'CASN METEL-Error Download File', data: [0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[3], tension: 0.3, fill: false },
           { label: 'CASN-Tidak bisa Reset Password', data: [0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[4], tension: 0.3, fill: false },
         ]
       },
-      options: opts
+      options: commonOpts
     });
 
-    createOrReplaceChart('tktChart2', {
+    if(tktChart2) tktChart2.destroy();
+    tktChart2 = new Chart(document.getElementById('tktChart2'), {
       type: 'bar',
       data: {
-        labels: ['19-Aug','21-Aug','23-Aug','25-Aug','27-Aug','29-Aug','31-Aug','2-Sep','4-Sep','6-Sep'],
+        labels: daysRef,
         datasets: [
-          { label: 'CASN METEL-Pembayaran berhasil', data: [5,12,18,22,28,35,45,95,148,101], backgroundColor: palette[0] },
-          { label: 'CASN-Pembayaran berhasil', data: [8,15,24,30,38,48,60,115,140,85], backgroundColor: palette[1] },
-          { label: 'CASN METEL-Tidak bisa Reset Password', data: [1,2,3,4,5,6,7,11,14,9], backgroundColor: palette[2] },
-          { label: 'CASN-Tidak bisa Reset Password', data: [0,1,1,2,2,3,3,5,6,4], backgroundColor: palette[3] },
-          { label: 'CASN METEL-Error Download File', data: [0,1,1,1,2,2,3,4,5,3], backgroundColor: palette[4] },
+          { label: 'CASN METEL-Pembayaran berhasil', data: [5,12,18,24,35,48,62,98,142,65], backgroundColor: palette[0] },
+          { label: 'CASN-Pembayaran berhasil', data: [4,10,16,22,32,45,60,95,138,82], backgroundColor: palette[1] },
+          { label: 'CASN METEL-Tidak bisa Reset Password', data: [1,2,3,4,5,6,8,10,8,0], backgroundColor: palette[2] },
+          { label: 'CASN-Tidak bisa Reset Password', data: [0,1,1,2,2,3,4,4,3,0], backgroundColor: palette[3] },
+          { label: 'CASN METEL-Error Download File', data: [0,1,1,1,2,2,3,3,3,0], backgroundColor: palette[4] },
         ]
       },
-      options: opts
+      options: commonOpts
     });
 
-    createOrReplaceChart('tktChart3', {
+    if(tktChart3) tktChart3.destroy();
+    tktChart3 = new Chart(document.getElementById('tktChart3'), {
       type: 'line',
       data: {
         labels: hours,
         datasets: [
-          { label: 'Pembayaran Berhasil Kuota tidak bertambah', data: [0,0,0,0,0,0,0,1,4,2,3,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[0], tension: 0.3, fill: false },
+          { label: 'Pembayaran Berhasil Kuota Tidak Bertambah', data: [0,0,0,0,0,0,0,1,4,3,2,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[0], tension: 0.3, fill: false },
           { label: 'Error Download File', data: [0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[1], tension: 0.3, fill: false },
-          { label: 'API-Error Generate SN', data: [0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[2], tension: 0.3, fill: false },
-          { label: 'Pengembalian Kuota e-Meterai', data: [0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[3], tension: 0.3, fill: false },
-          { label: 'Certificate Expired - Keterangan CA-19', data: [0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[4], tension: 0.3, fill: false },
+          { label: 'API-Error Generate SN', data: [0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[2], tension: 0.3, fill: false },
+          { label: 'Pengembalian Kuota e-Meterai', data: [0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[3], tension: 0.3, fill: false },
+          { label: 'Certificate Expired - Keterangan CA-19', data: [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[4], tension: 0.3, fill: false },
         ]
       },
-      options: opts
+      options: commonOpts
     });
 
-    createOrReplaceChart('tktChart4', {
+    if(tktChart4) tktChart4.destroy();
+    tktChart4 = new Chart(document.getElementById('tktChart4'), {
       type: 'bar',
       data: {
-        labels: ['19-Aug','21-Aug','23-Aug','25-Aug','27-Aug','29-Aug','31-Aug','2-Sep','4-Sep','6-Sep'],
+        labels: daysRef,
         datasets: [
-          { label: 'Pembayaran Berhasil Kuota tidak bertambah', data: [12,25,38,52,75,110,165,420,980,740], backgroundColor: palette[0] },
-          { label: 'Rekonsiliasi Data', data: [5,8,12,15,20,25,30,45,65,50], backgroundColor: palette[1] },
-          { label: 'Pengembalian Kuota e-Meterai', data: [3,5,8,10,14,18,22,35,48,38], backgroundColor: palette[2] },
-          { label: 'Mutasi Data Usage User', data: [1,2,3,4,5,6,8,12,16,12], backgroundColor: palette[3] },
-          { label: 'Error Download File', data: [1,1,2,3,4,5,7,10,14,10], backgroundColor: palette[4] },
+          { label: 'Pembayaran Berhasil Kuota Tidak Bertambah', data: [12,24,38,54,75,98,132,245,380,210], backgroundColor: palette[0] },
+          { label: 'Rekonsiliasi Data', data: [8,12,18,22,28,35,48,72,95,62], backgroundColor: palette[1] },
+          { label: 'Pengembalian Kuota e-Meterai', data: [5,8,12,15,20,26,34,52,68,44], backgroundColor: palette[2] },
+          { label: 'Mutasi Data Usage User', data: [2,3,5,7,9,11,14,20,25,18], backgroundColor: palette[3] },
+          { label: 'Error Download File', data: [2,3,4,6,8,10,12,18,22,15], backgroundColor: palette[4] },
         ]
       },
-      options: opts
+      options: commonOpts
     });
   }
 
-  function renderDailyTicketingFromUploaded(){
-    const escalatedList = Array.from(ticketsMap.values());
-    if(!escalatedList.length){
-      renderReferenceDailyTicketing();
+  function renderDailyAndTicketingFromUploaded(){
+    if(!allInteractions.length){
+      renderReferenceReports();
       return;
     }
 
+    // Kumpulkan semua tanggal unik (YYYY-MM-DD)
     const dateSet = new Set();
-    escalatedList.forEach(r => {
-      const iso = r.doOpen || r.doStart;
+    allInteractions.forEach(r => {
+      const iso = r.doStart || r.doOpen;
       if(!iso) return;
       const d = new Date(iso);
-      dateSet.add(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'));
+      const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      dateSet.add(key);
     });
     const dates = Array.from(dateSet).sort();
-    const selDateEl = document.getElementById('tktDateSelect');
+    const selDateEl = document.getElementById('dailyDateSelect');
     const prevVal = selDateEl.value;
     selDateEl.innerHTML = dates.map(dt => {
       const [y, m, d] = dt.split('-').map(Number);
       const lbl = new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
       return '<option value="' + dt + '">' + lbl + '</option>';
     }).join('');
-    if(dates.includes(prevVal)) selDateEl.value = prevVal;
-    else if(dates.length) selDateEl.value = dates[dates.length - 1];
+    if(dates.includes(prevVal)){
+      selDateEl.value = prevVal;
+    } else if(dates.length){
+      selDateEl.value = dates[dates.length - 1];
+    }
 
     const activeDate = selDateEl.value;
-    const hStart = parseInt(document.getElementById('tktHourStart').value, 10);
-    const hEnd = parseInt(document.getElementById('tktHourEnd').value, 10);
-    const casnScope = document.getElementById('tktCasnScope').value;
+    const hStart = parseInt(document.getElementById('dailyHourStart').value, 10);
+    const hEnd = parseInt(document.getElementById('dailyHourEnd').value, 10);
+    const casnScope = document.getElementById('dailyCasnScope').value;
 
     const [ay, am, ad] = activeDate.split('-').map(Number);
     const activeDateLabel = new Date(ay, am - 1, ad).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     const monthPrefix = activeDate.slice(0, 7);
 
+    // Sync header badges across Tab 1 & Tab 2
+    document.getElementById('tblDateVal').textContent = activeDateLabel;
+    document.getElementById('tblHourStart').textContent = hStart + ':00';
+    document.getElementById('tblHourEnd').textContent = hEnd + ':00';
+    document.getElementById('chart1Title').textContent = 'Pergerakan TOP 5 Interaksi CASN — ' + activeDateLabel;
+
     document.getElementById('tktDateVal').textContent = activeDateLabel;
-    document.getElementById('tktHourStartLbl').textContent = hStart + ':00';
-    document.getElementById('tktHourEndLbl').textContent = hEnd === 23 ? '23:59' : hEnd + ':00';
+    document.getElementById('tktHourStart').textContent = hStart + ':00';
+    document.getElementById('tktHourEnd').textContent = hEnd + ':59';
     document.getElementById('tktChart1Title').textContent = 'Pergerakan TOP 5 Tiket Eskalasi per Interval — ' + activeDateLabel;
-    document.getElementById('tktSourceBadge').textContent = 'Data Aktual CSV/Excel · ' + escalatedList.length.toLocaleString('id-ID') + ' tiket eskalasi';
+
+    document.getElementById('dailySourceBadge').textContent = 'Data Aktual CSV/Excel · ' + allInteractions.length.toLocaleString('id-ID') + ' interaksi · ' + ticketsMap.size.toLocaleString('id-ID') + ' tiket eskalasi';
 
     const isCasn = (r) => {
       if(casnScope === 'ALL') return true;
@@ -1525,48 +1335,18 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
       return sc === 'e-meterai' || dsc.includes('casn') || dsc.includes('sscasn') || dsc.includes('e-meterai');
     };
 
-    const withMeta = escalatedList.map(r => {
-      const iso = r.doOpen || r.doStart;
-      if(!iso) return null;
-      const d = new Date(iso);
-      const dKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-      return { r: r, dKey: dKey, hour: d.getHours() };
-    }).filter(Boolean);
-
-    const dailyAll = withMeta.filter(x => x.dKey === activeDate && x.hour >= hStart && x.hour <= hEnd);
-    const dailyCasn = dailyAll.filter(x => isCasn(x.r));
-    const mtdAll = withMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate);
-    const mtdCasn = mtdAll.filter(x => isCasn(x.r));
-
-    const summarizeTkt = (list) => {
-      let resolved = 0, pending = 0, outstanding = 0;
-      list.forEach(x => {
-        const st = (x.r.st || '').toLowerCase();
-        if(FINISHED_STATUSES.has(st)) resolved++;
-        else if(st === 'pending') pending++;
-        else outstanding++;
-      });
-      return { created: list.length, resolved, outstanding, pending };
+    const palette = ['#2563EB', '#F97316', '#94A3B8', '#FACC15', '#38BDF8'];
+    const hours = Array.from({ length: 24 }, (_, h) => h + ':00');
+    const mtdDates = dates.filter(dt => dt.startsWith(monthPrefix) && dt <= activeDate);
+    const mtdDateLabels = mtdDates.map(dt => {
+      const [y, m, d] = dt.split('-').map(Number);
+      return new Date(y, m - 1, d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    });
+    const commonOpts = {
+      responsive: true, maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true } },
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 11, font: { size: 10.5 } } } }
     };
-
-    const sDailyCasn = summarizeTkt(dailyCasn);
-    const sMtdCasn = summarizeTkt(mtdCasn);
-    const sDailyAll = summarizeTkt(dailyAll);
-    const sMtdAll = summarizeTkt(mtdAll);
-
-    const resRate = sDailyCasn.created ? ((sDailyCasn.resolved / sDailyCasn.created) * 100).toFixed(2) : '0.00';
-    document.getElementById('tktResolutionRateLbl').textContent = 'Resolution Rate CASN: ' + resRate + '%';
-
-    const sumRows = [
-      { label: 'Daily Ticket CASN', ...sDailyCasn },
-      { label: 'MTD Ticket CASN', ...sMtdCasn },
-      { label: 'Daily All Ticket', ...sDailyAll },
-      { label: 'MTD All Ticket', ...sMtdAll },
-    ];
-    document.getElementById('tktSummaryBody').innerHTML = sumRows.map(r =>
-      '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.created + '</td><td class="big-num">' + r.resolved + '</td>' +
-      '<td class="big-num">' + r.outstanding + '</td><td class="big-num">' + r.pending + '</td></tr>'
-    ).join('');
 
     const buildTop10 = (list, tbodyId) => {
       const counts = new Map();
@@ -1580,55 +1360,149 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
       const allSum = list.length || 1;
       const topPct = list.length ? ((topSum / allSum) * 100).toFixed(2) + '%' : '0.00%';
 
-      document.getElementById(tbodyId).innerHTML = (top10.map((it, idx) =>
-        '<tr><td class="num">' + (idx + 1) + '</td><td>' + it[0] + '</td><td class="num">' + it[1] + '</td><td class="num">' + ((it[1] / allSum) * 100).toFixed(2) + '%</td></tr>'
-      ).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">Tidak ada tiket eskalasi pada interval ini.</td></tr>') +
-      '<tr class="total-row"><td colspan="2" style="text-align:center;">Jumlah</td><td class="num">' + topSum + '</td><td class="num">' + topPct + '</td></tr>';
-
+      fillTopTable(
+        tbodyId,
+        top10.map(it => [it[0], it[1], ((it[1] / allSum) * 100).toFixed(2) + '%']),
+        topSum,
+        topPct
+      );
       return top10.slice(0, 5).map(x => x[0]);
     };
 
-    const top5DailyCasn = buildTop10(dailyCasn, 'topDailyCasnTktBody');
-    const top5MtdCasn = buildTop10(mtdCasn, 'topMtdCasnTktBody');
-    const top5DailyAll = buildTop10(dailyAll, 'topDailyAllTktBody');
-    const top5MtdAll = buildTop10(mtdAll, 'topMtdAllTktBody');
-
-    const hours = Array.from({ length: 24 }, (_, h) => h + ':00');
-    const mtdDates = dates.filter(dt => dt.startsWith(monthPrefix) && dt <= activeDate);
-    const mtdDateLabels = mtdDates.map(dt => {
-      const [y, m, d] = dt.split('-').map(Number);
-      return new Date(y, m - 1, d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-    });
-    const palette = ['#2563EB', '#F97316', '#94A3B8', '#FACC15', '#38BDF8'];
-    const opts = {
-      responsive: true, maintainAspectRatio: false,
-      scales: { y: { beginAtZero: true } },
-      plugins: { legend: { position: 'bottom', labels: { boxWidth: 11, font: { size: 10.5 } } } }
-    };
-
-    const hourlySets = (list, cats) => cats.map((cat, idx) => ({
+    const makeHourlySets = (list, topCats) => topCats.map((cat, idx) => ({
       label: cat,
       data: Array.from({ length: 24 }, (_, h) => list.filter(x => x.hour === h && (x.r.dsc || x.r.sc || '(Lainnya)') === cat).length),
-      borderColor: palette[idx % palette.length],
       backgroundColor: palette[idx % palette.length],
+      borderColor: palette[idx % palette.length],
       tension: 0.3,
       fill: false
     }));
 
-    const dailySets = (list, cats) => cats.map((cat, idx) => ({
+    const makeDailySets = (list, topCats) => topCats.map((cat, idx) => ({
       label: cat,
       data: mtdDates.map(dt => list.filter(x => x.dKey === dt && (x.r.dsc || x.r.sc || '(Lainnya)') === cat).length),
       backgroundColor: palette[idx % palette.length]
     }));
 
-    createOrReplaceChart('tktChart1', { type: 'line', data: { labels: hours, datasets: hourlySets(dailyCasn, top5DailyCasn) }, options: opts });
-    createOrReplaceChart('tktChart2', { type: 'bar', data: { labels: mtdDateLabels, datasets: dailySets(mtdCasn, top5MtdCasn) }, options: opts });
-    createOrReplaceChart('tktChart3', { type: 'line', data: { labels: hours, datasets: hourlySets(dailyAll, top5DailyAll) }, options: opts });
-    createOrReplaceChart('tktChart4', { type: 'bar', data: { labels: mtdDateLabels, datasets: dailySets(mtdAll, top5MtdAll) }, options: opts });
+    // =====================================================================
+    // PART A: DAILY INTERACTION (SEMUA BARIS: ESCALATED + NOT ESCALATED)
+    // =====================================================================
+    const intMeta = allInteractions.map(r => {
+      const iso = r.doStart || r.doOpen;
+      if(!iso) return null;
+      const d = new Date(iso);
+      const dKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      return { r: r, dKey: dKey, hour: d.getHours() };
+    }).filter(Boolean);
+
+    const dailyAllInt = intMeta.filter(x => x.dKey === activeDate && x.hour >= hStart && x.hour <= hEnd);
+    const dailyCasnInt = dailyAllInt.filter(x => isCasn(x.r));
+    const mtdAllInt = intMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate);
+    const mtdCasnInt = mtdAllInt.filter(x => isCasn(x.r));
+
+    const summarizeInt = (list) => {
+      let esc = 0, notEsc = 0, info = 0, kel = 0, perm = 0;
+      list.forEach(x => {
+        if(x.r.isEscalated) esc++; else notEsc++;
+        const mc = (x.r.mc || '').toLowerCase();
+        if(mc === 'informasi') info++;
+        else if(mc === 'keluhan') kel++;
+        else if(mc === 'permintaan') perm++;
+      });
+      return { total: list.length, esc, notEsc, info, kel, perm };
+    };
+
+    const sDailyCasnInt = summarizeInt(dailyCasnInt);
+    const sMtdCasnInt = summarizeInt(mtdCasnInt);
+    const sDailyAllInt = summarizeInt(dailyAllInt);
+    const sMtdAllInt = summarizeInt(mtdAllInt);
+
+    const intDenom = sDailyCasnInt.total || 1;
+    document.getElementById('pctInfo').textContent = sDailyCasnInt.total ? ((sDailyCasnInt.info / intDenom) * 100).toFixed(2) + '%' : '0.00%';
+    document.getElementById('pctKeluhan').textContent = sDailyCasnInt.total ? ((sDailyCasnInt.kel / intDenom) * 100).toFixed(2) + '%' : '0.00%';
+    document.getElementById('pctPermintaan').textContent = sDailyCasnInt.total ? ((sDailyCasnInt.perm / intDenom) * 100).toFixed(2) + '%' : '0.00%';
+
+    document.getElementById('dailySummaryBody').innerHTML = [
+      { label: 'Daily Interaction CASN', ...sDailyCasnInt },
+      { label: 'Month to Date', ...sMtdCasnInt },
+      { label: 'Daily All Interaction', ...sDailyAllInt },
+      { label: 'MTD All Interaction', ...sMtdAllInt },
+    ].map(r =>
+      '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.total + '</td><td class="big-num">' + r.esc + '</td>' +
+      '<td class="big-num">' + r.notEsc + '</td><td class="big-num">' + r.info + '</td><td class="big-num">' + r.kel + '</td><td class="big-num">' + r.perm + '</td></tr>'
+    ).join('');
+
+    const top5DailyCasnInt = buildTop10(dailyCasnInt, 'topDailyCasnBody');
+    const top5MtdCasnInt = buildTop10(mtdCasnInt, 'topMtdCasnBody');
+    const top5DailyAllInt = buildTop10(dailyAllInt, 'topDailyAllBody');
+    const top5MtdAllInt = buildTop10(mtdAllInt, 'topMtdAllBody');
+
+    if(dailyChart1) dailyChart1.destroy();
+    dailyChart1 = new Chart(document.getElementById('dailyChart1'), { type: 'bar', data: { labels: hours, datasets: makeHourlySets(dailyCasnInt, top5DailyCasnInt) }, options: commonOpts });
+    if(dailyChart2) dailyChart2.destroy();
+    dailyChart2 = new Chart(document.getElementById('dailyChart2'), { type: 'bar', data: { labels: mtdDateLabels, datasets: makeDailySets(mtdCasnInt, top5MtdCasnInt) }, options: commonOpts });
+    if(dailyChart3) dailyChart3.destroy();
+    dailyChart3 = new Chart(document.getElementById('dailyChart3'), { type: 'line', data: { labels: hours, datasets: makeHourlySets(dailyAllInt, top5DailyAllInt) }, options: commonOpts });
+    if(dailyChart4) dailyChart4.destroy();
+    dailyChart4 = new Chart(document.getElementById('dailyChart4'), { type: 'bar', data: { labels: mtdDateLabels, datasets: makeDailySets(mtdAllInt, top5MtdAllInt) }, options: commonOpts });
+
+    // =====================================================================
+    // PART B: DAILY TICKETING (KHUSUS TIKET ESCALATED)
+    // =====================================================================
+    const tktMeta = Array.from(ticketsMap.values()).map(r => {
+      const iso = r.doOpen || r.doStart;
+      if(!iso) return null;
+      const d = new Date(iso);
+      const dKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      return { r: r, dKey: dKey, hour: d.getHours() };
+    }).filter(Boolean);
+
+    const dailyAllTkt = tktMeta.filter(x => x.dKey === activeDate && x.hour >= hStart && x.hour <= hEnd);
+    const dailyCasnTkt = dailyAllTkt.filter(x => isCasn(x.r));
+    const mtdAllTkt = tktMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate);
+    const mtdCasnTkt = mtdAllTkt.filter(x => isCasn(x.r));
+
+    const summarizeTkt = (list) => {
+      let resolved = 0, outstanding = 0, pending = 0;
+      list.forEach(x => {
+        const st = (x.r.st || '').toLowerCase();
+        if(FINISHED_STATUSES.has(st)){
+          resolved++;
+        } else {
+          outstanding++;
+          if(st === 'pending') pending++;
+        }
+      });
+      return { created: list.length, resolved, outstanding, pending };
+    };
+
+    document.getElementById('tktSummaryBody').innerHTML = [
+      { label: 'Daily Ticket CASN', ...summarizeTkt(dailyCasnTkt) },
+      { label: 'MTD Ticket CASN', ...summarizeTkt(mtdCasnTkt) },
+      { label: 'Daily All Ticket', ...summarizeTkt(dailyAllTkt) },
+      { label: 'MTD All Ticket', ...summarizeTkt(mtdAllTkt) },
+    ].map(r =>
+      '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.created + '</td><td class="big-num">' + r.resolved + '</td>' +
+      '<td class="big-num">' + r.outstanding + '</td><td class="big-num">' + r.pending + '</td></tr>'
+    ).join('');
+
+    const top5DailyCasnTkt = buildTop10(dailyCasnTkt, 'topDailyTktCasnBody');
+    const top5MtdCasnTkt = buildTop10(mtdCasnTkt, 'topMtdTktCasnBody');
+    const top5DailyAllTkt = buildTop10(dailyAllTkt, 'topDailyTktAllBody');
+    const top5MtdAllTkt = buildTop10(mtdAllTkt, 'topMtdTktAllBody');
+
+    if(tktChart1) tktChart1.destroy();
+    tktChart1 = new Chart(document.getElementById('tktChart1'), { type: 'line', data: { labels: hours, datasets: makeHourlySets(dailyCasnTkt, top5DailyCasnTkt) }, options: commonOpts });
+    if(tktChart2) tktChart2.destroy();
+    tktChart2 = new Chart(document.getElementById('tktChart2'), { type: 'bar', data: { labels: mtdDateLabels, datasets: makeDailySets(mtdCasnTkt, top5MtdCasnTkt) }, options: commonOpts });
+    if(tktChart3) tktChart3.destroy();
+    tktChart3 = new Chart(document.getElementById('tktChart3'), { type: 'line', data: { labels: hours, datasets: makeHourlySets(dailyAllTkt, top5DailyAllTkt) }, options: commonOpts });
+    if(tktChart4) tktChart4.destroy();
+    tktChart4 = new Chart(document.getElementById('tktChart4'), { type: 'bar', data: { labels: mtdDateLabels, datasets: makeDailySets(mtdAllTkt, top5MtdAllTkt) }, options: commonOpts });
   }
 
   // =========================================================================
-  // 4. TAB 3: EVALUASI DATA TIKET AKTUAL (RUMUS PRESISI WEBSITE)
+  // 3. TAB 3: EVALUASI DATA TIKET AKTUAL (RUMUS PRESISI WEBSITE)
   // =========================================================================
   function getPendingCutoff(rec){
     if(!rec.doPending) return null;
@@ -1694,4 +1568,478 @@ footer { padding: 14px 0; margin-top: 12px; border-top: 1px solid var(--grid-lin
   }
 
   function computeEscalation(rec){
-    const
+    const eligible = ESCALATION_ELIGIBLE.has((rec.st || '').toLowerCase());
+    const channelOk = ESCALATION_CHANNELS.has((rec.ch || '').toLowerCase());
+    if(eligible && channelOk && rec.doOpen && rec.doStart){
+      const hrs = (new Date(rec.doOpen).getTime() - new Date(rec.doStart).getTime()) / 3600000;
+      return { hours: hrs, result: hrs <= ESCALATION_TARGET_HOURS ? 'aman' : 'breach' };
+    }
+    return { hours: null, result: 'unknown' };
+  }
+
+  function bucketOf(hours){
+    for(const b of DURATION_BUCKETS){ if(hours <= b.max) return b.label; }
+    return DURATION_BUCKETS[DURATION_BUCKETS.length - 1].label;
+  }
+
+  function monthKeyOf(iso){
+    const d = new Date(iso);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  }
+
+  function monthLabel(key){
+    const [y, m] = key.split('-').map(Number);
+    return new Date(y, m - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+  }
+
+  function fmtHours(hrs){
+    if(hrs === null || hrs === undefined || isNaN(hrs)) return '—';
+    if(hrs < 24) return hrs.toFixed(2) + ' jam';
+    return hrs.toFixed(2) + ' jam (' + (hrs / 24).toFixed(1) + ' hari)';
+  }
+
+  function updateFilters(allComputed){
+    const products = Array.from(new Set(allComputed.map(c => c.rec.sc).filter(Boolean))).sort();
+    let pHtml = '<option value="ALL">Semua Produk (' + allComputed.length + ')</option>';
+    if(products.includes('E-Meterai') && products.includes('Perisai')){
+      pHtml += '<option value="' + COMBINED_VALUE + '">E-Meterai + Perisai (Gabungan)</option>';
+    }
+    pHtml += products.map(p => '<option value="' + p + '">' + p + '</option>').join('');
+    document.getElementById('productFilter').innerHTML = pHtml;
+    if(['ALL', COMBINED_VALUE].concat(products).includes(selectedProduct)){
+      document.getElementById('productFilter').value = selectedProduct;
+    } else {
+      selectedProduct = 'ALL';
+    }
+
+    const byProd = applyProductFilter(allComputed, selectedProduct);
+    const cats = Array.from(new Set(byProd.map(c => c.rec.dsc).filter(Boolean))).sort();
+    document.getElementById('categoryFilter').innerHTML = '<option value="ALL">Semua Kategori</option>' +
+      cats.map(cat => '<option value="' + cat + '">' + cat + '</option>').join('');
+    if(selectedCategory === 'ALL' || cats.includes(selectedCategory)){
+      document.getElementById('categoryFilter').value = selectedCategory;
+    } else {
+      selectedCategory = 'ALL';
+    }
+
+    const months = Array.from(new Set(byProd.filter(c => c.rec.doOpen).map(c => monthKeyOf(c.rec.doOpen)))).sort().reverse();
+    document.getElementById('monthFilter').innerHTML = '<option value="ALL">Semua Bulan</option>' +
+      months.map(m => '<option value="' + m + '">' + monthLabel(m) + '</option>').join('');
+    if(selectedMonth === 'ALL' || months.includes(selectedMonth)){
+      document.getElementById('monthFilter').value = selectedMonth;
+    } else {
+      selectedMonth = 'ALL';
+    }
+  }
+
+  function applyProductFilter(list, sel){
+    if(sel === 'ALL') return list;
+    if(sel.indexOf('COMBINED:') === 0){
+      const names = sel.slice(9).split('|');
+      return list.filter(c => names.includes(c.rec.sc));
+    }
+    return list.filter(c => c.rec.sc === sel);
+  }
+
+  let currentScopedRows = [];
+
+  function renderActual(){
+    if(ticketsMap.size === 0){
+      document.getElementById('emptyState').style.display = '';
+      document.getElementById('actualDashboard').style.display = 'none';
+      return;
+    }
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('actualDashboard').style.display = '';
+    document.getElementById('filterBar').style.display = 'flex';
+    document.getElementById('modeSubtitle').textContent = slaViewMode === 'include'
+      ? 'Mode Aktif: User (Include Pending — Waktu Kalender Penuh)'
+      : 'Mode Aktif: Internal (Exclude Pending — Performa Solver)';
+
+    const now = Date.now();
+    const allComputed = Array.from(ticketsMap.values()).map(rec => ({ rec: rec, sla: computeSla(rec, now) }));
+    updateFilters(allComputed);
+
+    let scoped = applyProductFilter(allComputed, selectedProduct);
+    if(selectedCategory !== 'ALL') scoped = scoped.filter(c => c.rec.dsc === selectedCategory);
+    if(selectedMonth !== 'ALL') scoped = scoped.filter(c => c.rec.doOpen && monthKeyOf(c.rec.doOpen) === selectedMonth);
+    currentScopedRows = scoped;
+
+    const finished = scoped.filter(c => c.sla.finished);
+    const outstanding = scoped.filter(c => !c.sla.finished);
+    const compliant = finished.filter(c => c.sla.result === 'aman').length;
+    const breachFinished = finished.filter(c => c.sla.result === 'breach').length;
+    const compliancePct = finished.length ? ((compliant / finished.length) * 100).toFixed(1) : '—';
+    const outWarning = outstanding.filter(c => c.sla.result === 'warning').length;
+    const outBreach = outstanding.filter(c => c.sla.result === 'breach').length;
+
+    const cards = [
+      { label: 'Total Tiket', value: scoped.length, cls: '' },
+      { label: 'Selesai (Resolved+)', value: finished.length, cls: '' },
+      { label: 'SLA Compliance', value: compliancePct + (compliancePct !== '—' ? '%' : ''), cls: compliancePct !== '—' && +compliancePct >= 90 ? 'aman' : 'warning' },
+      { label: 'Breach (Selesai)', value: breachFinished, cls: breachFinished > 0 ? 'breach' : 'aman' },
+      { label: 'Outstanding — Warning', value: outWarning, cls: outWarning > 0 ? 'warning' : 'aman' },
+      { label: 'Outstanding — Breach', value: outBreach, cls: outBreach > 0 ? 'breach' : 'aman' },
+    ];
+    document.getElementById('overviewCards').innerHTML = cards.map(c =>
+      '<div class="card ' + c.cls + '"><div class="label">' + c.label + '</div><div class="value">' + c.value + '</div></div>'
+    ).join('');
+
+    let totFin = 0, totComp = 0, totBreach = 0;
+    const allValidHrs = [];
+    const achRows = PRIORITY_ORDER.map(pr => {
+      const items = finished.filter(c => c.rec.pr === pr);
+      const comp = items.filter(c => c.sla.result === 'aman').length;
+      const br = items.filter(c => c.sla.result === 'breach').length;
+      const validHrs = items.filter(c => c.sla.hours !== null && c.sla.hours >= 0).map(c => c.sla.hours);
+      validHrs.forEach(h => allValidHrs.push(h));
+      const mttr = validHrs.length ? (validHrs.reduce((s, h) => s + h, 0) / validHrs.length).toFixed(2) + ' jam' : '—';
+      totFin += items.length; totComp += comp; totBreach += br;
+      const pct = items.length ? ((comp / items.length) * 100).toFixed(1) : '—';
+      const badgeCls = pct === '—' ? 'muted' : (+pct >= 90 ? 'aman' : 'breach');
+      return '<tr><td><strong>' + pr + '</strong></td><td>' + items.length + '</td><td>' + comp + '</td><td>' + br + '</td>' +
+        '<td><span class="badge ' + badgeCls + '">' + pct + (pct !== '—' ? '%' : '') + '</span></td><td>' + mttr + '</td></tr>';
+    }).join('');
+    const totPct = totFin ? ((totComp / totFin) * 100).toFixed(1) : '—';
+    const totMttr = allValidHrs.length ? (allValidHrs.reduce((s, h) => s + h, 0) / allValidHrs.length).toFixed(2) + ' jam' : '—';
+    document.getElementById('achievementBody').innerHTML = achRows +
+      '<tr style="font-weight:700;background:var(--surface-2);"><td>Total</td><td>' + totFin + '</td><td>' + totComp + '</td><td>' + totBreach + '</td><td>' + totPct + (totPct !== '—' ? '%' : '') + '</td><td>' + totMttr + '</td></tr>';
+
+    const achData = PRIORITY_ORDER.map(pr => finished.filter(c => c.rec.pr === pr && c.sla.result === 'aman').length);
+    const breachData = PRIORITY_ORDER.map(pr => finished.filter(c => c.rec.pr === pr && c.sla.result === 'breach').length);
+    if(achievedChart) achievedChart.destroy();
+    achievedChart = new Chart(document.getElementById('achievedChart'), {
+      type: 'bar',
+      data: {
+        labels: PRIORITY_ORDER,
+        datasets: [
+          { label: 'Achieved', data: achData, backgroundColor: '#0F8B58', borderRadius: 4 },
+          { label: 'Not Achieved (Breach)', data: breachData, backgroundColor: '#DC2626', borderRadius: 4 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        onClick: (evt, els) => {
+          if(!els.length) return;
+          document.getElementById('ticketPriorityFilter').value = PRIORITY_ORDER[els[0].index];
+          document.getElementById('ticketStatusFilter').value = els[0].datasetIndex === 0 ? 'achieved' : 'not_achieved';
+          drawTicketTable();
+          document.getElementById('ticketListPanel').scrollIntoView({ behavior: 'smooth' });
+        },
+        scales: { y: { beginAtZero: true } },
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+
+    const finWithHours = finished.filter(c => c.sla.hours !== null);
+    document.getElementById('distTableHead').innerHTML = '<th>Priority</th>' + DURATION_BUCKETS.map(b => '<th>' + b.label + '</th>').join('') + '<th>Total</th>';
+    const distRows = PRIORITY_ORDER.map(pr => {
+      const items = finWithHours.filter(c => c.rec.pr === pr);
+      const counts = DURATION_BUCKETS.map(b => items.filter(c => bucketOf(c.sla.hours) === b.label).length);
+      return '<tr><td><strong>' + pr + '</strong></td>' + counts.map(n => '<td>' + n + '</td>').join('') + '<td><strong>' + items.length + '</strong></td></tr>';
+    }).join('');
+    const distTotals = DURATION_BUCKETS.map(b => finWithHours.filter(c => bucketOf(c.sla.hours) === b.label).length);
+    document.getElementById('distTableBody').innerHTML = distRows +
+      '<tr style="font-weight:700;background:var(--surface-2);"><td>Total</td>' + distTotals.map(n => '<td>' + n + '</td>').join('') + '<td>' + finWithHours.length + '</td></tr>';
+
+    const catCounts = new Map();
+    scoped.forEach(c => {
+      const lbl = (c.rec.mc || '-') + ' - ' + (c.rec.sc || '-') + ' - ' + (c.rec.dsc || '-');
+      catCounts.set(lbl, (catCounts.get(lbl) || 0) + 1);
+    });
+    const top10 = Array.from(catCounts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    if(top10Chart) top10Chart.destroy();
+    top10Chart = new Chart(document.getElementById('top10Chart'), {
+      type: 'bar',
+      data: {
+        labels: top10.map(x => x[0]),
+        datasets: [{ label: 'Jumlah Tiket', data: top10.map(x => x[1]), backgroundColor: '#1A73E8', borderRadius: 3 }]
+      },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true } }
+      }
+    });
+
+    const escItems = scoped.map(c => ({ rec: c.rec, esc: computeEscalation(c.rec) })).filter(x => x.esc.hours !== null);
+    const escAman = escItems.filter(x => x.esc.result === 'aman').length;
+    const escBreach = escItems.filter(x => x.esc.result === 'breach').length;
+    const escAvgMin = escItems.length ? (escItems.reduce((s, x) => s + x.esc.hours, 0) / escItems.length) * 60 : null;
+    document.getElementById('escalationCards').innerHTML = [
+      { label: 'Rata-rata Waktu Eskalasi', value: escAvgMin !== null ? escAvgMin.toFixed(1) + ' menit' : '—', cls: '' },
+      { label: 'Dalam Target (≤15 menit)', value: escAman, cls: 'aman' },
+      { label: 'Breach (>15 menit)', value: escBreach, cls: escBreach > 0 ? 'breach' : 'aman' },
+    ].map(c => '<div class="card ' + c.cls + '"><div class="label">' + c.label + '</div><div class="value" style="font-size:19px;">' + c.value + '</div></div>').join('');
+
+    const escByProd = new Map();
+    escItems.forEach(x => {
+      const p = x.rec.sc || '(Tidak diketahui)';
+      if(!escByProd.has(p)) escByProd.set(p, { total: 0, aman: 0 });
+      const g = escByProd.get(p);
+      g.total++;
+      if(x.esc.result === 'aman') g.aman++;
+    });
+    const maxEsc = Math.max(1, ...Array.from(escByProd.values()).map(g => g.total));
+    document.getElementById('escalationByProduct').innerHTML = Array.from(escByProd.entries()).sort((a, b) => b[1].total - a[1].total).map(([name, g]) => {
+      const pct = g.total ? ((g.aman / g.total) * 100).toFixed(0) : '0';
+      return '<div class="breakdown-row"><div class="name">' + name + '</div><div class="barbg"><div class="barfg" style="width:' + (g.total / maxEsc * 100) + '%"></div></div><div class="num">' + g.total + ' tiket · ' + pct + '%</div></div>';
+    }).join('') || '<p class="table-note">Tidak ada data eskalasi Email/WhatsApp.</p>';
+
+    const prods = Array.from(new Set(scoped.map(c => c.rec.sc).filter(Boolean))).sort();
+    document.getElementById('productPriorityTables').innerHTML = prods.map(prod => {
+      const rows = PRIORITY_ORDER.map(pr => {
+        const inGroup = scoped.filter(c => c.rec.sc === prod && c.rec.pr === pr);
+        const eValid = inGroup.map(c => computeEscalation(c.rec)).filter(e => e.hours !== null && e.hours >= 0);
+        const avgResp = eValid.length ? ((eValid.reduce((s, e) => s + e.hours, 0) / eValid.length) * 60).toFixed(2) + ' Menit' : '-';
+        const rValid = inGroup.filter(c => c.sla.finished && c.sla.hours !== null && c.sla.hours >= 0);
+        const avgRes = rValid.length ? (rValid.reduce((s, c) => s + c.sla.hours, 0) / rValid.length).toFixed(2) + ' Jam' : '-';
+        return '<tr><td><strong>' + pr + '</strong></td><td>15 menit</td><td>' + SLA_TARGET[pr] + ' jam</td><td>' + avgResp + '</td><td>' + avgRes + '</td></tr>';
+      }).join('');
+      return '<div style="margin-bottom:16px;"><div style="font-weight:700;font-size:13px;margin-bottom:6px;color:var(--heading);">' + prod + '</div>' +
+        '<div class="table-scroll table-scroll--full"><table class="sla-tbl"><thead><tr><th>Priority</th><th>Target Respons</th><th>Target Resolusi</th><th>Rata-rata Respons Aktual</th><th>Rata-rata Resolusi Aktual</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+    }).join('');
+
+    drawTicketTable();
+  }
+
+  function getFilteredTickets(){
+    const q = (document.getElementById('ticketSearch').value || '').toLowerCase().trim();
+    const st = document.getElementById('ticketStatusFilter').value;
+    const pr = document.getElementById('ticketPriorityFilter').value;
+    return currentScopedRows.filter(c => {
+      if(st === 'achieved' && !(c.sla.finished && c.sla.result === 'aman')) return false;
+      if(st === 'not_achieved' && !(c.sla.finished && c.sla.result === 'breach')) return false;
+      if(st === 'outstanding' && c.sla.finished) return false;
+      if(pr !== 'ALL' && c.rec.pr !== pr) return false;
+      if(q && !(c.rec.id + ' ' + c.rec.sj + ' ' + c.rec.dsc + ' ' + c.rec.sc).toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }
+
+  function drawTicketTable(){
+    const list = getFilteredTickets();
+    const shown = list.slice(0, 300);
+    document.getElementById('ticketListBody').innerHTML = shown.map(c => {
+      let badge = '<span class="badge muted">—</span>';
+      if(c.sla.finished){
+        badge = c.sla.result === 'aman' ? '<span class="badge aman">Achieved</span>' : '<span class="badge breach">Not Achieved</span>';
+      } else if(c.sla.result !== 'unknown'){
+        const lbl = c.sla.result === 'breach' ? 'Outstanding — Breach' : (c.sla.result === 'warning' ? 'Outstanding — Warning' : 'Outstanding — Aman');
+        badge = '<span class="badge ' + c.sla.result + '">' + lbl + '</span>';
+      }
+      const pendingBadge = c.sla.pendingExcluded ? '<span class="pending-mark" title="Pending ' + c.sla.pendingHours.toFixed(2) + ' jam">pending</span>' : '';
+      const exclStyle = c.sla.resultExclude === 'breach' ? ' style="color:var(--breach);font-weight:700;"' : '';
+      const inclStyle = c.sla.resultInclude === 'breach' ? ' style="color:var(--breach);font-weight:700;"' : '';
+      return '<tr><td class="tid">' + c.rec.id + '</td><td>' + (c.rec.sc || '—') + '</td><td>' + (c.rec.sj || '—') + '</td><td>' + (c.rec.dsc || '—') + '</td>' +
+        '<td><strong>' + (c.rec.pr || '—') + '</strong></td><td>' + (c.rec.st || '—') + '</td>' +
+        '<td' + exclStyle + '>' + fmtHours(c.sla.hoursExclude) + pendingBadge + '</td>' +
+        '<td' + inclStyle + '>' + fmtHours(c.sla.hoursInclude) + '</td><td>' + badge + '</td></tr>';
+    }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:20px;">Tidak ada tiket yang cocok.</td></tr>';
+
+    document.getElementById('ticketListCount').textContent = list.length + ' tiket';
+    document.getElementById('ticketListNote').textContent = 'Menampilkan ' + shown.length + ' dari ' + list.length + ' tiket. Kolom "Internal" mengecualikan durasi pending; kolom "User" menghitung waktu penuh.';
+  }
+
+  // =========================================================================
+  // 4. TAB 4: SIMULATOR CASN 2026 & BENCHMARK HISTORIS
+  // =========================================================================
+  function runSimulation(){
+    const vol = +document.getElementById('inVolume').value;
+    const agents = +document.getElementById('inAgents').value;
+    const baseAht = +document.getElementById('inAht').value;
+    const escRate = +document.getElementById('inEscRate').value / 100;
+    const useSegment = document.getElementById('chkSegment').checked;
+    const useCanned = document.getElementById('chkCanned').checked;
+    const useLifo = document.getElementById('chkLifo').checked;
+    const highSev = document.getElementById('chkSeverity').checked;
+
+    const otAgents = Math.max(0, agents - 6);
+    document.getElementById('valVolume').textContent = vol.toLocaleString('id-ID') + ' interaksi/hari';
+    document.getElementById('valAgents').textContent = agents + ' agent (' + otAgents + ' OT)';
+    document.getElementById('valAht').textContent = baseAht.toFixed(1) + ' menit';
+    document.getElementById('valEscRate').textContent = Math.round(escRate * 100) + '%';
+
+    const effAht = useCanned ? baseAht * 0.75 : baseAht;
+    const capInteractions = Math.floor((agents * 480) / effAht);
+    const backlog = Math.max(0, vol - capInteractions);
+    const estTickets = Math.round(vol * escRate);
+
+    const loadRatio = vol / Math.max(1, capInteractions);
+    let emetSla = 95 - Math.max(0, (loadRatio - 0.85) * 48);
+    if(useLifo) emetSla += 4.5;
+    if(useCanned) emetSla += 3.0;
+    if(highSev) emetSla -= 6.5;
+    emetSla = Math.max(18.7, Math.min(98.5, emetSla));
+
+    let perisaiSla = useSegment
+      ? Math.max(91.0, 98.0 - Math.max(0, (loadRatio - 1.2) * 3.5))
+      : Math.max(68.5, emetSla + 8.0);
+
+    const recAgents = Math.ceil((vol * effAht) / (480 * 0.88));
+
+    document.getElementById('simCards').innerHTML = [
+      { label: 'Kapasitas Layan / Hari', value: capInteractions.toLocaleString('id-ID'), hint: 'AHT Efektif: ' + effAht.toFixed(1) + ' mnt · Backlog: ' + backlog, cls: backlog === 0 ? 'aman' : 'warning' },
+      { label: 'Proyeksi Tiket Eskalasi', value: estTickets + ' tiket', hint: highSev ? 'Severity Critical/High (8j–12j)' : 'Severity Standar (Medium 24j)', cls: '' },
+      { label: 'Proyeksi SLA E-Meterai', value: emetSla.toFixed(1) + '%', hint: emetSla >= 85 ? 'Terkendali (Target ≥85%)' : 'Risiko Breach Tinggi!', cls: emetSla >= 85 ? 'aman' : (emetSla >= 70 ? 'warning' : 'breach') },
+      { label: 'Proyeksi SLA Perisai', value: perisaiSla.toFixed(1) + '%', hint: useSegment ? 'Antrean VIP Terisolasi' : 'Tercampur Antrean CASN! · Ideal: ' + recAgents + ' agent', cls: perisaiSla >= 90 ? 'aman' : 'warning' }
+    ].map(c => '<div class="card ' + c.cls + '"><div class="label">' + c.label + '</div><div class="value">' + c.value + '</div><div class="hint">' + c.hint + '</div></div>').join('');
+  }
+
+  function renderHistoricalChart(){
+    const labels = [
+      'Jan 24','Feb 24','Mar 24','Apr 24','Mei 24','Jun 24','Jul 24','Agu 24','Sep 24 (CASN)','Okt 24','Nov 24','Des 24',
+      'Jan 25','Feb 25','Mar 25','Apr 25','Mei 25','Jun 25','Jul 25','Agu 25','Sep 25','Okt 25','Nov 25','Des 25',
+      'Jan 26','Feb 26','Mar 26','Apr 26','Mei 26','Jun 26','Jul 26'
+    ];
+    const emetData = [
+      79.8,48.6,53.0,61.3,69.0,72.5,47.7,55.2,18.7,45.9,39.2,26.3,
+      36.0,42.7,77.1,81.1,65.9,57.6,61.5,65.2,70.3,68.4,57.9,74.3,
+      70.1,70.9,63.4,73.0,78.1,70.7,75.7
+    ];
+    const perisaiData = [
+      95.0,95.2,94.8,92.2,93.4,83.6,68.5,88.6,86.2,92.2,96.1,95.4,
+      97.9,97.8,99.3,98.4,99.0,97.8,95.5,98.3,97.4,96.6,97.5,98.1,
+      97.6,98.2,98.1,99.0,97.9,99.4,98.3
+    ];
+    if(histChart) histChart.destroy();
+    histChart = new Chart(document.getElementById('histChart'), {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'E-Meterai SLA %', data: emetData, borderColor: '#2563EB', backgroundColor: 'rgba(37,99,235,0.12)', tension: 0.25, fill: true },
+          { label: 'Perisai SLA %', data: perisaiData, borderColor: '#A855F7', backgroundColor: 'transparent', tension: 0.25 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: { y: { min: 0, max: 100, title: { display: true, text: 'SLA Achievement %' } } },
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
+
+  // =========================================================================
+  // 5. EVENT LISTENERS & INITIALIZATION
+  // =========================================================================
+  function switchTab(tabName){
+    document.querySelectorAll('.main-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'tab-' + tabName));
+    document.getElementById('sharedDailyControls').style.display = (tabName === 'daily' || tabName === 'ticketing') ? 'flex' : 'none';
+  }
+
+  document.querySelectorAll('.main-tab').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  document.getElementById('fileInput').addEventListener('change', async (ev) => {
+    const file = ev.target.files[0];
+    if(!file) return;
+    const statusEl = document.getElementById('statusLine');
+    statusEl.textContent = 'Membaca file "' + file.name + '"...';
+    statusEl.className = 'status-line';
+    try{
+      const buf = await file.arrayBuffer();
+      const parsed = parseWorkbook(buf, file.name);
+      if(parsed.interactions.length === 0) throw new Error('Tidak ada baris interaksi valid yang ditemukan.');
+      allInteractions = parsed.interactions;
+      ticketsMap = parsed.escalated;
+      const skipTxt = parsed.escalated._skippedNotEscalated ? (' (' + parsed.escalated._skippedNotEscalated + ' not escalated dihitung di Interaksi)') : '';
+      document.getElementById('metaBadge').textContent = file.name + ' · ' + allInteractions.length + ' interaksi (' + ticketsMap.size + ' eskalasi)';
+      statusEl.textContent = 'Berhasil memuat ' + allInteractions.length + ' interaksi & ' + ticketsMap.size + ' tiket eskalasi' + skipTxt + '.';
+      statusEl.className = 'status-line ok';
+
+      document.getElementById('dailyHourStart').value = '0';
+      document.getElementById('dailyHourEnd').value = '23';
+      renderDailyAndTicketingFromUploaded();
+      renderActual();
+    }catch(e){
+      statusEl.textContent = 'Gagal membaca file: ' + e.message;
+      statusEl.className = 'status-line error';
+    }
+    ev.target.value = '';
+  });
+
+  ['dailyDateSelect', 'dailyHourStart', 'dailyHourEnd', 'dailyCasnScope'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => {
+      if(allInteractions.length) renderDailyAndTicketingFromUploaded();
+    });
+  });
+
+  document.getElementById('slaViewToggle').addEventListener('click', () => {
+    slaViewMode = slaViewMode === 'exclude' ? 'include' : 'exclude';
+    document.getElementById('slaViewToggle').innerHTML = slaViewMode === 'include'
+      ? '&#128065; User (Include Pending)'
+      : '&#128065; Internal (Exclude Pending)';
+    if(ticketsMap.size > 0) renderActual();
+  });
+
+  let isDark = true;
+  document.getElementById('themeToggleBtn').addEventListener('click', () => {
+    isDark = !isDark;
+    if(isDark){
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.getElementById('themeToggleBtn').innerHTML = '&#9790; Gelap';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      document.getElementById('themeToggleBtn').innerHTML = '&#9788; Terang';
+    }
+  });
+
+  document.getElementById('productFilter').addEventListener('change', (e) => { selectedProduct = e.target.value; renderActual(); });
+  document.getElementById('categoryFilter').addEventListener('change', (e) => { selectedCategory = e.target.value; renderActual(); });
+  document.getElementById('monthFilter').addEventListener('change', (e) => { selectedMonth = e.target.value; renderActual(); });
+
+  document.getElementById('ticketSearch').addEventListener('input', drawTicketTable);
+  document.getElementById('ticketStatusFilter').addEventListener('change', drawTicketTable);
+  document.getElementById('ticketPriorityFilter').addEventListener('change', drawTicketTable);
+
+  document.getElementById('exportCsvBtn').addEventListener('click', () => {
+    const list = getFilteredTickets();
+    if(!list.length) return;
+    const esc = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    const header = ['Ticket ID','Produk','Subject','Kategori','Priority','Status','Durasi Internal (Jam)','Durasi User (Jam)','Hasil SLA'];
+    const lines = [header.join(',')];
+    list.forEach(c => {
+      const resLbl = c.sla.finished ? (c.sla.result === 'aman' ? 'Achieved' : 'Not Achieved') : c.sla.result;
+      lines.push([
+        c.rec.id, c.rec.sc, c.rec.sj, c.rec.dsc, c.rec.pr, c.rec.st,
+        c.sla.hoursExclude != null ? c.sla.hoursExclude.toFixed(2) : '',
+        c.sla.hoursInclude != null ? c.sla.hoursInclude.toFixed(2) : '',
+        resLbl
+      ].map(esc).join(','));
+    });
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'evaluasi_sla_' + new Date().toISOString().slice(0,10) + '.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  ['inVolume','inAgents','inAht','inEscRate','chkSegment','chkCanned','chkLifo','chkSeverity'].forEach(id => {
+    document.getElementById(id).addEventListener('input', runSimulation);
+    document.getElementById(id).addEventListener('change', runSimulation);
+  });
+
+  document.getElementById('simResetBtn').addEventListener('click', () => {
+    document.getElementById('inVolume').value = 1800;
+    document.getElementById('inAgents').value = 12;
+    document.getElementById('inAht').value = 6.5;
+    document.getElementById('inEscRate').value = 18;
+    document.getElementById('chkSegment').checked = true;
+    document.getElementById('chkCanned').checked = true;
+    document.getElementById('chkLifo').checked = true;
+    document.getElementById('chkSeverity').checked = false;
+    runSimulation();
+  });
+
+  initHourSelectors();
+  renderReferenceReports();
+  runSimulation();
+  renderHistoricalChart();
+})();
+</script>
+</body>
+</html>

@@ -29,6 +29,8 @@
     let selectedCategory = 'ALL';
     let selectedMonth = 'ALL';
     let currentScopedRows = [];
+    let isDark = true;
+    let lastCapturedBlob = null;
 
     let achievedChart = null, top10Chart = null, histChart = null;
     let dailyChart1 = null, dailyChart2 = null, dailyChart3 = null, dailyChart4 = null;
@@ -47,6 +49,13 @@
         modeSel.innerHTML =
             '<option value="replace">D1: Timpa (Replace)</option>' +
             '<option value="upsert">D1: Gabung (Upsert)</option>';
+
+        const copyDashBtn = document.createElement('button');
+        copyDashBtn.id = 'copyDashboardBtn';
+        copyDashBtn.type = 'button';
+        copyDashBtn.className = 'btn btn-success btn-sm';
+        copyDashBtn.innerHTML = '<i class="fas fa-copy me-1"></i> Copy Dashboard & Summary';
+        copyDashBtn.addEventListener('click', handleCopyDashboardAndSummary);
 
         const clearBtn = document.createElement('button');
         clearBtn.id = 'clearD1Btn';
@@ -75,7 +84,330 @@
         });
 
         wrap.insertBefore(modeSel, fileInput.nextSibling);
+        wrap.insertBefore(copyDashBtn, modeSel.nextSibling);
         wrap.appendChild(clearBtn);
+    }
+
+    function ensureHtml2Canvas(){
+        if(window.html2canvas) return Promise.resolve(window.html2canvas);
+        return new Promise((resolve, reject) => {
+            const existing = document.getElementById('html2canvasCdn');
+            if(existing){
+                existing.addEventListener('load', () => resolve(window.html2canvas));
+                existing.addEventListener('error', () => reject(new Error('Gagal memuat html2canvas')));
+                return;
+            }
+            const s = document.createElement('script');
+            s.id = 'html2canvasCdn';
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+            s.onload = () => resolve(window.html2canvas);
+            s.onerror = () => reject(new Error('Gagal memuat html2canvas'));
+            document.head.appendChild(s);
+        });
+    }
+
+    function ensureCopyModal(){
+        if(document.getElementById('copySummaryModal')) return;
+        const modalHtml =
+            '<div class="modal fade" id="copySummaryModal" tabindex="-1" aria-hidden="true">' +
+              '<div class="modal-dialog modal-xl modal-dialog-scrollable">' +
+                '<div class="modal-content bg-dark text-light border-secondary">' +
+                  '<div class="modal-header border-secondary py-2">' +
+                    '<h6 class="modal-title fw-bold"><i class="fas fa-clipboard-check text-success me-2"></i>Summary Laporan & Screenshot Dashboard</h6>' +
+                    '<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>' +
+                  '</div>' +
+                  '<div class="modal-body">' +
+                    '<div id="copyModalToast" class="alert alert-success py-2 px-3 small mb-3"></div>' +
+                    '<div class="row g-3">' +
+                      '<div class="col-lg-5">' +
+                        '<div class="d-flex justify-content-between align-items-center mb-1">' +
+                          '<label class="small fw-bold text-uppercase text-info">Teks Summary (Siap Paste WA / Email)</label>' +
+                          '<button type="button" class="btn btn-primary btn-sm py-0 px-2" id="modalCopyTextBtn"><i class="fas fa-copy me-1"></i> Copy Teks</button>' +
+                        '</div>' +
+                        '<textarea id="modalSummaryTextarea" class="form-control form-control-sm font-monospace bg-black text-light border-secondary" rows="20" style="font-size:0.78rem;line-height:1.45;"></textarea>' +
+                      '</div>' +
+                      '<div class="col-lg-7">' +
+                        '<div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-1">' +
+                          '<label class="small fw-bold text-uppercase text-info">Preview Screenshot Dashboard</label>' +
+                          '<div class="d-flex gap-1">' +
+                            '<button type="button" class="btn btn-success btn-sm py-0 px-2" id="modalCopyImgBtn"><i class="fas fa-image me-1"></i> Copy Gambar Dashboard</button>' +
+                            '<button type="button" class="btn btn-outline-light btn-sm py-0 px-2" id="modalDownloadImgBtn"><i class="fas fa-download me-1"></i> Download PNG</button>' +
+                          '</div>' +
+                        '</div>' +
+                        '<div id="modalImgPreviewWrap" class="border border-secondary rounded p-2 text-center bg-black" style="max-height:430px;overflow:auto;">' +
+                          '<div class="text-muted small py-5">Menyiapkan tangkapan layar dashboard...</div>' +
+                        '</div>' +
+                      '</div>' +
+                    '</div>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>';
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        document.getElementById('modalCopyTextBtn').addEventListener('click', async () => {
+            const txt = document.getElementById('modalSummaryTextarea').value;
+            const toast = document.getElementById('copyModalToast');
+            try {
+                await navigator.clipboard.writeText(txt);
+                toast.className = 'alert alert-success py-2 px-3 small mb-3';
+                toast.textContent = 'Teks summary berhasil disalin ke clipboard!';
+            } catch (e) {
+                document.getElementById('modalSummaryTextarea').select();
+                document.execCommand('copy');
+                toast.className = 'alert alert-success py-2 px-3 small mb-3';
+                toast.textContent = 'Teks summary berhasil disalin!';
+            }
+        });
+
+        document.getElementById('modalCopyImgBtn').addEventListener('click', async () => {
+            const toast = document.getElementById('copyModalToast');
+            if(!lastCapturedBlob){
+                toast.className = 'alert alert-warning py-2 px-3 small mb-3';
+                toast.textContent = 'Gambar dashboard belum siap.';
+                return;
+            }
+            try {
+                await navigator.clipboard.write([new ClipboardItem({ 'image/png': lastCapturedBlob })]);
+                toast.className = 'alert alert-success py-2 px-3 small mb-3';
+                toast.textContent = 'Gambar dashboard berhasil disalin ke clipboard! Langsung Paste (Ctrl+V) di WhatsApp/Email.';
+            } catch (err) {
+                toast.className = 'alert alert-warning py-2 px-3 small mb-3';
+                toast.textContent = 'Browser memblokir copy gambar langsung (' + err.message + '). Silakan klik Download PNG.';
+            }
+        });
+
+        document.getElementById('modalDownloadImgBtn').addEventListener('click', () => {
+            if(!lastCapturedBlob) return;
+            const url = URL.createObjectURL(lastCapturedBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'dashboard_casn_' + new Date().toISOString().slice(0, 10) + '.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    }
+
+    function buildDashboardSummaryText(){
+        const selDateEl = document.getElementById('dailyDateSelect');
+        const dateLabel = selDateEl && selDateEl.selectedOptions[0]
+            ? selDateEl.selectedOptions[0].textContent
+            : (document.getElementById('tblDateVal').textContent || '-');
+        const hStart = document.getElementById('dailyHourStart').value || '0';
+        const hEnd = document.getElementById('dailyHourEnd').value || '23';
+        const scopeVal = document.getElementById('dailyCasnScope').value;
+        const scopeLabel = scopeVal === 'ALL' ? 'Semua Produk' : 'E-Meterai / CASN';
+
+        if(!allInteractions.length){
+            const intRows = Array.from(document.querySelectorAll('#dailySummaryBody tr')).map(tr =>
+                Array.from(tr.children).map(td => td.textContent.trim())
+            );
+            const tktRows = Array.from(document.querySelectorAll('#tktSummaryBody tr')).map(tr =>
+                Array.from(tr.children).map(td => td.textContent.trim())
+            );
+            const topInt = Array.from(document.querySelectorAll('#topDailyCasnBody tr:not(.total-row)')).slice(0, 3).map(tr => {
+                const c = tr.children;
+                return c.length >= 4 ? `  ${c[0].textContent.trim()}. ${c[1].textContent.trim()} (${c[2].textContent.trim()} | ${c[3].textContent.trim()})` : '';
+            }).filter(Boolean);
+            const topTkt = Array.from(document.querySelectorAll('#topDailyTktCasnBody tr:not(.total-row)')).slice(0, 3).map(tr => {
+                const c = tr.children;
+                return c.length >= 4 ? `  ${c[0].textContent.trim()}. ${c[1].textContent.trim()} (${c[2].textContent.trim()} | ${c[3].textContent.trim()})` : '';
+            }).filter(Boolean);
+
+            const dInt = intRows[0] || ['-', '0', '0', '0', '0', '0', '0'];
+            const mInt = intRows[1] || ['-', '0', '0', '0', '0', '0', '0'];
+            const dTkt = tktRows[0] || ['-', '0', '0', '0', '0'];
+            const mTkt = tktRows[1] || ['-', '0', '0', '0', '0'];
+
+            return [
+                `*REPORT DAILY OPERATIONAL HELPDESK CASN*`,
+                `Tanggal : ${dateLabel}`,
+                `Interval : ${hStart}:00 - ${hEnd}:59 WIB`,
+                `Scope : ${scopeLabel} (Data Referensi)`,
+                ``,
+                `*1. RINGKASAN INTERAKSI*`,
+                `• Daily Interaction : *${dInt[1]}* (Escalated: ${dInt[2]} | Not Escalated: ${dInt[3]})`,
+                `  - Komposisi: Informasi ${document.getElementById('pctInfo').textContent} (${dInt[4]}), Keluhan ${document.getElementById('pctKeluhan').textContent} (${dInt[5]}), Permintaan ${document.getElementById('pctPermintaan').textContent} (${dInt[6]})`,
+                `• MTD Interaction : *${mInt[1]}* (Escalated: ${mInt[2]} | Not Escalated: ${mInt[3]})`,
+                `• Top 3 Interaksi Harian:`,
+                ...(topInt.length ? topInt : ['  - Belum ada data']),
+                ``,
+                `*2. RINGKASAN TICKETING (ESKALASI)*`,
+                `• Daily Ticket Created : *${dTkt[1]}* (Resolved: ${dTkt[2]} | Outstanding: ${dTkt[3]} | Pending: ${dTkt[4]})`,
+                `• MTD Ticket Created : *${mTkt[1]}* (Resolved: ${mTkt[2]} | Outstanding: ${mTkt[3]} | Pending: ${mTkt[4]})`,
+                `• Top 3 Tiket Eskalasi Harian:`,
+                ...(topTkt.length ? topTkt : ['  - Belum ada data'])
+            ].join('\n');
+        }
+
+        const activeDate = selDateEl.value;
+        const monthPrefix = activeDate.slice(0, 7);
+        const hStartNum = parseInt(hStart, 10);
+        const hEndNum = parseInt(hEnd, 10);
+
+        const isCasn = (r) => {
+            if(scopeVal === 'ALL') return true;
+            const sc = (r.sc || '').toLowerCase();
+            const dsc = (r.dsc || '').toLowerCase();
+            return sc === 'e-meterai' || dsc.includes('casn') || dsc.includes('sscasn') || dsc.includes('e-meterai');
+        };
+
+        const intMeta = allInteractions.map(r => {
+            const iso = r.doStart || r.doOpen;
+            if(!iso) return null;
+            const d = new Date(iso);
+            const dKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            return { r, dKey, hour: d.getHours() };
+        }).filter(Boolean);
+
+        const dailyInt = intMeta.filter(x => x.dKey === activeDate && x.hour >= hStartNum && x.hour <= hEndNum && isCasn(x.r));
+        const mtdInt = intMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && isCasn(x.r));
+
+        const sumInt = (list) => {
+            let esc = 0, notEsc = 0, info = 0, kel = 0, perm = 0;
+            list.forEach(x => {
+                if(x.r.isEscalated) esc++; else notEsc++;
+                const mc = (x.r.mc || '').toLowerCase();
+                if(mc === 'informasi') info++;
+                else if(mc === 'keluhan') kel++;
+                else if(mc === 'permintaan') perm++;
+            });
+            return { total: list.length, esc, notEsc, info, kel, perm };
+        };
+
+        const sDailyInt = sumInt(dailyInt);
+        const sMtdInt = sumInt(mtdInt);
+        const denomInt = sDailyInt.total || 1;
+        const pctInfo = sDailyInt.total ? ((sDailyInt.info / denomInt) * 100).toFixed(2) + '%' : '0.00%';
+        const pctKel = sDailyInt.total ? ((sDailyInt.kel / denomInt) * 100).toFixed(2) + '%' : '0.00%';
+        const pctPerm = sDailyInt.total ? ((sDailyInt.perm / denomInt) * 100).toFixed(2) + '%' : '0.00%';
+
+        const getTop3Lines = (list) => {
+            const counts = new Map();
+            list.forEach(x => {
+                const k = x.r.dsc || x.r.sc || '(Lainnya)';
+                counts.set(k, (counts.get(k) || 0) + 1);
+            });
+            const sorted = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 3);
+            if(!sorted.length) return ['  - Tidak ada data pada interval ini'];
+            return sorted.map((it, idx) => {
+                const pct = list.length ? ((it[1] / list.length) * 100).toFixed(2) + '%' : '0.00%';
+                return `  ${idx + 1}. ${it[0]} (${it[1].toLocaleString('id-ID')} | ${pct})`;
+            });
+        };
+
+        const tktMeta = Array.from(ticketsMap.values()).map(r => {
+            const iso = r.doOpen || r.doStart;
+            if(!iso) return null;
+            const d = new Date(iso);
+            const dKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            return { r, dKey, hour: d.getHours() };
+        }).filter(Boolean);
+
+        const dailyTkt = tktMeta.filter(x => x.dKey === activeDate && x.hour >= hStartNum && x.hour <= hEndNum && isCasn(x.r));
+        const mtdTkt = tktMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && isCasn(x.r));
+
+        const sumTkt = (list) => {
+            let resolved = 0, outstanding = 0, pending = 0;
+            list.forEach(x => {
+                const st = (x.r.st || '').toLowerCase();
+                if(FINISHED_STATUSES.has(st)) resolved++;
+                else {
+                    outstanding++;
+                    if(st === 'pending') pending++;
+                }
+            });
+            return { created: list.length, resolved, outstanding, pending };
+        };
+
+        const sDailyTkt = sumTkt(dailyTkt);
+        const sMtdTkt = sumTkt(mtdTkt);
+
+        const now = Date.now();
+        const slaList = Array.from(ticketsMap.values())
+            .filter(r => isCasn(r))
+            .map(r => computeSla(r, now));
+        const slaFin = slaList.filter(s => s.finished);
+        const slaComp = slaFin.filter(s => s.result === 'aman').length;
+        const slaBreach = slaFin.filter(s => s.result === 'breach').length;
+        const slaOut = slaList.filter(s => !s.finished).length;
+        const slaPct = slaFin.length ? ((slaComp / slaFin.length) * 100).toFixed(1) + '%' : '—';
+        const modeLabel = slaViewMode === 'include' ? 'User / Include Pending' : 'Internal / Exclude Pending';
+
+        return [
+            `*REPORT DAILY OPERATIONAL HELPDESK CASN*`,
+            `Tanggal : ${dateLabel}`,
+            `Interval : ${hStart}:00 - ${hEnd}:59 WIB`,
+            `Scope : ${scopeLabel}`,
+            ``,
+            `*1. RINGKASAN INTERAKSI*`,
+            `• Daily Interaction : *${sDailyInt.total.toLocaleString('id-ID')}* (Escalated: ${sDailyInt.esc.toLocaleString('id-ID')} | Not Escalated: ${sDailyInt.notEsc.toLocaleString('id-ID')})`,
+            `  - Komposisi: Informasi ${pctInfo} (${sDailyInt.info}), Keluhan ${pctKel} (${sDailyInt.kel}), Permintaan ${pctPerm} (${sDailyInt.perm})`,
+            `• MTD Interaction : *${sMtdInt.total.toLocaleString('id-ID')}* (Escalated: ${sMtdInt.esc.toLocaleString('id-ID')} | Not Escalated: ${sMtdInt.notEsc.toLocaleString('id-ID')})`,
+            `• Top 3 Interaksi Harian:`,
+            ...getTop3Lines(dailyInt),
+            ``,
+            `*2. RINGKASAN TICKETING (ESKALASI)*`,
+            `• Daily Ticket Created : *${sDailyTkt.created.toLocaleString('id-ID')}* (Resolved: ${sDailyTkt.resolved.toLocaleString('id-ID')} | Outstanding: ${sDailyTkt.outstanding.toLocaleString('id-ID')} | Pending: ${sDailyTkt.pending.toLocaleString('id-ID')})`,
+            `• MTD Ticket Created : *${sMtdTkt.created.toLocaleString('id-ID')}* (Resolved: ${sMtdTkt.resolved.toLocaleString('id-ID')} | Outstanding: ${sMtdTkt.outstanding.toLocaleString('id-ID')} | Pending: ${sMtdTkt.pending.toLocaleString('id-ID')})`,
+            `• Top 3 Tiket Eskalasi Harian:`,
+            ...getTop3Lines(dailyTkt),
+            ``,
+            `*3. PERFORMA SLA TIKET (${modeLabel})*`,
+            `• Total Tiket Scope : *${slaList.length.toLocaleString('id-ID')}* (Selesai: ${slaFin.length.toLocaleString('id-ID')} | Outstanding: ${slaOut.toLocaleString('id-ID')})`,
+            `• SLA Compliance : *${slaPct}* (Achieved: ${slaComp.toLocaleString('id-ID')} | Breach: ${slaBreach.toLocaleString('id-ID')})`
+        ].join('\n');
+    }
+
+    async function handleCopyDashboardAndSummary(){
+        ensureCopyModal();
+        const summaryText = buildDashboardSummaryText();
+        const textarea = document.getElementById('modalSummaryTextarea');
+        const toast = document.getElementById('copyModalToast');
+        const previewWrap = document.getElementById('modalImgPreviewWrap');
+
+        textarea.value = summaryText;
+        lastCapturedBlob = null;
+        previewWrap.innerHTML = '<div class="text-muted small py-5"><i class="fas fa-spinner fa-spin me-2"></i>Mengambil gambar dashboard...</div>';
+
+        let textCopied = false;
+        try {
+            await navigator.clipboard.writeText(summaryText);
+            textCopied = true;
+        } catch (e) {
+            textCopied = false;
+        }
+
+        toast.className = 'alert alert-success py-2 px-3 small mb-3';
+        toast.textContent = textCopied
+            ? 'Teks summary otomatis tersalin ke Clipboard! Tinggal Paste (Ctrl+V) di WhatsApp/Email.'
+            : 'Summary siap disalin. Klik "Copy Teks" atau "Copy Gambar Dashboard" di bawah.';
+
+        if(window.bootstrap && window.bootstrap.Modal){
+            const modal = window.bootstrap.Modal.getOrCreateInstance(document.getElementById('copySummaryModal'));
+            modal.show();
+        }
+
+        try {
+            const h2c = await ensureHtml2Canvas();
+            const targetEl = document.querySelector('#layoutSidenav_content main .container-fluid') || document.body;
+            const canvas = await h2c(targetEl, {
+                backgroundColor: isDark ? '#07090d' : '#f4f6f9',
+                scale: 1.5,
+                useCORS: true,
+                logging: false
+            });
+            canvas.toBlob((blob) => {
+                if(!blob) return;
+                lastCapturedBlob = blob;
+                const imgUrl = URL.createObjectURL(blob);
+                previewWrap.innerHTML = '<img src="' + imgUrl + '" alt="Dashboard Preview" class="img-fluid rounded border border-secondary" />';
+            }, 'image/png');
+        } catch (err) {
+            previewWrap.innerHTML = '<div class="text-warning small py-4">Gagal merender screenshot otomatis (' + err.message + '), namun teks summary tetap siap digunakan.</div>';
+        }
     }
 
     function safeStr(v){
@@ -1212,7 +1544,6 @@
         if(ticketsMap.size > 0) renderActual();
     });
 
-    let isDark = true;
     document.getElementById('themeToggleBtn').addEventListener('click', () => {
         isDark = !isDark;
         const sidenav = document.getElementById('sidenavAccordion');

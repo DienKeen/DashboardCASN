@@ -8,6 +8,7 @@
     const ESCALATION_ELIGIBLE = new Set(['close', 'resolved', 'return', 'open', 'on progress']);
     const ESCALATION_CHANNELS = new Set(['email', 'whatsapp']);
     const COMBINED_VALUE = 'COMBINED:E-Meterai|Perisai';
+    const PIN_STORAGE_KEY = 'casn_admin_pin_session';
 
     const DURATION_BUCKETS = [
         { label: '8 Jam', max: 8 },
@@ -31,15 +32,96 @@
     let currentScopedRows = [];
     let isDark = true;
     let lastCapturedBlob = null;
+    let adminPin = sessionStorage.getItem(PIN_STORAGE_KEY) || '';
 
     let achievedChart = null, top10Chart = null, histChart = null;
     let dailyChart1 = null, dailyChart2 = null, dailyChart3 = null, dailyChart4 = null;
     let tktChart1 = null, tktChart2 = null, tktChart3 = null, tktChart4 = null;
 
+    function isAdminUnlocked(){
+        return Boolean(adminPin);
+    }
+
+    function updateRoleUI(){
+        const unlocked = isAdminUnlocked();
+        const roleBtn = document.getElementById('roleToggleBtn');
+        const uploadLbl = document.querySelector('label[for="fileInput"]');
+        const modeSel = document.getElementById('uploadSyncMode');
+        const clearBtn = document.getElementById('clearD1Btn');
+
+        if(roleBtn){
+            roleBtn.className = unlocked ? 'btn btn-warning btn-sm fw-semibold' : 'btn btn-outline-secondary btn-sm';
+            roleBtn.innerHTML = unlocked
+                ? '<i class="fas fa-unlock me-1"></i> Admin Aktif'
+                : '<i class="fas fa-lock me-1"></i> Mode Viewer';
+            roleBtn.title = unlocked ? 'Klik untuk mengunci kembali ke Mode Viewer' : 'Klik untuk membuka akses Upload & Reset D1 dengan PIN';
+        }
+        if(uploadLbl){
+            uploadLbl.classList.toggle('opacity-50', !unlocked);
+            uploadLbl.title = unlocked ? 'Upload file CSV/Excel ke D1' : 'Terkunci: Klik Mode Viewer untuk memasukkan PIN Admin';
+        }
+        if(modeSel) modeSel.style.display = unlocked ? '' : 'none';
+        if(clearBtn) clearBtn.style.display = unlocked ? '' : 'none';
+    }
+
+    async function promptAdminUnlock(){
+        if(isAdminUnlocked()){
+            if(confirm('Kunci kembali dashboard ke Mode Viewer (sembunyikan akses Upload & Reset D1)?')){
+                adminPin = '';
+                sessionStorage.removeItem(PIN_STORAGE_KEY);
+                updateRoleUI();
+            }
+            return false;
+        }
+        const input = prompt('Masukkan PIN Admin Helpdesk untuk membuka fitur Upload & Reset D1:');
+        if(!input) return false;
+        const alertEl = document.getElementById('statusAlert');
+        try {
+            const res = await fetch('/api/auth/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pin: input.trim() })
+            });
+            const data = await res.json().catch(() => ({}));
+            if(res.ok && data.ok){
+                adminPin = input.trim();
+                sessionStorage.setItem(PIN_STORAGE_KEY, adminPin);
+                updateRoleUI();
+                alertEl.className = 'alert alert-success py-2 px-3 small';
+                alertEl.textContent = 'Akses Admin terbuka. Fitur Upload CSV/Excel & Reset D1 aktif.';
+                return true;
+            } else {
+                alertEl.className = 'alert alert-danger py-2 px-3 small';
+                alertEl.textContent = 'PIN Admin salah. Akses tetap dalam Mode Viewer.';
+                return false;
+            }
+        } catch (err) {
+            alertEl.className = 'alert alert-danger py-2 px-3 small';
+            alertEl.textContent = 'Gagal memverifikasi PIN: ' + err.message;
+            return false;
+        }
+    }
+
     function injectD1Controls(){
         const fileInput = document.getElementById('fileInput');
         if(!fileInput || document.getElementById('uploadSyncMode')) return;
         const wrap = fileInput.parentElement;
+        const uploadLbl = document.querySelector('label[for="fileInput"]');
+
+        if(uploadLbl){
+            uploadLbl.addEventListener('click', async (e) => {
+                if(!isAdminUnlocked()){
+                    e.preventDefault();
+                    const ok = await promptAdminUnlock();
+                    if(ok) fileInput.click();
+                }
+            });
+        }
+
+        const roleBtn = document.createElement('button');
+        roleBtn.id = 'roleToggleBtn';
+        roleBtn.type = 'button';
+        roleBtn.addEventListener('click', promptAdminUnlock);
 
         const modeSel = document.createElement('select');
         modeSel.id = 'uploadSyncMode';
@@ -63,10 +145,17 @@
         clearBtn.className = 'btn btn-outline-danger btn-sm';
         clearBtn.innerHTML = '<i class="fas fa-trash-alt me-1"></i> Reset D1';
         clearBtn.addEventListener('click', async () => {
+            if(!isAdminUnlocked()){
+                const ok = await promptAdminUnlock();
+                if(!ok) return;
+            }
             if(!confirm('Hapus seluruh data tiket tersimpan di Cloudflare D1?')) return;
             const alertEl = document.getElementById('statusAlert');
             try {
-                const res = await fetch('/api/tickets', { method: 'DELETE' });
+                const res = await fetch('/api/tickets', {
+                    method: 'DELETE',
+                    headers: { 'X-Admin-Pin': adminPin }
+                });
                 const json = await res.json().catch(() => ({}));
                 if(!res.ok || !json.ok) throw new Error(json.reason || ('HTTP ' + res.status));
                 allInteractions = [];
@@ -83,9 +172,89 @@
             }
         });
 
+        wrap.insertBefore(roleBtn, uploadLbl);
         wrap.insertBefore(modeSel, fileInput.nextSibling);
         wrap.insertBefore(copyDashBtn, modeSel.nextSibling);
         wrap.appendChild(clearBtn);
+        updateRoleUI();
+    }
+
+    function ensureChannelSummaryCard(){
+        const secDaily = document.getElementById('sec-daily');
+        if(!secDaily || document.getElementById('channelBreakdownCard')) return;
+        const cardHtml =
+            '<div class="card mb-4" id="channelBreakdownCard">' +
+              '<div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">' +
+                '<span><i class="fas fa-headset me-1"></i> Distribusi Interaksi & Kecepatan Eskalasi per Channel</span>' +
+                '<span class="small text-muted">Target Eskalasi Email & WhatsApp: ≤ 15 Menit</span>' +
+              '</div>' +
+              '<div class="card-body p-2">' +
+                '<div class="table-responsive">' +
+                  '<table class="report-tbl">' +
+                    '<thead><tr>' +
+                      '<th class="text-start">Channel</th>' +
+                      '<th>Daily Interaksi</th>' +
+                      '<th>Porsi (%)</th>' +
+                      '<th>Escalated</th>' +
+                      '<th>Not Escalated</th>' +
+                      '<th>MTD Interaksi</th>' +
+                      '<th>Avg Kecepatan Eskalasi</th>' +
+                    '</tr></thead>' +
+                    '<tbody id="channelBreakdownBody"></tbody>' +
+                  '</table>' +
+                '</div>' +
+              '</div>' +
+            '</div>';
+        secDaily.insertAdjacentHTML('beforeend', cardHtml);
+    }
+
+    function ensureAtRiskRadarCard(){
+        const overviewEl = document.getElementById('overviewCards');
+        if(!overviewEl || document.getElementById('atRiskRadarCard')) return;
+        const radarHtml =
+            '<div class="card mb-4 border-start border-4 border-danger" id="atRiskRadarCard">' +
+              '<div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">' +
+                '<span class="text-danger fw-bold"><i class="fas fa-exclamation-triangle me-1"></i> Radar Prioritas: Top 5 Tiket Aktif Mendekati / Melewati Breach SLA</span>' +
+                '<button type="button" class="btn btn-outline-danger btn-sm py-0 px-2" id="copyAtRiskBtn">' +
+                  '<i class="fas fa-copy me-1"></i> Copy ID Tiket Kritis' +
+                '</button>' +
+              '</div>' +
+              '<div class="card-body p-2">' +
+                '<div class="table-responsive">' +
+                  '<table class="sla-tbl">' +
+                    '<thead><tr>' +
+                      '<th>Ticket ID</th>' +
+                      '<th>Produk</th>' +
+                      '<th>Subject / Kategori</th>' +
+                      '<th>Priority</th>' +
+                      '<th>Status</th>' +
+                      '<th>Durasi Berjalan</th>' +
+                      '<th>Countdown Sisa SLA</th>' +
+                    '</tr></thead>' +
+                    '<tbody id="atRiskRadarBody"></tbody>' +
+                  '</table>' +
+                '</div>' +
+              '</div>' +
+            '</div>';
+        overviewEl.insertAdjacentHTML('afterend', radarHtml);
+
+        document.getElementById('copyAtRiskBtn').addEventListener('click', async () => {
+            const rows = Array.from(document.querySelectorAll('#atRiskRadarBody tr[data-ticket-id]'));
+            if(!rows.length) return;
+            const lines = ['*ALERT MONITORING SLA TIKET AKTIF (PRIORITAS TINDAK LANJUT)*'];
+            rows.forEach((tr, idx) => {
+                lines.push(`${idx + 1}. *${tr.dataset.ticketId}* [${tr.dataset.priority}] - ${tr.dataset.subject} (${tr.dataset.countdown})`);
+            });
+            const text = lines.join('\n');
+            const btn = document.getElementById('copyAtRiskBtn');
+            try {
+                await navigator.clipboard.writeText(text);
+                btn.innerHTML = '<i class="fas fa-check me-1"></i> Tersalin!';
+                setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy me-1"></i> Copy ID Tiket Kritis'; }, 2000);
+            } catch (e) {
+                alert(text);
+            }
+        });
     }
 
     function ensureHtml2Canvas(){
@@ -284,6 +453,16 @@
         const pctKel = sDailyInt.total ? ((sDailyInt.kel / denomInt) * 100).toFixed(2) + '%' : '0.00%';
         const pctPerm = sDailyInt.total ? ((sDailyInt.perm / denomInt) * 100).toFixed(2) + '%' : '0.00%';
 
+        const chCounts = new Map();
+        dailyInt.forEach(x => {
+            const ch = x.r.ch || '(Tanpa Channel)';
+            chCounts.set(ch, (chCounts.get(ch) || 0) + 1);
+        });
+        const chSummary = Array.from(chCounts.entries())
+            .sort((a, b) => b[1] - a[1])
+            .map(([ch, cnt]) => `${ch}: ${cnt.toLocaleString('id-ID')}`)
+            .join(' | ') || '-';
+
         const getTop3Lines = (list) => {
             const counts = new Map();
             list.forEach(x => {
@@ -326,13 +505,14 @@
         const sMtdTkt = sumTkt(mtdTkt);
 
         const now = Date.now();
-        const slaList = Array.from(ticketsMap.values())
-            .filter(r => isCasn(r))
-            .map(r => computeSla(r, now));
+        const scopeTickets = Array.from(ticketsMap.values()).filter(r => isCasn(r));
+        const slaList = scopeTickets.map(r => computeSla(r, now));
         const slaFin = slaList.filter(s => s.finished);
         const slaComp = slaFin.filter(s => s.result === 'aman').length;
         const slaBreach = slaFin.filter(s => s.result === 'breach').length;
         const slaOut = slaList.filter(s => !s.finished).length;
+        const reopenCount = scopeTickets.filter(r => (r.st || '').toLowerCase().includes('reopen')).length;
+        const reopenRate = scopeTickets.length ? ((reopenCount / scopeTickets.length) * 100).toFixed(1) + '%' : '0.0%';
         const slaPct = slaFin.length ? ((slaComp / slaFin.length) * 100).toFixed(1) + '%' : '—';
         const modeLabel = slaViewMode === 'include' ? 'User / Include Pending' : 'Internal / Exclude Pending';
 
@@ -344,6 +524,7 @@
             ``,
             `*1. RINGKASAN INTERAKSI*`,
             `• Daily Interaction : *${sDailyInt.total.toLocaleString('id-ID')}* (Escalated: ${sDailyInt.esc.toLocaleString('id-ID')} | Not Escalated: ${sDailyInt.notEsc.toLocaleString('id-ID')})`,
+            `  - Channel Daily : ${chSummary}`,
             `  - Komposisi: Informasi ${pctInfo} (${sDailyInt.info}), Keluhan ${pctKel} (${sDailyInt.kel}), Permintaan ${pctPerm} (${sDailyInt.perm})`,
             `• MTD Interaction : *${sMtdInt.total.toLocaleString('id-ID')}* (Escalated: ${sMtdInt.esc.toLocaleString('id-ID')} | Not Escalated: ${sMtdInt.notEsc.toLocaleString('id-ID')})`,
             `• Top 3 Interaksi Harian:`,
@@ -355,9 +536,9 @@
             `• Top 3 Tiket Eskalasi Harian:`,
             ...getTop3Lines(dailyTkt),
             ``,
-            `*3. PERFORMA SLA TIKET (${modeLabel})*`,
+            `*3. PERFORMA SLA & KUALITAS (${modeLabel})*`,
             `• Total Tiket Scope : *${slaList.length.toLocaleString('id-ID')}* (Selesai: ${slaFin.length.toLocaleString('id-ID')} | Outstanding: ${slaOut.toLocaleString('id-ID')})`,
-            `• SLA Compliance : *${slaPct}* (Achieved: ${slaComp.toLocaleString('id-ID')} | Breach: ${slaBreach.toLocaleString('id-ID')})`
+            `• SLA Compliance : *${slaPct}* (Achieved: ${slaComp.toLocaleString('id-ID')} | Breach: ${slaBreach.toLocaleString('id-ID')} | Reopen Rate: ${reopenRate})`
         ].join('\n');
     }
 
@@ -530,7 +711,10 @@
             const chunkMode = (i === 0 && mode === 'replace') ? 'replace' : 'upsert';
             const res = await fetch('/api/tickets', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Admin-Pin': adminPin
+                },
                 body: JSON.stringify({ mode: chunkMode, records: chunk })
             });
             const json = await res.json().catch(() => ({}));
@@ -586,6 +770,7 @@
     }
 
     function renderReferenceReports(){
+        ensureChannelSummaryCard();
         document.getElementById('dailyDateSelect').innerHTML = '<option value="REF">September 6, 2024 (Referensi)</option>';
         document.getElementById('dailyHourStart').value = '0';
         document.getElementById('dailyHourEnd').value = '23';
@@ -614,6 +799,15 @@
         ].map(r =>
             '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.total + '</td><td class="big-num">' + r.esc + '</td>' +
             '<td class="big-num">' + r.notEsc + '</td><td class="big-num">' + r.info + '</td><td class="big-num">' + r.kel + '</td><td class="big-num">' + r.perm + '</td></tr>'
+        ).join('');
+
+        document.getElementById('channelBreakdownBody').innerHTML = [
+            { ch: 'WhatsApp', daily: 782, pct: '72.21%', esc: 76, notEsc: 706, mtd: 10240, avgEsc: '8.4 Menit' },
+            { ch: 'Email', daily: 268, pct: '24.75%', esc: 38, notEsc: 230, mtd: 3490, avgEsc: '11.2 Menit' },
+            { ch: 'Web / Live Chat', daily: 33, pct: '3.05%', esc: 4, notEsc: 29, mtd: 414, avgEsc: '6.9 Menit' }
+        ].map(r =>
+            '<tr><td class="row-title">' + r.ch + '</td><td class="num">' + r.daily + '</td><td class="num">' + r.pct + '</td>' +
+            '<td class="num">' + r.esc + '</td><td class="num">' + r.notEsc + '</td><td class="num">' + r.mtd + '</td><td class="num">' + r.avgEsc + '</td></tr>'
         ).join('');
 
         fillTopTable('topDailyCasnBody', [
@@ -864,6 +1058,7 @@
     }
 
     function renderDailyAndTicketingFromUploaded(){
+        ensureChannelSummaryCard();
         if(!allInteractions.length){ renderReferenceReports(); return; }
 
         const dateSet = new Set();
@@ -999,6 +1194,39 @@
             '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.total + '</td><td class="big-num">' + r.esc + '</td>' +
             '<td class="big-num">' + r.notEsc + '</td><td class="big-num">' + r.info + '</td><td class="big-num">' + r.kel + '</td><td class="big-num">' + r.perm + '</td></tr>'
         ).join('');
+
+        const chMap = new Map();
+        dailyCasnInt.forEach(x => {
+            const ch = x.r.ch || '(Tanpa Channel)';
+            if(!chMap.has(ch)) chMap.set(ch, { daily: 0, esc: 0, notEsc: 0, mtd: 0, escHrs: [] });
+            const g = chMap.get(ch);
+            g.daily++;
+            if(x.r.isEscalated){
+                g.esc++;
+                if(x.r.doOpen && x.r.doStart){
+                    const hrs = (new Date(x.r.doOpen).getTime() - new Date(x.r.doStart).getTime()) / 3600000;
+                    if(hrs >= 0) g.escHrs.push(hrs);
+                }
+            } else {
+                g.notEsc++;
+            }
+        });
+        mtdCasnInt.forEach(x => {
+            const ch = x.r.ch || '(Tanpa Channel)';
+            if(!chMap.has(ch)) chMap.set(ch, { daily: 0, esc: 0, notEsc: 0, mtd: 0, escHrs: [] });
+            chMap.get(ch).mtd++;
+        });
+        const chTotalDaily = dailyCasnInt.length || 1;
+        document.getElementById('channelBreakdownBody').innerHTML = Array.from(chMap.entries())
+            .sort((a, b) => b[1].daily - a[1].daily)
+            .map(([ch, g]) => {
+                const pct = dailyCasnInt.length ? ((g.daily / chTotalDaily) * 100).toFixed(2) + '%' : '0.00%';
+                const avgMin = g.escHrs.length
+                    ? ((g.escHrs.reduce((s, h) => s + h, 0) / g.escHrs.length) * 60).toFixed(1) + ' Menit'
+                    : '—';
+                return '<tr><td class="row-title">' + ch + '</td><td class="num">' + g.daily + '</td><td class="num">' + pct + '</td>' +
+                    '<td class="num">' + g.esc + '</td><td class="num">' + g.notEsc + '</td><td class="num">' + g.mtd + '</td><td class="num">' + avgMin + '</td></tr>';
+            }).join('') || '<tr><td colspan="7" class="text-center text-muted">Tidak ada data channel pada interval ini.</td></tr>';
 
         const top5DailyCasnInt = buildTop10(dailyCasnInt, 'topDailyCasnBody');
         const top5MtdCasnInt = buildTop10(mtdCasnInt, 'topMtdCasnBody');
@@ -1157,6 +1385,13 @@
         return hrs.toFixed(2) + ' jam (' + (hrs / 24).toFixed(1) + ' hari)';
     }
 
+    function fmtCountdown(remHours){
+        if(remHours === null || remHours === undefined || isNaN(remHours)) return '—';
+        const abs = Math.abs(remHours);
+        const label = abs < 1 ? Math.round(abs * 60) + ' menit' : abs.toFixed(1) + ' jam';
+        return remHours >= 0 ? 'Sisa ' + label : 'Lewat ' + label;
+    }
+
     function applyProductFilter(list, sel){
         if(sel === 'ALL') return list;
         if(sel.indexOf('COMBINED:') === 0){
@@ -1192,6 +1427,7 @@
     }
 
     function renderActual(){
+        ensureAtRiskRadarCard();
         if(ticketsMap.size === 0){
             document.getElementById('emptyState').style.display = '';
             document.getElementById('actualDashboard').style.display = 'none';
@@ -1220,18 +1456,41 @@
         const compliancePct = finished.length ? ((compliant / finished.length) * 100).toFixed(1) : '—';
         const outWarning = outstanding.filter(c => c.sla.result === 'warning').length;
         const outBreach = outstanding.filter(c => c.sla.result === 'breach').length;
+        const reopenCount = scoped.filter(c => (c.rec.st || '').toLowerCase().includes('reopen')).length;
+        const reopenPct = scoped.length ? ((reopenCount / scoped.length) * 100).toFixed(1) + '%' : '0.0%';
 
         const kpiCards = [
             { label: 'Total Tiket', value: scoped.length, bg: 'bg-primary' },
-            { label: 'Selesai (Resolved+)', value: finished.length, bg: 'bg-secondary' },
             { label: 'SLA Compliance', value: compliancePct + (compliancePct !== '—' ? '%' : ''), bg: compliancePct !== '—' && +compliancePct >= 90 ? 'bg-success' : 'bg-warning text-dark' },
             { label: 'Breach (Selesai)', value: breachFinished, bg: breachFinished > 0 ? 'bg-danger' : 'bg-success' },
             { label: 'Outstanding Warning', value: outWarning, bg: outWarning > 0 ? 'bg-warning text-dark' : 'bg-success' },
             { label: 'Outstanding Breach', value: outBreach, bg: outBreach > 0 ? 'bg-danger' : 'bg-success' },
+            { label: 'Reopen Rate', value: reopenPct + ' (' + reopenCount + ')', bg: reopenCount > 0 ? 'bg-warning text-dark' : 'bg-secondary' },
         ];
         document.getElementById('overviewCards').innerHTML = kpiCards.map(c =>
             '<div class="col-xl-2 col-md-4 col-sm-6"><div class="card ' + c.bg + ' text-white mb-4"><div class="card-body py-3"><div class="small text-uppercase fw-bold opacity-75">' + c.label + '</div><div class="h4 mb-0 fw-bold mt-1">' + c.value + '</div></div></div></div>'
         ).join('');
+
+        const atRisk = outstanding
+            .filter(c => c.sla.target !== null && c.sla.hours !== null)
+            .map(c => ({ ...c, remHours: c.sla.target - c.sla.hours }))
+            .sort((a, b) => a.remHours - b.remHours)
+            .slice(0, 5);
+
+        document.getElementById('atRiskRadarBody').innerHTML = atRisk.map(c => {
+            const cdText = fmtCountdown(c.remHours);
+            const badgeCls = c.remHours < 0 ? 'bg-danger' : (c.remHours <= 2 ? 'bg-warning text-dark' : 'bg-info text-dark');
+            const subj = (c.rec.sj || c.rec.dsc || '—').replace(/"/g, '&quot;');
+            return '<tr data-ticket-id="' + c.rec.id + '" data-priority="' + (c.rec.pr || '-') + '" data-subject="' + subj + '" data-countdown="' + cdText + '">' +
+                '<td class="font-monospace fw-bold">' + c.rec.id + '</td>' +
+                '<td>' + (c.rec.sc || '—') + '</td>' +
+                '<td>' + (c.rec.sj || c.rec.dsc || '—') + '</td>' +
+                '<td><strong>' + (c.rec.pr || '—') + '</strong></td>' +
+                '<td>' + (c.rec.st || '—') + '</td>' +
+                '<td>' + fmtHours(c.sla.hours) + ' / ' + c.sla.target + 'j</td>' +
+                '<td><span class="badge ' + badgeCls + '">' + cdText + '</span></td>' +
+            '</tr>';
+        }).join('') || '<tr><td colspan="7" class="text-center text-muted py-3">Tidak ada tiket aktif (Outstanding) pada filter ini.</td></tr>';
 
         let totFin = 0, totComp = 0, totBreach = 0;
         const allValidHrs = [];
@@ -1316,18 +1575,20 @@
             { label: 'Breach (>15m)', value: escBreach, cls: escBreach > 0 ? 'border-danger' : 'border-success' },
         ].map(c => '<div class="col-4"><div class="card border-start border-4 ' + c.cls + '"><div class="card-body p-2"><div class="small text-muted">' + c.label + '</div><div class="h5 mb-0 fw-bold">' + c.value + '</div></div></div></div>').join('');
 
-        const escByProd = new Map();
+        const escByChannel = new Map();
         escItems.forEach(x => {
-            const p = x.rec.sc || '(Lainnya)';
-            if(!escByProd.has(p)) escByProd.set(p, { total: 0, aman: 0 });
-            const g = escByProd.get(p);
+            const p = (x.rec.ch || '(Lainnya)') + ' · ' + (x.rec.sc || '-');
+            if(!escByChannel.has(p)) escByChannel.set(p, { total: 0, aman: 0, sumHrs: 0 });
+            const g = escByChannel.get(p);
             g.total++;
+            g.sumHrs += Math.max(0, x.esc.hours);
             if(x.esc.result === 'aman') g.aman++;
         });
-        const maxEsc = Math.max(1, ...Array.from(escByProd.values()).map(g => g.total));
-        document.getElementById('escalationByProduct').innerHTML = Array.from(escByProd.entries()).sort((a, b) => b[1].total - a[1].total).map(([name, g]) => {
+        const maxEsc = Math.max(1, ...Array.from(escByChannel.values()).map(g => g.total));
+        document.getElementById('escalationByProduct').innerHTML = Array.from(escByChannel.entries()).sort((a, b) => b[1].total - a[1].total).map(([name, g]) => {
             const pct = g.total ? ((g.aman / g.total) * 100).toFixed(0) : '0';
-            return '<div class="breakdown-item"><div class="breakdown-name">' + name + '</div><div class="breakdown-bar"><div class="breakdown-fill" style="width:' + (g.total / maxEsc * 100) + '%"></div></div><div class="breakdown-val">' + g.total + ' · ' + pct + '%</div></div>';
+            const avgM = g.total ? ((g.sumHrs / g.total) * 60).toFixed(1) + 'm' : '-';
+            return '<div class="breakdown-item"><div class="breakdown-name" title="' + name + '">' + name + '</div><div class="breakdown-bar"><div class="breakdown-fill" style="width:' + (g.total / maxEsc * 100) + '%"></div></div><div class="breakdown-val" style="flex:0 0 135px;">' + g.total + ' · ' + avgM + ' (' + pct + '%)</div></div>';
         }).join('') || '<p class="small text-muted mb-0">Tidak ada data eskalasi Email/WhatsApp.</p>';
 
         const prods = Array.from(new Set(scoped.map(c => c.rec.sc).filter(Boolean))).sort();

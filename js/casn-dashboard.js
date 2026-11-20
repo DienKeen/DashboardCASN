@@ -35,59 +35,6 @@
     let adminPin = sessionStorage.getItem(PIN_STORAGE_KEY) || '';
     let statusTimer = null;
 
-    let achievedChart = null, top10Chart = null, histChart = null;
-    let dailyChart1 = null, dailyChart2 = null, dailyChart3 = null, dailyChart4 = null;
-    let tktChart1 = null, tktChart2 = null, tktChart3 = null, tktChart4 = null;
-
-    const barTotalPlugin = {
-        id: 'barTotalPlugin',
-        afterDatasetsDraw(chart) {
-            if (chart.config.type !== 'bar' || chart.options.indexAxis === 'y') return;
-            const { ctx, data } = chart;
-            const isStacked = Boolean(chart.options?.scales?.x?.stacked);
-            ctx.save();
-            ctx.font = '600 10.5px system-ui, -apple-system, sans-serif';
-            ctx.fillStyle = isDark ? '#e2e8f0' : '#1e293b';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'bottom';
-
-            if (isStacked) {
-                const labelCount = (data.labels || []).length;
-                for (let i = 0; i < labelCount; i++) {
-                    let total = 0;
-                    let topY = null;
-                    let barX = null;
-                    data.datasets.forEach((ds, dsIdx) => {
-                        if (!chart.isDatasetVisible(dsIdx)) return;
-                        const val = Number(ds.data[i] || 0);
-                        total += val;
-                        const meta = chart.getDatasetMeta(dsIdx);
-                        const el = meta.data[i];
-                        if (el && (topY === null || el.y < topY)) {
-                            topY = el.y;
-                            barX = el.x;
-                        }
-                    });
-                    if (total > 0 && barX !== null && topY !== null) {
-                        ctx.fillText(total.toLocaleString('id-ID'), barX, topY - 4);
-                    }
-                }
-            } else {
-                data.datasets.forEach((ds, dsIdx) => {
-                    if (!chart.isDatasetVisible(dsIdx)) return;
-                    const meta = chart.getDatasetMeta(dsIdx);
-                    meta.data.forEach((el, i) => {
-                        const val = Number(ds.data[i] || 0);
-                        if (val > 0 && el) {
-                            ctx.fillText(val.toLocaleString('id-ID'), el.x, el.y - 4);
-                        }
-                    });
-                });
-            }
-            ctx.restore();
-        }
-    };
-
     function injectProStyles(){
         if(document.getElementById('casnProUiStyle')) return;
         const css = `
@@ -263,44 +210,43 @@
                 letter-spacing: -0.01em;
             }
             .row > [class*="col-"] > .card {
-                height: calc(100% - 1.25rem);
-                margin-bottom: 1.25rem !important;
+                height: calc(100% - 1rem);
+                margin-bottom: 1rem !important;
             }
 
             /* Compact Zero-Cutoff Summary Tables */
             .report-tbl {
                 width: 100% !important;
                 table-layout: auto !important;
-                font-size: 0.72rem !important;
+                font-size: 0.74rem !important;
                 border-collapse: collapse;
             }
             .report-tbl th,
             .report-tbl td {
-                padding: 0.38rem 0.2rem !important;
+                padding: 0.4rem 0.35rem !important;
                 font-variant-numeric: tabular-nums;
                 vertical-align: middle !important;
             }
             .report-tbl th {
-                font-size: 0.66rem !important;
+                font-size: 0.69rem !important;
                 font-weight: 700 !important;
                 white-space: nowrap !important;
-                letter-spacing: 0 !important;
             }
             .report-tbl td.row-title {
                 font-weight: 600 !important;
                 white-space: nowrap !important;
                 text-align: left !important;
-                padding-left: 0.35rem !important;
+                padding-left: 0.5rem !important;
             }
             .report-tbl td.big-num {
-                font-size: 0.77rem !important;
+                font-size: 0.8rem !important;
                 font-weight: 700 !important;
                 text-align: center !important;
             }
             .report-tbl td.num {
-                font-size: 0.73rem !important;
+                font-size: 0.75rem !important;
                 text-align: right !important;
-                padding-right: 0.35rem !important;
+                padding-right: 0.5rem !important;
             }
             .sla-tbl {
                 font-size: 0.78rem !important;
@@ -330,31 +276,141 @@
         document.head.appendChild(styleEl);
     }
 
-    function simplifyReportLayout(){
-        const pairs = [
-            { c3: 'dailyChart3', c4: 'dailyChart4', mtdBody: 'topMtdCasnBody', allBody: 'topDailyAllBody', c2Title: 'Tren Interaksi Harian (MTD)' },
-            { c3: 'tktChart3', c4: 'tktChart4', mtdBody: 'topMtdTktCasnBody', allBody: 'topDailyTktAllBody', c2Title: 'Tren Tiket Harian (MTD)' }
-        ];
-        pairs.forEach(p => {
-            const col3 = document.getElementById(p.c3)?.closest('[class*="col-"]');
-            const col4 = document.getElementById(p.c4)?.closest('[class*="col-"]');
-            if(col3) col3.style.display = 'none';
-            if(col4) col4.style.display = 'none';
+    function splitStackedTopCard(dailyTbodyId, mtdTbodyId, dailyTitle, mtdTitle){
+        const dailyTbl = document.getElementById(dailyTbodyId)?.closest('table');
+        const mtdTbl = document.getElementById(mtdTbodyId)?.closest('table');
+        if(!dailyTbl || !mtdTbl) return [null, null];
 
-            const colMtd = document.getElementById(p.mtdBody)?.closest('[class*="col-"]');
-            const colAll = document.getElementById(p.allBody)?.closest('[class*="col-"]');
-            if(colMtd && colAll && colMtd.parentElement && colAll.parentElement && colMtd.parentElement !== colAll.parentElement){
-                const oldRow4 = colAll.parentElement;
-                colMtd.parentElement.appendChild(colAll);
-                if(oldRow4.children.length === 0 || (oldRow4.children.length === 1 && oldRow4.children[0] === col4)){
-                    oldRow4.style.display = 'none';
-                }
+        const cardA = document.createElement('div');
+        cardA.className = 'card';
+        cardA.innerHTML = '<div class="card-header"><i class="fas fa-list-ol me-1 text-primary"></i> ' + dailyTitle + '</div><div class="card-body p-2"><div class="table-responsive"></div></div>';
+        cardA.querySelector('.table-responsive').appendChild(dailyTbl);
+
+        const cardB = document.createElement('div');
+        cardB.className = 'card';
+        cardB.innerHTML = '<div class="card-header"><i class="fas fa-list-ol me-1 text-primary"></i> ' + mtdTitle + '</div><div class="card-body p-2"><div class="table-responsive"></div></div>';
+        cardB.querySelector('.table-responsive').appendChild(mtdTbl);
+
+        return [cardA, cardB];
+    }
+
+    function applyNoChartLayout(){
+        ensureChannelSummaryCard();
+        polishSummaryTableHeaders();
+
+        const secDaily = document.getElementById('sec-daily');
+        if(secDaily && !secDaily.dataset.noChartApplied){
+            const cardSummary = document.getElementById('dailySummaryBody')?.closest('.card');
+            const cardTopDailyCasn = document.getElementById('topDailyCasnBody')?.closest('.card');
+            const cardTopMtdCasn = document.getElementById('topMtdCasnBody')?.closest('.card');
+            let cardTopDailyAll = document.getElementById('topDailyAllBody')?.closest('.card');
+            let cardTopMtdAll = document.getElementById('topMtdAllBody')?.closest('.card');
+            const cardChannel = document.getElementById('channelBreakdownCard');
+
+            if(cardTopDailyAll && cardTopMtdAll && cardTopDailyAll === cardTopMtdAll){
+                [cardTopDailyAll, cardTopMtdAll] = splitStackedTopCard(
+                    'topDailyAllBody',
+                    'topMtdAllBody',
+                    'TOP 10 All Interaction (Daily)',
+                    'TOP 10 All Interaction (Month to Date)'
+                );
             }
 
-            const c2Id = p.c3 === 'dailyChart3' ? 'dailyChart2' : 'tktChart2';
-            const c2Header = document.getElementById(c2Id)?.closest('.card')?.querySelector('.card-header');
-            if(c2Header){
-                c2Header.innerHTML = '<i class="fas fa-chart-bar me-1 text-primary"></i> ' + p.c2Title;
+            Array.from(secDaily.children).forEach(el => { el.style.display = 'none'; });
+
+            const grid = document.createElement('div');
+            grid.id = 'dailyNoChartGrid';
+
+            const makeRow = (cols) => {
+                const row = document.createElement('div');
+                row.className = 'row g-3';
+                cols.forEach(({ cls, el }) => {
+                    if(!el) return;
+                    const col = document.createElement('div');
+                    col.className = cls;
+                    col.appendChild(el);
+                    row.appendChild(col);
+                });
+                grid.appendChild(row);
+            };
+
+            makeRow([{ cls: 'col-12', el: cardSummary }]);
+            makeRow([
+                { cls: 'col-lg-6', el: cardTopDailyCasn },
+                { cls: 'col-lg-6', el: cardTopMtdCasn }
+            ]);
+            makeRow([
+                { cls: 'col-lg-6', el: cardTopDailyAll },
+                { cls: 'col-lg-6', el: cardTopMtdAll }
+            ]);
+            makeRow([{ cls: 'col-12', el: cardChannel }]);
+
+            secDaily.appendChild(grid);
+            secDaily.dataset.noChartApplied = '1';
+        }
+
+        const secTkt = document.getElementById('sec-ticketing');
+        if(secTkt && !secTkt.dataset.noChartApplied){
+            const cardTktSummary = document.getElementById('tktSummaryBody')?.closest('.card');
+            const cardTopDailyTktCasn = document.getElementById('topDailyTktCasnBody')?.closest('.card');
+            const cardTopMtdTktCasn = document.getElementById('topMtdTktCasnBody')?.closest('.card');
+            let cardTopDailyTktAll = document.getElementById('topDailyTktAllBody')?.closest('.card');
+            let cardTopMtdTktAll = document.getElementById('topMtdTktAllBody')?.closest('.card');
+
+            if(cardTopDailyTktAll && cardTopMtdTktAll && cardTopDailyTktAll === cardTopMtdTktAll){
+                [cardTopDailyTktAll, cardTopMtdTktAll] = splitStackedTopCard(
+                    'topDailyTktAllBody',
+                    'topMtdTktAllBody',
+                    'TOP 10 All Ticket (Daily)',
+                    'TOP 10 All Ticket (Month to Date)'
+                );
+            }
+
+            Array.from(secTkt.children).forEach(el => { el.style.display = 'none'; });
+
+            const grid = document.createElement('div');
+            grid.id = 'tktNoChartGrid';
+
+            const makeRow = (cols) => {
+                const row = document.createElement('div');
+                row.className = 'row g-3';
+                cols.forEach(({ cls, el }) => {
+                    if(!el) return;
+                    const col = document.createElement('div');
+                    col.className = cls;
+                    col.appendChild(el);
+                    row.appendChild(col);
+                });
+                grid.appendChild(row);
+            };
+
+            makeRow([{ cls: 'col-12', el: cardTktSummary }]);
+            makeRow([
+                { cls: 'col-lg-6', el: cardTopDailyTktCasn },
+                { cls: 'col-lg-6', el: cardTopMtdTktCasn }
+            ]);
+            makeRow([
+                { cls: 'col-lg-6', el: cardTopDailyTktAll },
+                { cls: 'col-lg-6', el: cardTopMtdTktAll }
+            ]);
+
+            secTkt.appendChild(grid);
+            secTkt.dataset.noChartApplied = '1';
+        }
+
+        ['achievedChart', 'top10Chart'].forEach(canvasId => {
+            const col = document.getElementById(canvasId)?.closest('[class*="col-"]');
+            if(col){
+                const parentRow = col.parentElement;
+                col.style.display = 'none';
+                if(parentRow){
+                    const visibleCols = Array.from(parentRow.children).filter(c => c !== col && c.style.display !== 'none');
+                    if(visibleCols.length === 1){
+                        visibleCols[0].className = 'col-12';
+                    } else if(visibleCols.length === 0){
+                        parentRow.style.display = 'none';
+                    }
+                }
             }
         });
     }
@@ -547,8 +603,7 @@
                 ths[0].textContent = 'Interaksi CASN';
                 ths[1].textContent = 'Total';
                 ths[2].textContent = 'Escalated';
-                ths[3].textContent = 'Not Esc.';
-                ths[3].title = 'Not Escalated';
+                ths[3].textContent = 'Not Escalated';
                 ths[4].textContent = 'Informasi';
                 ths[5].textContent = 'Keluhan';
                 ths[6].textContent = 'Permintaan';
@@ -556,60 +611,11 @@
         }
     }
 
-    function getCleanChartOptions(extra = {}){
-        const tickColor = isDark ? '#94a3b8' : '#475569';
-        const gridColor = isDark ? 'rgba(148, 163, 184, 0.09)' : 'rgba(15, 23, 42, 0.07)';
-        return {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            scales: {
-                x: {
-                    stacked: Boolean(extra.stacked),
-                    ticks: {
-                        color: tickColor,
-                        font: { size: 10.5 },
-                        maxRotation: 0,
-                        autoSkip: true,
-                        maxTicksLimit: 12
-                    },
-                    grid: { display: false },
-                    border: { display: false }
-                },
-                y: {
-                    stacked: Boolean(extra.stacked),
-                    beginAtZero: true,
-                    grace: '14%',
-                    ticks: { color: tickColor, font: { size: 10.5 }, precision: 0, maxTicksLimit: 6 },
-                    grid: { color: gridColor },
-                    border: { display: false }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: extra.showLegend !== false,
-                    position: 'top',
-                    align: 'end',
-                    labels: {
-                        color: tickColor,
-                        usePointStyle: true,
-                        pointStyle: 'circle',
-                        boxWidth: 7,
-                        boxHeight: 7,
-                        padding: 12,
-                        font: { size: 11, weight: '600' }
-                    }
-                },
-                tooltip: extra.tooltip || {}
-            }
-        };
-    }
-
     function ensureChannelSummaryCard(){
         const secDaily = document.getElementById('sec-daily');
         if(!secDaily || document.getElementById('channelBreakdownCard')) return;
         const cardHtml =
-            '<div class="card mb-4" id="channelBreakdownCard">' +
+            '<div class="card" id="channelBreakdownCard">' +
               '<div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">' +
                 '<span><i class="fas fa-headset me-1 text-info"></i> Distribusi Interaksi & Kecepatan Eskalasi per Channel</span>' +
                 '<span class="badge bg-secondary bg-opacity-25 text-info border border-info border-opacity-25">Target Eskalasi Email & WhatsApp: ≤ 15 Menit</span>' +
@@ -1180,16 +1186,11 @@
     }
 
     function renderZeroReports(){
-        ensureChannelSummaryCard();
-        polishSummaryTableHeaders();
-        simplifyReportLayout();
+        applyNoChartLayout();
 
         document.getElementById('dailyDateSelect').innerHTML = '<option value="EMPTY">Belum ada data (0)</option>';
         document.getElementById('dailyHourStart').value = '0';
         document.getElementById('dailyHourEnd').value = '23';
-
-        const hours = Array.from({ length: 24 }, (_, h) => h + ':00');
-        const cleanOpts = getCleanChartOptions();
 
         document.getElementById('tblDateVal').textContent = '-';
         document.getElementById('tblHourStart').textContent = '0:00';
@@ -1197,7 +1198,6 @@
         document.getElementById('pctInfo').textContent = '0.00%';
         document.getElementById('pctKeluhan').textContent = '0.00%';
         document.getElementById('pctPermintaan').textContent = '0.00%';
-        document.getElementById('chart1Title').textContent = 'Tren Interaksi per Jam';
 
         document.getElementById('dailySummaryBody').innerHTML = [
             'Daily Interaction CASN',
@@ -1217,24 +1217,9 @@
         fillTopTable('topDailyAllBody', [], 0, '0.00%');
         fillTopTable('topMtdAllBody', [], 0, '0.00%');
 
-        const emptyLine = {
-            labels: hours,
-            datasets: [{ label: 'Total (0)', data: Array(24).fill(0), borderColor: '#3B82F6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true }]
-        };
-        const emptyBar = {
-            labels: ['-'],
-            datasets: [{ label: 'Total (0)', data: [0], backgroundColor: '#3B82F6', maxBarThickness: 38 }]
-        };
-
-        if(dailyChart1) dailyChart1.destroy();
-        dailyChart1 = new Chart(document.getElementById('dailyChart1'), { type: 'line', data: emptyLine, options: cleanOpts });
-        if(dailyChart2) dailyChart2.destroy();
-        dailyChart2 = new Chart(document.getElementById('dailyChart2'), { type: 'bar', data: emptyBar, options: cleanOpts });
-
         document.getElementById('tktDateVal').textContent = '-';
         document.getElementById('tktHourStart').textContent = '0:00';
         document.getElementById('tktHourEnd').textContent = '23:59';
-        document.getElementById('tktChart1Title').textContent = 'Tren Tiket Eskalasi per Jam';
 
         document.getElementById('tktSummaryBody').innerHTML = [
             'Daily Ticket CASN',
@@ -1250,17 +1235,10 @@
         fillTopTable('topMtdTktCasnBody', [], 0, '0.00%');
         fillTopTable('topDailyTktAllBody', [], 0, '0.00%');
         fillTopTable('topMtdTktAllBody', [], 0, '0.00%');
-
-        if(tktChart1) tktChart1.destroy();
-        tktChart1 = new Chart(document.getElementById('tktChart1'), { type: 'line', data: emptyLine, options: cleanOpts });
-        if(tktChart2) tktChart2.destroy();
-        tktChart2 = new Chart(document.getElementById('tktChart2'), { type: 'bar', data: emptyBar, options: cleanOpts });
     }
 
     function renderDailyAndTicketingFromUploaded(){
-        ensureChannelSummaryCard();
-        polishSummaryTableHeaders();
-        simplifyReportLayout();
+        applyNoChartLayout();
         if(!allInteractions.length){ renderZeroReports(); return; }
 
         const dateSet = new Set();
@@ -1285,8 +1263,6 @@
         const activeDate = selDateEl.value;
         const hStart = parseInt(document.getElementById('dailyHourStart').value, 10);
         const hEnd = parseInt(document.getElementById('dailyHourEnd').value, 10);
-        const minH = hStart <= hEnd ? hStart : 0;
-        const maxH = hStart <= hEnd ? hEnd : 23;
         const casnScope = document.getElementById('dailyCasnScope').value;
 
         const [ay, am, ad] = activeDate.split('-').map(Number);
@@ -1296,12 +1272,10 @@
         document.getElementById('tblDateVal').textContent = activeDateLabel;
         document.getElementById('tblHourStart').textContent = hStart + ':00';
         document.getElementById('tblHourEnd').textContent = hEnd + ':00';
-        document.getElementById('chart1Title').textContent = 'Tren Interaksi per Jam — ' + activeDateLabel;
 
         document.getElementById('tktDateVal').textContent = activeDateLabel;
         document.getElementById('tktHourStart').textContent = hStart + ':00';
         document.getElementById('tktHourEnd').textContent = hEnd + ':59';
-        document.getElementById('tktChart1Title').textContent = 'Tren Tiket Eskalasi per Jam — ' + activeDateLabel;
         document.getElementById('dailySourceBadge').textContent = 'Data Aktual · ' + allInteractions.length.toLocaleString('id-ID') + ' interaksi · ' + ticketsMap.size.toLocaleString('id-ID') + ' tiket eskalasi';
 
         const isCasn = (r) => {
@@ -1310,16 +1284,6 @@
             const dsc = (r.dsc || '').toLowerCase();
             return sc === 'e-meterai' || dsc.includes('casn') || dsc.includes('sscasn') || dsc.includes('e-meterai');
         };
-
-        const activeHours = [];
-        for(let h = minH; h <= maxH; h++) activeHours.push(h);
-        const hourLabels = activeHours.map(h => h + ':00');
-
-        const mtdDates = dates.filter(dt => dt.startsWith(monthPrefix) && dt <= activeDate);
-        const mtdDateLabels = mtdDates.map(dt => {
-            const [y, m, d] = dt.split('-').map(Number);
-            return new Date(y, m - 1, d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-        });
 
         const buildTop10 = (list, tbodyId) => {
             const counts = new Map();
@@ -1333,18 +1297,6 @@
             const allSum = list.length || 1;
             const topPct = list.length ? ((topSum / allSum) * 100).toFixed(2) + '%' : '0.00%';
             fillTopTable(tbodyId, top10.map(it => [it[0], it[1], ((it[1] / allSum) * 100).toFixed(2) + '%']), topSum, topPct);
-        };
-
-        const topIssueByHour = (list, h) => {
-            const slice = list.filter(x => x.hour === h);
-            if(!slice.length) return null;
-            const counts = new Map();
-            slice.forEach(x => {
-                const k = x.r.dsc || x.r.sc || '(Lainnya)';
-                counts.set(k, (counts.get(k) || 0) + 1);
-            });
-            const top = Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0];
-            return top ? 'Top Isu: ' + top[0] + ' (' + top[1] + ')' : null;
         };
 
         const intMeta = allInteractions.map(r => {
@@ -1430,76 +1382,6 @@
         buildTop10(dailyAllInt, 'topDailyAllBody');
         buildTop10(mtdAllInt, 'topMtdAllBody');
 
-        if(dailyChart1) dailyChart1.destroy();
-        dailyChart1 = new Chart(document.getElementById('dailyChart1'), {
-            type: 'line',
-            data: {
-                labels: hourLabels,
-                datasets: [
-                    {
-                        label: 'Total Interaksi',
-                        data: activeHours.map(h => dailyCasnInt.filter(x => x.hour === h).length),
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.14)',
-                        borderWidth: 2.3,
-                        pointRadius: 2.5,
-                        pointHoverRadius: 5,
-                        tension: 0.35,
-                        fill: true
-                    },
-                    {
-                        label: 'Escalated',
-                        data: activeHours.map(h => dailyCasnInt.filter(x => x.hour === h && x.r.isEscalated).length),
-                        borderColor: '#f97316',
-                        backgroundColor: 'transparent',
-                        borderWidth: 2,
-                        pointRadius: 2,
-                        pointHoverRadius: 4,
-                        tension: 0.35,
-                        fill: false
-                    }
-                ]
-            },
-            options: getCleanChartOptions({
-                tooltip: {
-                    callbacks: {
-                        afterBody: (items) => {
-                            if(!items.length) return '';
-                            const h = activeHours[items[0].dataIndex];
-                            const info = topIssueByHour(dailyCasnInt, h);
-                            return info ? '\n' + info : '';
-                        }
-                    }
-                }
-            })
-        });
-
-        if(dailyChart2) dailyChart2.destroy();
-        dailyChart2 = new Chart(document.getElementById('dailyChart2'), {
-            type: 'bar',
-            plugins: [barTotalPlugin],
-            data: {
-                labels: mtdDateLabels,
-                datasets: [
-                    {
-                        label: 'Not Escalated',
-                        data: mtdDates.map(dt => mtdCasnInt.filter(x => x.dKey === dt && !x.r.isEscalated).length),
-                        backgroundColor: '#3b82f6',
-                        maxBarThickness: 38,
-                        borderRadius: 3
-                    },
-                    {
-                        label: 'Escalated',
-                        data: mtdDates.map(dt => mtdCasnInt.filter(x => x.dKey === dt && x.r.isEscalated).length),
-                        backgroundColor: '#f97316',
-                        maxBarThickness: 38,
-                        borderRadius: 3
-                    }
-                ]
-            },
-            options: getCleanChartOptions({ stacked: true })
-        });
-
         const tktMeta = Array.from(ticketsMap.values()).map(r => {
             const iso = r.doOpen || r.doStart;
             if(!iso) return null;
@@ -1540,76 +1422,6 @@
         buildTop10(mtdCasnTkt, 'topMtdTktCasnBody');
         buildTop10(dailyAllTkt, 'topDailyTktAllBody');
         buildTop10(mtdAllTkt, 'topMtdTktAllBody');
-
-        if(tktChart1) tktChart1.destroy();
-        tktChart1 = new Chart(document.getElementById('tktChart1'), {
-            type: 'line',
-            data: {
-                labels: hourLabels,
-                datasets: [
-                    {
-                        label: 'Total Tiket',
-                        data: activeHours.map(h => dailyCasnTkt.filter(x => x.hour === h).length),
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.14)',
-                        borderWidth: 2.3,
-                        pointRadius: 2.5,
-                        pointHoverRadius: 5,
-                        tension: 0.35,
-                        fill: true
-                    },
-                    {
-                        label: 'Outstanding',
-                        data: activeHours.map(h => dailyCasnTkt.filter(x => x.hour === h && !FINISHED_STATUSES.has((x.r.st || '').toLowerCase())).length),
-                        borderColor: '#f59e0b',
-                        backgroundColor: 'transparent',
-                        borderWidth: 2,
-                        pointRadius: 2,
-                        pointHoverRadius: 4,
-                        tension: 0.35,
-                        fill: false
-                    }
-                ]
-            },
-            options: getCleanChartOptions({
-                tooltip: {
-                    callbacks: {
-                        afterBody: (items) => {
-                            if(!items.length) return '';
-                            const h = activeHours[items[0].dataIndex];
-                            const info = topIssueByHour(dailyCasnTkt, h);
-                            return info ? '\n' + info : '';
-                        }
-                    }
-                }
-            })
-        });
-
-        if(tktChart2) tktChart2.destroy();
-        tktChart2 = new Chart(document.getElementById('tktChart2'), {
-            type: 'bar',
-            plugins: [barTotalPlugin],
-            data: {
-                labels: mtdDateLabels,
-                datasets: [
-                    {
-                        label: 'Resolved',
-                        data: mtdDates.map(dt => mtdCasnTkt.filter(x => x.dKey === dt && FINISHED_STATUSES.has((x.r.st || '').toLowerCase())).length),
-                        backgroundColor: '#10b981',
-                        maxBarThickness: 38,
-                        borderRadius: 3
-                    },
-                    {
-                        label: 'Outstanding',
-                        data: mtdDates.map(dt => mtdCasnTkt.filter(x => x.dKey === dt && !FINISHED_STATUSES.has((x.r.st || '').toLowerCase())).length),
-                        backgroundColor: '#f59e0b',
-                        maxBarThickness: 38,
-                        borderRadius: 3
-                    }
-                ]
-            },
-            options: getCleanChartOptions({ stacked: true })
-        });
     }
 
     function getPendingCutoff(rec){
@@ -1747,6 +1559,7 @@
 
     function renderActual(){
         ensureAtRiskRadarCard();
+        applyNoChartLayout();
         if(ticketsMap.size === 0){
             document.getElementById('emptyState').style.display = '';
             document.getElementById('actualDashboard').style.display = 'none';
@@ -1831,32 +1644,6 @@
         document.getElementById('achievementBody').innerHTML = achRows +
             '<tr class="fw-bold table-active"><td>Total</td><td>' + totFin + '</td><td>' + totComp + '</td><td>' + totBreach + '</td><td>' + totPct + (totPct !== '—' ? '%' : '') + '</td><td>' + totMttr + '</td></tr>';
 
-        const achData = PRIORITY_ORDER.map(pr => finished.filter(c => c.rec.pr === pr && c.sla.result === 'aman').length);
-        const breachData = PRIORITY_ORDER.map(pr => finished.filter(c => c.rec.pr === pr && c.sla.result === 'breach').length);
-        const chartTheme = getCleanChartOptions();
-        if(achievedChart) achievedChart.destroy();
-        achievedChart = new Chart(document.getElementById('achievedChart'), {
-            type: 'bar',
-            plugins: [barTotalPlugin],
-            data: {
-                labels: PRIORITY_ORDER,
-                datasets: [
-                    { label: 'Achieved', data: achData, backgroundColor: '#10b981', borderRadius: 4, maxBarThickness: 36 },
-                    { label: 'Breach', data: breachData, backgroundColor: '#ef4444', borderRadius: 4, maxBarThickness: 36 }
-                ]
-            },
-            options: {
-                ...chartTheme,
-                onClick: (evt, els) => {
-                    if(!els.length) return;
-                    document.getElementById('ticketPriorityFilter').value = PRIORITY_ORDER[els[0].index];
-                    document.getElementById('ticketStatusFilter').value = els[0].datasetIndex === 0 ? 'achieved' : 'not_achieved';
-                    drawTicketTable();
-                    document.getElementById('ticketListPanel').scrollIntoView({ behavior: 'smooth' });
-                }
-            }
-        });
-
         const finWithHours = finished.filter(c => c.sla.hours !== null);
         document.getElementById('distTableHead').innerHTML = '<th>Priority</th>' + DURATION_BUCKETS.map(b => '<th>' + b.label + '</th>').join('') + '<th>Total</th>';
         const distRows = PRIORITY_ORDER.map(pr => {
@@ -1867,38 +1654,6 @@
         const distTotals = DURATION_BUCKETS.map(b => finWithHours.filter(c => bucketOf(c.sla.hours) === b.label).length);
         document.getElementById('distTableBody').innerHTML = distRows +
             '<tr class="fw-bold table-active"><td>Total</td>' + distTotals.map(n => '<td>' + n + '</td>').join('') + '<td>' + finWithHours.length + '</td></tr>';
-
-        const catCounts = new Map();
-        scoped.forEach(c => {
-            const fullLbl = (c.rec.dsc || c.rec.sc || '-');
-            catCounts.set(fullLbl, (catCounts.get(fullLbl) || 0) + 1);
-        });
-        const top10 = Array.from(catCounts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
-        if(top10Chart) top10Chart.destroy();
-        top10Chart = new Chart(document.getElementById('top10Chart'), {
-            type: 'bar',
-            data: {
-                labels: top10.map(x => x[0].length > 34 ? x[0].slice(0, 32) + '…' : x[0]),
-                datasets: [{ label: 'Jumlah Tiket', data: top10.map(x => x[1]), backgroundColor: '#3b82f6', borderRadius: 4, maxBarThickness: 22 }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            title: (items) => items.length ? top10[items[0].dataIndex][0] : ''
-                        }
-                    }
-                },
-                scales: {
-                    x: { beginAtZero: true, ticks: chartTheme.scales.y.ticks, grid: chartTheme.scales.y.grid, border: { display: false } },
-                    y: { ticks: { color: chartTheme.scales.x.ticks.color, font: { size: 10.5 } }, grid: { display: false }, border: { display: false } }
-                }
-            }
-        });
 
         const escItems = scoped.map(c => ({ rec: c.rec, esc: computeEscalation(c.rec) })).filter(x => x.esc.hours !== null);
         const escAman = escItems.filter(x => x.esc.result === 'aman').length;
@@ -2026,41 +1781,30 @@
         ).join('');
     }
 
-    function renderHistoricalChart(){
-        const labels = [
-            'Jan 24','Feb 24','Mar 24','Apr 24','Mei 24','Jun 24','Jul 24','Agu 24','Sep 24 (CASN)','Okt 24','Nov 24','Des 24',
-            'Jan 25','Feb 25','Mar 25','Apr 25','Mei 25','Jun 25','Jul 25','Agu 25','Sep 25','Okt 25','Nov 25','Des 25',
-            'Jan 26','Feb 26','Mar 26','Apr 26','Mei 26','Jun 26','Jul 26'
+    function renderHistoricalTable(){
+        const histCanvas = document.getElementById('histChart');
+        if(!histCanvas) return;
+        const wrap = histCanvas.parentElement;
+        wrap.style.height = 'auto';
+
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const rowsData = [
+            { year: '2024', emet: [79.8,48.6,53.0,61.3,69.0,72.5,47.7,55.2,18.7,45.9,39.2,26.3], perisai: [95.0,95.2,94.8,92.2,93.4,83.6,68.5,88.6,86.2,92.2,96.1,95.4] },
+            { year: '2025', emet: [36.0,42.7,77.1,81.1,65.9,57.6,61.5,65.2,70.3,68.4,57.9,74.3], perisai: [97.9,97.8,99.3,98.4,99.0,97.8,95.5,98.3,97.4,96.6,97.5,98.1] },
+            { year: '2026', emet: [70.1,70.9,63.4,73.0,78.1,70.7,75.7,null,null,null,null,null], perisai: [97.6,98.2,98.1,99.0,97.9,99.4,98.3,null,null,null,null,null] }
         ];
-        const emetData = [
-            79.8,48.6,53.0,61.3,69.0,72.5,47.7,55.2,18.7,45.9,39.2,26.3,
-            36.0,42.7,77.1,81.1,65.9,57.6,61.5,65.2,70.3,68.4,57.9,74.3,
-            70.1,70.9,63.4,73.0,78.1,70.7,75.7
-        ];
-        const perisaiData = [
-            95.0,95.2,94.8,92.2,93.4,83.6,68.5,88.6,86.2,92.2,96.1,95.4,
-            97.9,97.8,99.3,98.4,99.0,97.8,95.5,98.3,97.4,96.6,97.5,98.1,
-            97.6,98.2,98.1,99.0,97.9,99.4,98.3
-        ];
-        const chartTheme = getCleanChartOptions();
-        if(histChart) histChart.destroy();
-        histChart = new Chart(document.getElementById('histChart'), {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    { label: 'E-Meterai SLA %', data: emetData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.12)', borderWidth: 2, pointRadius: 2, tension: 0.3, fill: true },
-                    { label: 'Perisai SLA %', data: perisaiData, borderColor: '#a855f7', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 2, tension: 0.3 }
-                ]
-            },
-            options: {
-                ...chartTheme,
-                scales: {
-                    x: chartTheme.scales.x,
-                    y: { min: 0, max: 100, ticks: chartTheme.scales.y.ticks, grid: chartTheme.scales.y.grid, border: { display: false }, title: { display: true, text: 'SLA %', color: chartTheme.scales.y.ticks.color } }
-                }
-            }
-        });
+
+        const makeRowHtml = (label, arr) =>
+            '<tr><td class="row-title">' + label + '</td>' +
+            arr.map(v => '<td class="num">' + (v !== null ? v.toFixed(1) + '%' : '—') + '</td>').join('') +
+            '</tr>';
+
+        wrap.innerHTML =
+            '<div class="table-responsive"><table class="report-tbl">' +
+            '<thead><tr><th class="text-start ps-2">Produk / Tahun</th>' + months.map(m => '<th class="text-end pe-2">' + m + '</th>').join('') + '</tr></thead>' +
+            '<tbody>' +
+            rowsData.map(r => makeRowHtml('E-Meterai ' + r.year, r.emet) + makeRowHtml('Perisai ' + r.year, r.perisai)).join('') +
+            '</tbody></table></div>';
     }
 
     function switchSection(target, title){
@@ -2073,12 +1817,6 @@
         document.getElementById('pageHeading').textContent = title;
         document.getElementById('pageBreadcrumb').textContent = title;
         document.getElementById('sharedDailyControls').style.display = (target === 'daily' || target === 'ticketing') ? '' : 'none';
-
-        setTimeout(() => {
-            [dailyChart1, dailyChart2, tktChart1, tktChart2, achievedChart, top10Chart, histChart].forEach(ch => {
-                if(ch) ch.resize();
-            });
-        }, 40);
     }
 
     document.querySelectorAll('#sidenavAccordion .nav-link[data-target]').forEach(link => {
@@ -2160,10 +1898,6 @@
             sidenav.classList.add('sb-sidenav-light');
             document.getElementById('themeToggleBtn').innerHTML = '<i class="fas fa-sun me-1"></i>Terang';
         }
-        if(allInteractions.length) renderDailyAndTicketingFromUploaded();
-        else renderZeroReports();
-        if(ticketsMap.size > 0) renderActual();
-        renderHistoricalChart();
     });
 
     document.getElementById('productFilter').addEventListener('change', (e) => { selectedProduct = e.target.value; renderActual(); });
@@ -2219,6 +1953,6 @@
     initHourSelectors();
     renderZeroReports();
     runSimulation();
-    renderHistoricalChart();
+    renderHistoricalTable();
     loadFromD1();
 })();

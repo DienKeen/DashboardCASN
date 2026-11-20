@@ -33,10 +33,286 @@
     let isDark = true;
     let lastCapturedBlob = null;
     let adminPin = sessionStorage.getItem(PIN_STORAGE_KEY) || '';
+    let statusTimer = null;
 
     let achievedChart = null, top10Chart = null, histChart = null;
     let dailyChart1 = null, dailyChart2 = null, dailyChart3 = null, dailyChart4 = null;
     let tktChart1 = null, tktChart2 = null, tktChart3 = null, tktChart4 = null;
+
+    function injectProStyles(){
+        if(document.getElementById('casnProUiStyle')) return;
+        const css = `
+            /* Sticky & Single-Row Clean Top Navbar */
+            .sb-topnav {
+                position: sticky !important;
+                top: 0;
+                z-index: 1035;
+                min-height: 52px;
+                padding: 0.35rem 0.9rem !important;
+                border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+                backdrop-filter: blur(10px);
+            }
+            .sb-topnav .navbar-brand {
+                font-size: 1rem !important;
+                letter-spacing: -0.01em;
+                white-space: nowrap;
+            }
+            #navControlsWrap {
+                display: flex !important;
+                align-items: center !important;
+                flex-wrap: nowrap !important;
+                gap: 0.4rem !important;
+                margin-left: auto !important;
+            }
+            #navControlsWrap .btn,
+            #navControlsWrap .form-select {
+                font-size: 0.76rem !important;
+                line-height: 1.25 !important;
+                padding: 0.28rem 0.58rem !important;
+                border-radius: 6px !important;
+                white-space: nowrap !important;
+                height: 30px !important;
+                display: inline-flex;
+                align-items: center;
+            }
+            #navControlsWrap .form-select {
+                padding-right: 1.65rem !important;
+            }
+            #adminControlsGroup {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.3rem;
+                padding: 2px 4px;
+                border-radius: 7px;
+                background: rgba(245, 158, 11, 0.08);
+                border: 1px solid rgba(245, 158, 11, 0.28);
+            }
+            #adminControlsGroup .btn,
+            #adminControlsGroup .form-select {
+                height: 25px !important;
+                padding: 0.18rem 0.5rem !important;
+                font-size: 0.73rem !important;
+            }
+            #adminControlsGroup .form-select {
+                padding-right: 1.5rem !important;
+            }
+            .nav-sep {
+                width: 1px;
+                height: 18px;
+                background: rgba(148, 163, 184, 0.22);
+                margin: 0 2px;
+            }
+
+            /* Page Header & Metadata Pill */
+            #pageHeading {
+                font-size: 1.5rem !important;
+                font-weight: 700 !important;
+                letter-spacing: -0.02em;
+            }
+            #metaBadge {
+                font-size: 0.75rem !important;
+                font-weight: 600 !important;
+                padding: 0.38rem 0.75rem !important;
+                border-radius: 999px !important;
+                white-space: nowrap !important;
+                background: rgba(59, 130, 246, 0.14) !important;
+                color: #93c5fd !important;
+                border: 1px solid rgba(59, 130, 246, 0.3) !important;
+            }
+            html:not(.dark-mode) #metaBadge {
+                background: #eff6ff !important;
+                color: #1d4ed8 !important;
+                border-color: #bfdbfe !important;
+            }
+
+            /* Slim Toast-Style Status Alert */
+            #statusAlert {
+                font-size: 0.79rem !important;
+                padding: 0.45rem 0.85rem !important;
+                border-radius: 8px !important;
+                margin-bottom: 0.85rem !important;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.5rem;
+                transition: opacity 0.25s ease;
+            }
+            html.dark-mode #statusAlert.alert-info {
+                background: rgba(30, 41, 59, 0.85) !important;
+                color: #cbd5e1 !important;
+                border: 1px solid rgba(148, 163, 184, 0.2) !important;
+            }
+            html.dark-mode #statusAlert.alert-success {
+                background: rgba(16, 185, 129, 0.14) !important;
+                color: #6ee7b7 !important;
+                border: 1px solid rgba(16, 185, 129, 0.32) !important;
+            }
+            html.dark-mode #statusAlert.alert-warning {
+                background: rgba(245, 158, 11, 0.14) !important;
+                color: #fcd34d !important;
+                border: 1px solid rgba(245, 158, 11, 0.32) !important;
+            }
+            html.dark-mode #statusAlert.alert-danger {
+                background: rgba(239, 68, 68, 0.15) !important;
+                color: #fca5a5 !important;
+                border: 1px solid rgba(239, 68, 68, 0.35) !important;
+            }
+
+            /* Clean Single-Line Filter Toolbar */
+            #sharedDailyControls {
+                border-radius: 10px !important;
+                margin-bottom: 1rem !important;
+            }
+            #sharedDailyControls .card-body {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                gap: 0.65rem 1rem !important;
+                padding: 0.6rem 0.9rem !important;
+            }
+            #sharedDailyControls label,
+            #sharedDailyControls .fw-bold,
+            #sharedDailyControls span {
+                font-size: 0.74rem !important;
+                letter-spacing: 0.02em;
+                white-space: nowrap !important;
+            }
+            #sharedDailyControls .form-select {
+                font-size: 0.78rem !important;
+                padding: 0.24rem 1.75rem 0.24rem 0.55rem !important;
+                height: 30px !important;
+                border-radius: 6px !important;
+            }
+            #dailySourceBadge {
+                white-space: nowrap !important;
+                font-size: 0.74rem !important;
+                font-weight: 600 !important;
+                padding: 0.28rem 0.72rem !important;
+                border-radius: 999px !important;
+                background: rgba(14, 165, 233, 0.12);
+                color: #7dd3fc;
+                border: 1px solid rgba(14, 165, 233, 0.26);
+                margin-left: auto;
+            }
+            html:not(.dark-mode) #dailySourceBadge {
+                background: #f0f9ff;
+                color: #0369a1;
+                border-color: #bae6fd;
+            }
+
+            /* Card Polish & Equal Height Alignment */
+            .card {
+                border-radius: 10px !important;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
+            }
+            .card-header {
+                font-size: 0.84rem !important;
+                font-weight: 600 !important;
+                padding: 0.6rem 0.9rem !important;
+                letter-spacing: -0.01em;
+            }
+            .row > [class*="col-"] > .card {
+                height: calc(100% - 1.25rem);
+                margin-bottom: 1.25rem !important;
+            }
+
+            /* Compact Zero-Cutoff Summary Tables */
+            .report-tbl {
+                width: 100% !important;
+                table-layout: auto !important;
+                font-size: 0.75rem !important;
+                border-collapse: collapse;
+            }
+            .report-tbl th,
+            .report-tbl td {
+                padding: 0.4rem 0.32rem !important;
+                font-variant-numeric: tabular-nums;
+                vertical-align: middle !important;
+            }
+            .report-tbl th {
+                font-size: 0.7rem !important;
+                font-weight: 700 !important;
+                white-space: nowrap !important;
+                letter-spacing: 0.01em;
+            }
+            .report-tbl td.row-title {
+                font-weight: 600 !important;
+                white-space: nowrap !important;
+                text-align: left !important;
+                padding-left: 0.45rem !important;
+            }
+            .report-tbl td.big-num {
+                font-size: 0.82rem !important;
+                font-weight: 700 !important;
+                text-align: center !important;
+            }
+            .report-tbl td.num {
+                font-size: 0.76rem !important;
+                text-align: right !important;
+                padding-right: 0.45rem !important;
+            }
+            .sla-tbl {
+                font-size: 0.78rem !important;
+            }
+            .sla-tbl th,
+            .sla-tbl td {
+                padding: 0.45rem 0.55rem !important;
+                font-variant-numeric: tabular-nums;
+            }
+
+            /* Sidebar Polish */
+            #sidenavAccordion .nav-link {
+                font-size: 0.83rem !important;
+                padding: 0.55rem 0.9rem !important;
+                border-left: 3px solid transparent;
+                transition: all 0.15s ease;
+            }
+            #sidenavAccordion .nav-link.active {
+                border-left-color: #3b82f6 !important;
+                background: rgba(59, 130, 246, 0.14) !important;
+                font-weight: 600 !important;
+            }
+        `;
+        const styleEl = document.createElement('style');
+        styleEl.id = 'casnProUiStyle';
+        styleEl.textContent = css;
+        document.head.appendChild(styleEl);
+    }
+
+    function showStatus(type, message, autoHideMs = 0){
+        const alertEl = document.getElementById('statusAlert');
+        if(!alertEl) return;
+        if(statusTimer){
+            clearTimeout(statusTimer);
+            statusTimer = null;
+        }
+        const iconMap = {
+            info: 'fa-info-circle',
+            success: 'fa-check-circle',
+            warning: 'fa-exclamation-triangle',
+            danger: 'fa-times-circle'
+        };
+        const icon = iconMap[type] || 'fa-info-circle';
+        alertEl.style.display = 'flex';
+        alertEl.style.opacity = '1';
+        alertEl.className = 'alert alert-' + type;
+        alertEl.innerHTML =
+            '<span><i class="fas ' + icon + ' me-2"></i>' + message + '</span>' +
+            '<button type="button" class="btn-close btn-close-white ms-2" style="font-size:0.65rem;" aria-label="Close"></button>';
+        const closeBtn = alertEl.querySelector('.btn-close');
+        if(closeBtn){
+            closeBtn.addEventListener('click', () => {
+                alertEl.style.display = 'none';
+            });
+        }
+        if(autoHideMs > 0){
+            statusTimer = setTimeout(() => {
+                alertEl.style.opacity = '0';
+                setTimeout(() => { alertEl.style.display = 'none'; }, 260);
+            }, autoHideMs);
+        }
+    }
 
     function isAdminUnlocked(){
         return Boolean(adminPin);
@@ -45,23 +321,18 @@
     function updateRoleUI(){
         const unlocked = isAdminUnlocked();
         const roleBtn = document.getElementById('roleToggleBtn');
-        const uploadLbl = document.querySelector('label[for="fileInput"]');
-        const modeSel = document.getElementById('uploadSyncMode');
-        const clearBtn = document.getElementById('clearD1Btn');
+        const adminGroup = document.getElementById('adminControlsGroup');
 
         if(roleBtn){
-            roleBtn.className = unlocked ? 'btn btn-warning btn-sm fw-semibold' : 'btn btn-outline-secondary btn-sm';
+            roleBtn.className = unlocked ? 'btn btn-outline-warning btn-sm fw-semibold' : 'btn btn-outline-secondary btn-sm';
             roleBtn.innerHTML = unlocked
-                ? '<i class="fas fa-unlock me-1"></i> Admin Aktif'
-                : '<i class="fas fa-lock me-1"></i> Mode Viewer';
+                ? '<i class="fas fa-shield-alt me-1"></i>Admin'
+                : '<i class="fas fa-lock me-1"></i>Viewer';
             roleBtn.title = unlocked ? 'Klik untuk mengunci kembali ke Mode Viewer' : 'Klik untuk membuka akses Upload & Reset D1 dengan PIN';
         }
-        if(uploadLbl){
-            uploadLbl.classList.toggle('opacity-50', !unlocked);
-            uploadLbl.title = unlocked ? 'Upload file CSV/Excel ke D1' : 'Terkunci: Klik Mode Viewer untuk memasukkan PIN Admin';
+        if(adminGroup){
+            adminGroup.style.display = unlocked ? 'inline-flex' : 'none';
         }
-        if(modeSel) modeSel.style.display = unlocked ? '' : 'none';
-        if(clearBtn) clearBtn.style.display = unlocked ? '' : 'none';
     }
 
     async function promptAdminUnlock(){
@@ -70,12 +341,12 @@
                 adminPin = '';
                 sessionStorage.removeItem(PIN_STORAGE_KEY);
                 updateRoleUI();
+                showStatus('info', 'Dashboard dikunci ke Mode Viewer (Read-Only).', 4500);
             }
             return false;
         }
         const input = prompt('Masukkan PIN Admin Helpdesk untuk membuka fitur Upload & Reset D1:');
         if(!input) return false;
-        const alertEl = document.getElementById('statusAlert');
         try {
             const res = await fetch('/api/auth/verify', {
                 method: 'POST',
@@ -87,17 +358,14 @@
                 adminPin = input.trim();
                 sessionStorage.setItem(PIN_STORAGE_KEY, adminPin);
                 updateRoleUI();
-                alertEl.className = 'alert alert-success py-2 px-3 small';
-                alertEl.textContent = 'Akses Admin terbuka. Fitur Upload CSV/Excel & Reset D1 aktif.';
+                showStatus('success', 'Akses Admin aktif. Fitur Upload CSV/Excel & Reset D1 terbuka.', 5000);
                 return true;
             } else {
-                alertEl.className = 'alert alert-danger py-2 px-3 small';
-                alertEl.textContent = 'PIN Admin salah. Akses tetap dalam Mode Viewer.';
+                showStatus('danger', 'PIN Admin tidak sesuai. Akses tetap dalam Mode Viewer.', 5000);
                 return false;
             }
         } catch (err) {
-            alertEl.className = 'alert alert-danger py-2 px-3 small';
-            alertEl.textContent = 'Gagal memverifikasi PIN: ' + err.message;
+            showStatus('danger', 'Gagal memverifikasi PIN: ' + err.message);
             return false;
         }
     }
@@ -106,16 +374,20 @@
         const fileInput = document.getElementById('fileInput');
         if(!fileInput || document.getElementById('uploadSyncMode')) return;
         const wrap = fileInput.parentElement;
+        wrap.id = 'navControlsWrap';
         const uploadLbl = document.querySelector('label[for="fileInput"]');
+        const slaBtn = document.getElementById('slaViewToggle');
+        const themeBtn = document.getElementById('themeToggleBtn');
 
         if(uploadLbl){
-            uploadLbl.addEventListener('click', async (e) => {
-                if(!isAdminUnlocked()){
-                    e.preventDefault();
-                    const ok = await promptAdminUnlock();
-                    if(ok) fileInput.click();
-                }
-            });
+            uploadLbl.innerHTML = '<i class="fas fa-upload me-1"></i>Upload';
+            uploadLbl.title = 'Upload file CSV / Excel ke Cloudflare D1';
+        }
+        if(slaBtn){
+            slaBtn.innerHTML = '<i class="fas fa-sliders-h me-1"></i>Internal (Excl. Pending)';
+        }
+        if(themeBtn){
+            themeBtn.innerHTML = '<i class="fas fa-moon me-1"></i>Gelap';
         }
 
         const roleBtn = document.createElement('button');
@@ -123,34 +395,29 @@
         roleBtn.type = 'button';
         roleBtn.addEventListener('click', promptAdminUnlock);
 
+        const adminGroup = document.createElement('div');
+        adminGroup.id = 'adminControlsGroup';
+
         const modeSel = document.createElement('select');
         modeSel.id = 'uploadSyncMode';
         modeSel.className = 'form-select form-select-sm bg-dark text-light border-secondary';
-        modeSel.style.width = 'auto';
         modeSel.title = 'Mode penyimpanan ke database Cloudflare D1 saat upload file';
         modeSel.innerHTML =
-            '<option value="replace">D1: Timpa (Replace)</option>' +
-            '<option value="upsert">D1: Gabung (Upsert)</option>';
-
-        const copyDashBtn = document.createElement('button');
-        copyDashBtn.id = 'copyDashboardBtn';
-        copyDashBtn.type = 'button';
-        copyDashBtn.className = 'btn btn-success btn-sm';
-        copyDashBtn.innerHTML = '<i class="fas fa-copy me-1"></i> Copy Report & Summary';
-        copyDashBtn.addEventListener('click', handleCopyDashboardAndSummary);
+            '<option value="replace">Mode: Replace</option>' +
+            '<option value="upsert">Mode: Upsert</option>';
 
         const clearBtn = document.createElement('button');
         clearBtn.id = 'clearD1Btn';
         clearBtn.type = 'button';
         clearBtn.className = 'btn btn-outline-danger btn-sm';
-        clearBtn.innerHTML = '<i class="fas fa-trash-alt me-1"></i> Reset D1';
+        clearBtn.title = 'Kosongkan seluruh data di Cloudflare D1';
+        clearBtn.innerHTML = '<i class="fas fa-trash-alt me-1"></i>Reset';
         clearBtn.addEventListener('click', async () => {
             if(!isAdminUnlocked()){
                 const ok = await promptAdminUnlock();
                 if(!ok) return;
             }
             if(!confirm('Hapus seluruh data tiket tersimpan di Cloudflare D1?')) return;
-            const alertEl = document.getElementById('statusAlert');
             try {
                 const res = await fetch('/api/tickets', {
                     method: 'DELETE',
@@ -162,21 +429,85 @@
                 ticketsMap = new Map();
                 document.getElementById('metaBadge').textContent = 'Mode Preview Data Referensi CASN';
                 document.getElementById('dailySourceBadge').textContent = 'Data Referensi CASN (Upload CSV/Excel untuk data real)';
-                alertEl.className = 'alert alert-warning py-2 px-3 small';
-                alertEl.textContent = 'Data di Cloudflare D1 berhasil dikosongkan.';
+                showStatus('warning', 'Data di Cloudflare D1 berhasil dikosongkan.', 5000);
                 renderReferenceReports();
                 renderActual();
             } catch (err) {
-                alertEl.className = 'alert alert-danger py-2 px-3 small';
-                alertEl.textContent = 'Gagal menghapus data D1: ' + err.message;
+                showStatus('danger', 'Gagal menghapus data D1: ' + err.message);
             }
         });
 
+        const sep = document.createElement('span');
+        sep.className = 'nav-sep';
+
+        const copyDashBtn = document.createElement('button');
+        copyDashBtn.id = 'copyDashboardBtn';
+        copyDashBtn.type = 'button';
+        copyDashBtn.className = 'btn btn-success btn-sm fw-semibold';
+        copyDashBtn.innerHTML = '<i class="fas fa-copy me-1"></i>Copy Report';
+        copyDashBtn.title = 'Salin teks summary & tangkapan layar dashboard';
+        copyDashBtn.addEventListener('click', handleCopyDashboardAndSummary);
+
         wrap.insertBefore(roleBtn, uploadLbl);
-        wrap.insertBefore(modeSel, fileInput.nextSibling);
-        wrap.insertBefore(copyDashBtn, modeSel.nextSibling);
-        wrap.appendChild(clearBtn);
+        wrap.insertBefore(adminGroup, uploadLbl);
+        adminGroup.appendChild(uploadLbl);
+        adminGroup.appendChild(fileInput);
+        adminGroup.appendChild(modeSel);
+        adminGroup.appendChild(clearBtn);
+        wrap.insertBefore(sep, adminGroup.nextSibling);
+        wrap.insertBefore(copyDashBtn, sep.nextSibling);
+
         updateRoleUI();
+    }
+
+    function polishSummaryTableHeaders(){
+        const dailyTable = document.getElementById('dailySummaryBody')?.closest('table');
+        if(dailyTable){
+            const ths = dailyTable.querySelectorAll('thead th');
+            if(ths.length >= 7){
+                ths[0].textContent = 'Interaksi CASN';
+                ths[1].textContent = 'Total';
+                ths[2].textContent = 'Escalated';
+                ths[3].textContent = 'Not Esc.';
+                ths[3].title = 'Not Escalated';
+                ths[4].textContent = 'Informasi';
+                ths[5].textContent = 'Keluhan';
+                ths[6].textContent = 'Permintaan';
+            }
+        }
+    }
+
+    function getChartCommonOptions(){
+        const tickColor = isDark ? '#94a3b8' : '#475569';
+        const gridColor = isDark ? 'rgba(148, 163, 184, 0.11)' : 'rgba(15, 23, 42, 0.08)';
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+                x: {
+                    ticks: { color: tickColor, font: { size: 10.5 } },
+                    grid: { display: false }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: tickColor, font: { size: 10.5 }, precision: 0 },
+                    grid: { color: gridColor }
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: tickColor,
+                        boxWidth: 10,
+                        boxHeight: 10,
+                        padding: 12,
+                        font: { size: 10.5 }
+                    }
+                }
+            }
+        };
     }
 
     function ensureChannelSummaryCard(){
@@ -185,20 +516,20 @@
         const cardHtml =
             '<div class="card mb-4" id="channelBreakdownCard">' +
               '<div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">' +
-                '<span><i class="fas fa-headset me-1"></i> Distribusi Interaksi & Kecepatan Eskalasi per Channel</span>' +
-                '<span class="small text-muted">Target Eskalasi Email & WhatsApp: ≤ 15 Menit</span>' +
+                '<span><i class="fas fa-headset me-1 text-info"></i> Distribusi Interaksi & Kecepatan Eskalasi per Channel</span>' +
+                '<span class="badge bg-secondary bg-opacity-25 text-info border border-info border-opacity-25">Target Eskalasi Email & WhatsApp: ≤ 15 Menit</span>' +
               '</div>' +
               '<div class="card-body p-2">' +
                 '<div class="table-responsive">' +
                   '<table class="report-tbl">' +
                     '<thead><tr>' +
-                      '<th class="text-start">Channel</th>' +
-                      '<th>Daily Interaksi</th>' +
-                      '<th>Porsi (%)</th>' +
-                      '<th>Escalated</th>' +
-                      '<th>Not Escalated</th>' +
-                      '<th>MTD Interaksi</th>' +
-                      '<th>Avg Kecepatan Eskalasi</th>' +
+                      '<th class="text-start ps-2">Channel</th>' +
+                      '<th class="text-end pe-2">Daily Interaksi</th>' +
+                      '<th class="text-end pe-2">Porsi (%)</th>' +
+                      '<th class="text-end pe-2">Escalated</th>' +
+                      '<th class="text-end pe-2">Not Esc.</th>' +
+                      '<th class="text-end pe-2">MTD Interaksi</th>' +
+                      '<th class="text-end pe-2">Avg Kecepatan Eskalasi</th>' +
                     '</tr></thead>' +
                     '<tbody id="channelBreakdownBody"></tbody>' +
                   '</table>' +
@@ -215,7 +546,7 @@
             '<div class="card mb-4 border-start border-4 border-danger" id="atRiskRadarCard">' +
               '<div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">' +
                 '<span class="text-danger fw-bold"><i class="fas fa-exclamation-triangle me-1"></i> Radar Prioritas: Top 5 Tiket Aktif Mendekati / Melewati Breach SLA</span>' +
-                '<button type="button" class="btn btn-outline-danger btn-sm py-0 px-2" id="copyAtRiskBtn">' +
+                '<button type="button" class="btn btn-outline-danger btn-sm py-1 px-2" id="copyAtRiskBtn">' +
                   '<i class="fas fa-copy me-1"></i> Copy ID Tiket Kritis' +
                 '</button>' +
               '</div>' +
@@ -771,18 +1102,15 @@
 
     function renderReferenceReports(){
         ensureChannelSummaryCard();
+        polishSummaryTableHeaders();
         document.getElementById('dailyDateSelect').innerHTML = '<option value="REF">September 6, 2024 (Referensi)</option>';
         document.getElementById('dailyHourStart').value = '0';
         document.getElementById('dailyHourEnd').value = '23';
 
-        const palette = ['#2563EB', '#F97316', '#94A3B8', '#FACC15', '#38BDF8'];
+        const palette = ['#3B82F6', '#F97316', '#94A3B8', '#FACC15', '#38BDF8'];
         const hours = Array.from({ length: 24 }, (_, h) => h + ':00');
         const daysRef = ['19-Aug','21-Aug','23-Aug','25-Aug','27-Aug','29-Aug','31-Aug','2-Sep','4-Sep','6-Sep'];
-        const commonOpts = {
-            responsive: true, maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true } },
-            plugins: { legend: { position: 'bottom', labels: { boxWidth: 11, font: { size: 10.5 } } } }
-        };
+        const commonOpts = getChartCommonOptions();
 
         document.getElementById('tblDateVal').textContent = 'September 6, 2024';
         document.getElementById('tblHourStart').textContent = '0:00';
@@ -868,11 +1196,11 @@
             data: {
                 labels: hours,
                 datasets: [
-                    { label: 'CASN METEL-Pembayaran berhasil', data: [4,5,6,8,12,18,35,88,122,110,95,82,0,0,0,0,0,0,0,0,0,0,0,0], backgroundColor: palette[0] },
-                    { label: 'CASN-Pembayaran berhasil', data: [2,3,4,5,8,14,26,52,74,68,58,49,0,0,0,0,0,0,0,0,0,0,0,0], backgroundColor: palette[1] },
-                    { label: 'CASN-Failed Upload Document PDF', data: [1,1,1,2,3,5,9,16,22,19,15,12,0,0,0,0,0,0,0,0,0,0,0,0], backgroundColor: palette[2] },
-                    { label: 'CASN-Panduan penggunaan e-Meterai', data: [0,1,1,1,2,3,6,11,15,13,10,8,0,0,0,0,0,0,0,0,0,0,0,0], backgroundColor: palette[3] },
-                    { label: 'CASN METEL-Tidak bisa Reset Password', data: [0,0,1,1,1,2,4,7,9,8,6,5,0,0,0,0,0,0,0,0,0,0,0,0], backgroundColor: palette[4] },
+                    { label: 'CASN METEL-Pembayaran berhasil', data: [4,5,6,8,12,18,35,88,122,110,95,82,0,0,0,0,0,0,0,0,0,0,0,0], backgroundColor: palette[0], borderRadius: 3 },
+                    { label: 'CASN-Pembayaran berhasil', data: [2,3,4,5,8,14,26,52,74,68,58,49,0,0,0,0,0,0,0,0,0,0,0,0], backgroundColor: palette[1], borderRadius: 3 },
+                    { label: 'CASN-Failed Upload Document PDF', data: [1,1,1,2,3,5,9,16,22,19,15,12,0,0,0,0,0,0,0,0,0,0,0,0], backgroundColor: palette[2], borderRadius: 3 },
+                    { label: 'CASN-Panduan penggunaan e-Meterai', data: [0,1,1,1,2,3,6,11,15,13,10,8,0,0,0,0,0,0,0,0,0,0,0,0], backgroundColor: palette[3], borderRadius: 3 },
+                    { label: 'CASN METEL-Tidak bisa Reset Password', data: [0,0,1,1,1,2,4,7,9,8,6,5,0,0,0,0,0,0,0,0,0,0,0,0], backgroundColor: palette[4], borderRadius: 3 },
                 ]
             },
             options: commonOpts
@@ -884,11 +1212,11 @@
             data: {
                 labels: daysRef,
                 datasets: [
-                    { label: 'CASN-Pembayaran berhasil', data: [40,65,90,110,145,180,220,580,1120,980], backgroundColor: palette[0] },
-                    { label: 'CASN METEL-Pembayaran berhasil', data: [20,35,50,75,95,120,160,340,680,610], backgroundColor: palette[1] },
-                    { label: 'CASN-Failed Upload Document PDF', data: [15,22,30,45,60,80,110,190,340,290], backgroundColor: palette[2] },
-                    { label: 'CASN-Informasi seputar E-Meterai', data: [10,18,25,32,45,55,75,130,210,185], backgroundColor: palette[3] },
-                    { label: 'CASN-Panduan penggunaan e-Meterai', data: [8,12,18,24,30,42,58,95,160,140], backgroundColor: palette[4] },
+                    { label: 'CASN-Pembayaran berhasil', data: [40,65,90,110,145,180,220,580,1120,980], backgroundColor: palette[0], borderRadius: 3 },
+                    { label: 'CASN METEL-Pembayaran berhasil', data: [20,35,50,75,95,120,160,340,680,610], backgroundColor: palette[1], borderRadius: 3 },
+                    { label: 'CASN-Failed Upload Document PDF', data: [15,22,30,45,60,80,110,190,340,290], backgroundColor: palette[2], borderRadius: 3 },
+                    { label: 'CASN-Informasi seputar E-Meterai', data: [10,18,25,32,45,55,75,130,210,185], backgroundColor: palette[3], borderRadius: 3 },
+                    { label: 'CASN-Panduan penggunaan e-Meterai', data: [8,12,18,24,30,42,58,95,160,140], backgroundColor: palette[4], borderRadius: 3 },
                 ]
             },
             options: commonOpts
@@ -916,11 +1244,11 @@
             data: {
                 labels: daysRef,
                 datasets: [
-                    { label: 'Deskripsi dan Panduan Produk E-Meterai', data: [180,240,310,390,480,590,740,1280,2150,1890], backgroundColor: palette[0] },
-                    { label: 'CASN-Pembayaran berhasil', data: [40,65,90,110,145,180,220,580,1120,980], backgroundColor: palette[1] },
-                    { label: 'CASN METEL-Pembayaran berhasil', data: [20,35,50,75,95,120,160,340,680,610], backgroundColor: palette[2] },
-                    { label: 'Deskripsi Produk', data: [45,60,75,95,120,145,180,260,410,370], backgroundColor: palette[3] },
-                    { label: 'Maintenance Layanan E-Meterai', data: [35,48,62,80,105,130,165,240,390,350], backgroundColor: palette[4] },
+                    { label: 'Deskripsi dan Panduan Produk E-Meterai', data: [180,240,310,390,480,590,740,1280,2150,1890], backgroundColor: palette[0], borderRadius: 3 },
+                    { label: 'CASN-Pembayaran berhasil', data: [40,65,90,110,145,180,220,580,1120,980], backgroundColor: palette[1], borderRadius: 3 },
+                    { label: 'CASN METEL-Pembayaran berhasil', data: [20,35,50,75,95,120,160,340,680,610], backgroundColor: palette[2], borderRadius: 3 },
+                    { label: 'Deskripsi Produk', data: [45,60,75,95,120,145,180,260,410,370], backgroundColor: palette[3], borderRadius: 3 },
+                    { label: 'Maintenance Layanan E-Meterai', data: [35,48,62,80,105,130,165,240,390,350], backgroundColor: palette[4], borderRadius: 3 },
                 ]
             },
             options: commonOpts
@@ -1014,11 +1342,11 @@
             data: {
                 labels: daysRef,
                 datasets: [
-                    { label: 'CASN METEL-Pembayaran berhasil', data: [5,12,18,24,35,48,62,98,142,65], backgroundColor: palette[0] },
-                    { label: 'CASN-Pembayaran berhasil', data: [4,10,16,22,32,45,60,95,138,82], backgroundColor: palette[1] },
-                    { label: 'CASN METEL-Tidak bisa Reset Password', data: [1,2,3,4,5,6,8,10,8,0], backgroundColor: palette[2] },
-                    { label: 'CASN-Tidak bisa Reset Password', data: [0,1,1,2,2,3,4,4,3,0], backgroundColor: palette[3] },
-                    { label: 'CASN METEL-Error Download File', data: [0,1,1,1,2,2,3,3,3,0], backgroundColor: palette[4] },
+                    { label: 'CASN METEL-Pembayaran berhasil', data: [5,12,18,24,35,48,62,98,142,65], backgroundColor: palette[0], borderRadius: 3 },
+                    { label: 'CASN-Pembayaran berhasil', data: [4,10,16,22,32,45,60,95,138,82], backgroundColor: palette[1], borderRadius: 3 },
+                    { label: 'CASN METEL-Tidak bisa Reset Password', data: [1,2,3,4,5,6,8,10,8,0], backgroundColor: palette[2], borderRadius: 3 },
+                    { label: 'CASN-Tidak bisa Reset Password', data: [0,1,1,2,2,3,4,4,3,0], backgroundColor: palette[3], borderRadius: 3 },
+                    { label: 'CASN METEL-Error Download File', data: [0,1,1,1,2,2,3,3,3,0], backgroundColor: palette[4], borderRadius: 3 },
                 ]
             },
             options: commonOpts
@@ -1046,11 +1374,11 @@
             data: {
                 labels: daysRef,
                 datasets: [
-                    { label: 'Pembayaran Berhasil Kuota Tidak Bertambah', data: [12,24,38,54,75,98,132,245,380,210], backgroundColor: palette[0] },
-                    { label: 'Rekonsiliasi Data', data: [8,12,18,22,28,35,48,72,95,62], backgroundColor: palette[1] },
-                    { label: 'Pengembalian Kuota e-Meterai', data: [5,8,12,15,20,26,34,52,68,44], backgroundColor: palette[2] },
-                    { label: 'Mutasi Data Usage User', data: [2,3,5,7,9,11,14,20,25,18], backgroundColor: palette[3] },
-                    { label: 'Error Download File', data: [2,3,4,6,8,10,12,18,22,15], backgroundColor: palette[4] },
+                    { label: 'Pembayaran Berhasil Kuota Tidak Bertambah', data: [12,24,38,54,75,98,132,245,380,210], backgroundColor: palette[0], borderRadius: 3 },
+                    { label: 'Rekonsiliasi Data', data: [8,12,18,22,28,35,48,72,95,62], backgroundColor: palette[1], borderRadius: 3 },
+                    { label: 'Pengembalian Kuota e-Meterai', data: [5,8,12,15,20,26,34,52,68,44], backgroundColor: palette[2], borderRadius: 3 },
+                    { label: 'Mutasi Data Usage User', data: [2,3,5,7,9,11,14,20,25,18], backgroundColor: palette[3], borderRadius: 3 },
+                    { label: 'Error Download File', data: [2,3,4,6,8,10,12,18,22,15], backgroundColor: palette[4], borderRadius: 3 },
                 ]
             },
             options: commonOpts
@@ -1059,6 +1387,7 @@
 
     function renderDailyAndTicketingFromUploaded(){
         ensureChannelSummaryCard();
+        polishSummaryTableHeaders();
         if(!allInteractions.length){ renderReferenceReports(); return; }
 
         const dateSet = new Set();
@@ -1107,18 +1436,14 @@
             return sc === 'e-meterai' || dsc.includes('casn') || dsc.includes('sscasn') || dsc.includes('e-meterai');
         };
 
-        const palette = ['#2563EB', '#F97316', '#94A3B8', '#FACC15', '#38BDF8'];
+        const palette = ['#3B82F6', '#F97316', '#94A3B8', '#FACC15', '#38BDF8'];
         const hours = Array.from({ length: 24 }, (_, h) => h + ':00');
         const mtdDates = dates.filter(dt => dt.startsWith(monthPrefix) && dt <= activeDate);
         const mtdDateLabels = mtdDates.map(dt => {
             const [y, m, d] = dt.split('-').map(Number);
             return new Date(y, m - 1, d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
         });
-        const commonOpts = {
-            responsive: true, maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true } },
-            plugins: { legend: { position: 'bottom', labels: { boxWidth: 11, font: { size: 10.5 } } } }
-        };
+        const commonOpts = getChartCommonOptions();
 
         const buildTop10 = (list, tbodyId) => {
             const counts = new Map();
@@ -1140,6 +1465,9 @@
             data: Array.from({ length: 24 }, (_, h) => list.filter(x => x.hour === h && (x.r.dsc || x.r.sc || '(Lainnya)') === cat).length),
             backgroundColor: palette[idx % palette.length],
             borderColor: palette[idx % palette.length],
+            borderRadius: 3,
+            barPercentage: 0.85,
+            categoryPercentage: 0.8,
             tension: 0.3,
             fill: false
         }));
@@ -1147,7 +1475,8 @@
         const makeDailySets = (list, topCats) => topCats.map((cat, idx) => ({
             label: cat,
             data: mtdDates.map(dt => list.filter(x => x.dKey === dt && (x.r.dsc || x.r.sc || '(Lainnya)') === cat).length),
-            backgroundColor: palette[idx % palette.length]
+            backgroundColor: palette[idx % palette.length],
+            borderRadius: 3
         }));
 
         const intMeta = allInteractions.map(r => {
@@ -1226,7 +1555,7 @@
                     : '—';
                 return '<tr><td class="row-title">' + ch + '</td><td class="num">' + g.daily + '</td><td class="num">' + pct + '</td>' +
                     '<td class="num">' + g.esc + '</td><td class="num">' + g.notEsc + '</td><td class="num">' + g.mtd + '</td><td class="num">' + avgMin + '</td></tr>';
-            }).join('') || '<tr><td colspan="7" class="text-center text-muted">Tidak ada data channel pada interval ini.</td></tr>';
+            }).join('') || '<tr><td colspan="7" class="text-center text-muted py-3">Tidak ada data channel pada interval ini.</td></tr>';
 
         const top5DailyCasnInt = buildTop10(dailyCasnInt, 'topDailyCasnBody');
         const top5MtdCasnInt = buildTop10(mtdCasnInt, 'topMtdCasnBody');
@@ -1514,6 +1843,7 @@
 
         const achData = PRIORITY_ORDER.map(pr => finished.filter(c => c.rec.pr === pr && c.sla.result === 'aman').length);
         const breachData = PRIORITY_ORDER.map(pr => finished.filter(c => c.rec.pr === pr && c.sla.result === 'breach').length);
+        const chartTheme = getChartCommonOptions();
         if(achievedChart) achievedChart.destroy();
         achievedChart = new Chart(document.getElementById('achievedChart'), {
             type: 'bar',
@@ -1525,16 +1855,14 @@
                 ]
             },
             options: {
-                responsive: true, maintainAspectRatio: false,
+                ...chartTheme,
                 onClick: (evt, els) => {
                     if(!els.length) return;
                     document.getElementById('ticketPriorityFilter').value = PRIORITY_ORDER[els[0].index];
                     document.getElementById('ticketStatusFilter').value = els[0].datasetIndex === 0 ? 'achieved' : 'not_achieved';
                     drawTicketTable();
                     document.getElementById('ticketListPanel').scrollIntoView({ behavior: 'smooth' });
-                },
-                scales: { y: { beginAtZero: true } },
-                plugins: { legend: { position: 'bottom' } }
+                }
             }
         });
 
@@ -1560,9 +1888,18 @@
             type: 'bar',
             data: {
                 labels: top10.map(x => x[0]),
-                datasets: [{ label: 'Jumlah Tiket', data: top10.map(x => x[1]), backgroundColor: '#0d6efd', borderRadius: 3 }]
+                datasets: [{ label: 'Jumlah Tiket', data: top10.map(x => x[1]), backgroundColor: '#3b82f6', borderRadius: 4 }]
             },
-            options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, ticks: chartTheme.scales.x.ticks, grid: chartTheme.scales.y.grid },
+                    y: { ticks: chartTheme.scales.x.ticks, grid: { display: false } }
+                }
+            }
         });
 
         const escItems = scoped.map(c => ({ rec: c.rec, esc: computeEscalation(c.rec) })).filter(x => x.esc.hours !== null);
@@ -1573,7 +1910,7 @@
             { label: 'Rata-rata Eskalasi', value: escAvgMin !== null ? escAvgMin.toFixed(1) + ' mnt' : '—', cls: 'border-primary' },
             { label: 'Dalam Target (≤15m)', value: escAman, cls: 'border-success' },
             { label: 'Breach (>15m)', value: escBreach, cls: escBreach > 0 ? 'border-danger' : 'border-success' },
-        ].map(c => '<div class="col-4"><div class="card border-start border-4 ' + c.cls + '"><div class="card-body p-2"><div class="small text-muted">' + c.label + '</div><div class="h5 mb-0 fw-bold">' + c.value + '</div></div></div></div>').join('');
+        ].map(c => '<div class="col-4"><div class="card border-start border-4 ' + c.cls + ' mb-0"><div class="card-body p-2"><div class="small text-muted">' + c.label + '</div><div class="h5 mb-0 fw-bold">' + c.value + '</div></div></div></div>').join('');
 
         const escByChannel = new Map();
         escItems.forEach(x => {
@@ -1707,20 +2044,23 @@
             97.9,97.8,99.3,98.4,99.0,97.8,95.5,98.3,97.4,96.6,97.5,98.1,
             97.6,98.2,98.1,99.0,97.9,99.4,98.3
         ];
+        const chartTheme = getChartCommonOptions();
         if(histChart) histChart.destroy();
         histChart = new Chart(document.getElementById('histChart'), {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [
-                    { label: 'E-Meterai SLA %', data: emetData, borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,0.12)', tension: 0.25, fill: true },
+                    { label: 'E-Meterai SLA %', data: emetData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.12)', tension: 0.25, fill: true },
                     { label: 'Perisai SLA %', data: perisaiData, borderColor: '#a855f7', backgroundColor: 'transparent', tension: 0.25 }
                 ]
             },
             options: {
-                responsive: true, maintainAspectRatio: false,
-                scales: { y: { min: 0, max: 100, title: { display: true, text: 'SLA Achievement %' } } },
-                plugins: { legend: { position: 'bottom' } }
+                ...chartTheme,
+                scales: {
+                    x: chartTheme.scales.x,
+                    y: { min: 0, max: 100, ticks: chartTheme.scales.y.ticks, grid: chartTheme.scales.y.grid, title: { display: true, text: 'SLA Achievement %', color: chartTheme.scales.y.ticks.color } }
+                }
             }
         });
     }
@@ -1753,10 +2093,8 @@
     document.getElementById('fileInput').addEventListener('change', async (ev) => {
         const file = ev.target.files[0];
         if(!file) return;
-        const alertEl = document.getElementById('statusAlert');
         const syncMode = (document.getElementById('uploadSyncMode') || {}).value || 'replace';
-        alertEl.className = 'alert alert-info py-2 px-3 small';
-        alertEl.textContent = 'Membaca file "' + file.name + '"...';
+        showStatus('info', 'Membaca file "' + file.name + '"...');
         try{
             const buf = await file.arrayBuffer();
             const parsed = parseWorkbook(buf, file.name);
@@ -1777,22 +2115,19 @@
             renderDailyAndTicketingFromUploaded();
             renderActual();
 
-            alertEl.textContent = 'Menyimpan ' + parsed.interactions.length + ' baris ke Cloudflare D1 (' + syncMode + ')...';
+            showStatus('info', 'Menyimpan ' + parsed.interactions.length.toLocaleString('id-ID') + ' baris ke Cloudflare D1 (' + syncMode + ')...');
             try {
                 await syncToD1(parsed.interactions, syncMode);
                 document.getElementById('metaBadge').textContent =
                     'Cloudflare D1 · ' + allInteractions.length.toLocaleString('id-ID') + ' interaksi (' + ticketsMap.size.toLocaleString('id-ID') + ' eskalasi)';
-                alertEl.className = 'alert alert-success py-2 px-3 small';
-                alertEl.textContent = 'Berhasil memuat & menyimpan ' + parsed.interactions.length + ' interaksi ke Cloudflare D1.';
+                showStatus('success', 'Berhasil memuat & menyimpan ' + parsed.interactions.length.toLocaleString('id-ID') + ' interaksi ke Cloudflare D1.', 6000);
             } catch (syncErr) {
                 document.getElementById('metaBadge').textContent =
                     file.name + ' (Lokal) · ' + allInteractions.length + ' interaksi (' + ticketsMap.size + ' eskalasi)';
-                alertEl.className = 'alert alert-warning py-2 px-3 small';
-                alertEl.textContent = 'Data tampil di layar, namun gagal sync ke D1 (' + syncErr.message + ').';
+                showStatus('warning', 'Data tampil di layar, namun gagal sync ke D1 (' + syncErr.message + ').');
             }
         }catch(e){
-            alertEl.className = 'alert alert-danger py-2 px-3 small';
-            alertEl.textContent = 'Gagal membaca file: ' + e.message;
+            showStatus('danger', 'Gagal membaca file: ' + e.message);
         }
         ev.target.value = '';
     });
@@ -1806,8 +2141,8 @@
     document.getElementById('slaViewToggle').addEventListener('click', () => {
         slaViewMode = slaViewMode === 'exclude' ? 'include' : 'exclude';
         document.getElementById('slaViewToggle').innerHTML = slaViewMode === 'include'
-            ? '<i class="fas fa-eye me-1"></i> User (Include Pending)'
-            : '<i class="fas fa-eye me-1"></i> Internal (Exclude Pending)';
+            ? '<i class="fas fa-sliders-h me-1"></i>User (Incl. Pending)'
+            : '<i class="fas fa-sliders-h me-1"></i>Internal (Excl. Pending)';
         if(ticketsMap.size > 0) renderActual();
     });
 
@@ -1819,14 +2154,18 @@
             document.documentElement.setAttribute('data-bs-theme', 'dark');
             sidenav.classList.remove('sb-sidenav-light');
             sidenav.classList.add('sb-sidenav-dark');
-            document.getElementById('themeToggleBtn').innerHTML = '<i class="fas fa-moon me-1"></i> Gelap';
+            document.getElementById('themeToggleBtn').innerHTML = '<i class="fas fa-moon me-1"></i>Gelap';
         } else {
             document.documentElement.classList.remove('dark-mode');
             document.documentElement.removeAttribute('data-bs-theme');
             sidenav.classList.remove('sb-sidenav-dark');
             sidenav.classList.add('sb-sidenav-light');
-            document.getElementById('themeToggleBtn').innerHTML = '<i class="fas fa-sun me-1"></i> Terang';
+            document.getElementById('themeToggleBtn').innerHTML = '<i class="fas fa-sun me-1"></i>Terang';
         }
+        if(allInteractions.length) renderDailyAndTicketingFromUploaded();
+        else renderReferenceReports();
+        if(ticketsMap.size > 0) renderActual();
+        renderHistoricalChart();
     });
 
     document.getElementById('productFilter').addEventListener('change', (e) => { selectedProduct = e.target.value; renderActual(); });
@@ -1877,6 +2216,7 @@
         runSimulation();
     });
 
+    injectProStyles();
     injectD1Controls();
     initHourSelectors();
     renderReferenceReports();

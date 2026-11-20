@@ -39,6 +39,55 @@
     let dailyChart1 = null, dailyChart2 = null, dailyChart3 = null, dailyChart4 = null;
     let tktChart1 = null, tktChart2 = null, tktChart3 = null, tktChart4 = null;
 
+    const barTotalPlugin = {
+        id: 'barTotalPlugin',
+        afterDatasetsDraw(chart) {
+            if (chart.config.type !== 'bar' || chart.options.indexAxis === 'y') return;
+            const { ctx, data } = chart;
+            const isStacked = Boolean(chart.options?.scales?.x?.stacked);
+            ctx.save();
+            ctx.font = '600 10.5px system-ui, -apple-system, sans-serif';
+            ctx.fillStyle = isDark ? '#e2e8f0' : '#1e293b';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+
+            if (isStacked) {
+                const labelCount = (data.labels || []).length;
+                for (let i = 0; i < labelCount; i++) {
+                    let total = 0;
+                    let topY = null;
+                    let barX = null;
+                    data.datasets.forEach((ds, dsIdx) => {
+                        if (!chart.isDatasetVisible(dsIdx)) return;
+                        const val = Number(ds.data[i] || 0);
+                        total += val;
+                        const meta = chart.getDatasetMeta(dsIdx);
+                        const el = meta.data[i];
+                        if (el && (topY === null || el.y < topY)) {
+                            topY = el.y;
+                            barX = el.x;
+                        }
+                    });
+                    if (total > 0 && barX !== null && topY !== null) {
+                        ctx.fillText(total.toLocaleString('id-ID'), barX, topY - 4);
+                    }
+                }
+            } else {
+                data.datasets.forEach((ds, dsIdx) => {
+                    if (!chart.isDatasetVisible(dsIdx)) return;
+                    const meta = chart.getDatasetMeta(dsIdx);
+                    meta.data.forEach((el, i) => {
+                        const val = Number(ds.data[i] || 0);
+                        if (val > 0 && el) {
+                            ctx.fillText(val.toLocaleString('id-ID'), el.x, el.y - 4);
+                        }
+                    });
+                });
+            }
+            ctx.restore();
+        }
+    };
+
     function injectProStyles(){
         if(document.getElementById('casnProUiStyle')) return;
         const css = `
@@ -165,30 +214,31 @@
             }
             #sharedDailyControls .card-body {
                 display: flex !important;
-                flex-wrap: wrap !important;
+                flex-wrap: nowrap !important;
                 align-items: center !important;
                 justify-content: space-between !important;
-                gap: 0.65rem 1rem !important;
-                padding: 0.6rem 0.9rem !important;
+                gap: 0.5rem 0.75rem !important;
+                padding: 0.55rem 0.85rem !important;
+                overflow-x: auto;
             }
             #sharedDailyControls label,
             #sharedDailyControls .fw-bold,
             #sharedDailyControls span {
-                font-size: 0.74rem !important;
+                font-size: 0.73rem !important;
                 letter-spacing: 0.02em;
                 white-space: nowrap !important;
             }
             #sharedDailyControls .form-select {
-                font-size: 0.78rem !important;
-                padding: 0.24rem 1.75rem 0.24rem 0.55rem !important;
-                height: 30px !important;
+                font-size: 0.76rem !important;
+                padding: 0.22rem 1.65rem 0.22rem 0.5rem !important;
+                height: 29px !important;
                 border-radius: 6px !important;
             }
             #dailySourceBadge {
                 white-space: nowrap !important;
-                font-size: 0.74rem !important;
+                font-size: 0.72rem !important;
                 font-weight: 600 !important;
-                padding: 0.28rem 0.72rem !important;
+                padding: 0.25rem 0.65rem !important;
                 border-radius: 999px !important;
                 background: rgba(14, 165, 233, 0.12);
                 color: #7dd3fc;
@@ -278,6 +328,35 @@
         styleEl.id = 'casnProUiStyle';
         styleEl.textContent = css;
         document.head.appendChild(styleEl);
+    }
+
+    function simplifyReportLayout(){
+        const pairs = [
+            { c3: 'dailyChart3', c4: 'dailyChart4', mtdBody: 'topMtdCasnBody', allBody: 'topDailyAllBody', c2Title: 'Tren Interaksi Harian (MTD)' },
+            { c3: 'tktChart3', c4: 'tktChart4', mtdBody: 'topMtdTktCasnBody', allBody: 'topDailyTktAllBody', c2Title: 'Tren Tiket Harian (MTD)' }
+        ];
+        pairs.forEach(p => {
+            const col3 = document.getElementById(p.c3)?.closest('[class*="col-"]');
+            const col4 = document.getElementById(p.c4)?.closest('[class*="col-"]');
+            if(col3) col3.style.display = 'none';
+            if(col4) col4.style.display = 'none';
+
+            const colMtd = document.getElementById(p.mtdBody)?.closest('[class*="col-"]');
+            const colAll = document.getElementById(p.allBody)?.closest('[class*="col-"]');
+            if(colMtd && colAll && colMtd.parentElement && colAll.parentElement && colMtd.parentElement !== colAll.parentElement){
+                const oldRow4 = colAll.parentElement;
+                colMtd.parentElement.appendChild(colAll);
+                if(oldRow4.children.length === 0 || (oldRow4.children.length === 1 && oldRow4.children[0] === col4)){
+                    oldRow4.style.display = 'none';
+                }
+            }
+
+            const c2Id = p.c3 === 'dailyChart3' ? 'dailyChart2' : 'tktChart2';
+            const c2Header = document.getElementById(c2Id)?.closest('.card')?.querySelector('.card-header');
+            if(c2Header){
+                c2Header.innerHTML = '<i class="fas fa-chart-bar me-1 text-primary"></i> ' + p.c2Title;
+            }
+        });
     }
 
     function showStatus(type, message, autoHideMs = 0){
@@ -477,35 +556,51 @@
         }
     }
 
-    function getChartCommonOptions(){
+    function getCleanChartOptions(extra = {}){
         const tickColor = isDark ? '#94a3b8' : '#475569';
-        const gridColor = isDark ? 'rgba(148, 163, 184, 0.11)' : 'rgba(15, 23, 42, 0.08)';
+        const gridColor = isDark ? 'rgba(148, 163, 184, 0.09)' : 'rgba(15, 23, 42, 0.07)';
         return {
             responsive: true,
             maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
             scales: {
                 x: {
-                    ticks: { color: tickColor, font: { size: 10.5 } },
-                    grid: { display: false }
+                    stacked: Boolean(extra.stacked),
+                    ticks: {
+                        color: tickColor,
+                        font: { size: 10.5 },
+                        maxRotation: 0,
+                        autoSkip: true,
+                        maxTicksLimit: 12
+                    },
+                    grid: { display: false },
+                    border: { display: false }
                 },
                 y: {
+                    stacked: Boolean(extra.stacked),
                     beginAtZero: true,
-                    ticks: { color: tickColor, font: { size: 10.5 }, precision: 0 },
-                    grid: { color: gridColor }
+                    grace: '14%',
+                    ticks: { color: tickColor, font: { size: 10.5 }, precision: 0, maxTicksLimit: 6 },
+                    grid: { color: gridColor },
+                    border: { display: false }
                 }
             },
             plugins: {
                 legend: {
-                    position: 'bottom',
+                    display: extra.showLegend !== false,
+                    position: 'top',
+                    align: 'end',
                     labels: {
                         color: tickColor,
-                        boxWidth: 10,
-                        boxHeight: 10,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        boxWidth: 7,
+                        boxHeight: 7,
                         padding: 12,
-                        font: { size: 10.5 }
+                        font: { size: 11, weight: '600' }
                     }
-                }
+                },
+                tooltip: extra.tooltip || {}
             }
         };
     }
@@ -1087,12 +1182,14 @@
     function renderZeroReports(){
         ensureChannelSummaryCard();
         polishSummaryTableHeaders();
+        simplifyReportLayout();
+
         document.getElementById('dailyDateSelect').innerHTML = '<option value="EMPTY">Belum ada data (0)</option>';
         document.getElementById('dailyHourStart').value = '0';
         document.getElementById('dailyHourEnd').value = '23';
 
         const hours = Array.from({ length: 24 }, (_, h) => h + ':00');
-        const commonOpts = getChartCommonOptions();
+        const cleanOpts = getCleanChartOptions();
 
         document.getElementById('tblDateVal').textContent = '-';
         document.getElementById('tblHourStart').textContent = '0:00';
@@ -1100,7 +1197,7 @@
         document.getElementById('pctInfo').textContent = '0.00%';
         document.getElementById('pctKeluhan').textContent = '0.00%';
         document.getElementById('pctPermintaan').textContent = '0.00%';
-        document.getElementById('chart1Title').textContent = 'Pergerakan TOP 5 Interaksi CASN';
+        document.getElementById('chart1Title').textContent = 'Tren Interaksi per Jam';
 
         document.getElementById('dailySummaryBody').innerHTML = [
             'Daily Interaction CASN',
@@ -1120,24 +1217,24 @@
         fillTopTable('topDailyAllBody', [], 0, '0.00%');
         fillTopTable('topMtdAllBody', [], 0, '0.00%');
 
-        const emptyChartData = {
+        const emptyLine = {
             labels: hours,
-            datasets: [{ label: 'Tidak ada data (0)', data: Array(24).fill(0), backgroundColor: '#3B82F6', borderColor: '#3B82F6' }]
+            datasets: [{ label: 'Total (0)', data: Array(24).fill(0), borderColor: '#3B82F6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true }]
+        };
+        const emptyBar = {
+            labels: ['-'],
+            datasets: [{ label: 'Total (0)', data: [0], backgroundColor: '#3B82F6', maxBarThickness: 38 }]
         };
 
         if(dailyChart1) dailyChart1.destroy();
-        dailyChart1 = new Chart(document.getElementById('dailyChart1'), { type: 'bar', data: emptyChartData, options: commonOpts });
+        dailyChart1 = new Chart(document.getElementById('dailyChart1'), { type: 'line', data: emptyLine, options: cleanOpts });
         if(dailyChart2) dailyChart2.destroy();
-        dailyChart2 = new Chart(document.getElementById('dailyChart2'), { type: 'bar', data: emptyChartData, options: commonOpts });
-        if(dailyChart3) dailyChart3.destroy();
-        dailyChart3 = new Chart(document.getElementById('dailyChart3'), { type: 'line', data: emptyChartData, options: commonOpts });
-        if(dailyChart4) dailyChart4.destroy();
-        dailyChart4 = new Chart(document.getElementById('dailyChart4'), { type: 'bar', data: emptyChartData, options: commonOpts });
+        dailyChart2 = new Chart(document.getElementById('dailyChart2'), { type: 'bar', data: emptyBar, options: cleanOpts });
 
         document.getElementById('tktDateVal').textContent = '-';
         document.getElementById('tktHourStart').textContent = '0:00';
         document.getElementById('tktHourEnd').textContent = '23:59';
-        document.getElementById('tktChart1Title').textContent = 'Pergerakan TOP 5 Tiket Eskalasi per Interval';
+        document.getElementById('tktChart1Title').textContent = 'Tren Tiket Eskalasi per Jam';
 
         document.getElementById('tktSummaryBody').innerHTML = [
             'Daily Ticket CASN',
@@ -1155,18 +1252,15 @@
         fillTopTable('topMtdTktAllBody', [], 0, '0.00%');
 
         if(tktChart1) tktChart1.destroy();
-        tktChart1 = new Chart(document.getElementById('tktChart1'), { type: 'line', data: emptyChartData, options: commonOpts });
+        tktChart1 = new Chart(document.getElementById('tktChart1'), { type: 'line', data: emptyLine, options: cleanOpts });
         if(tktChart2) tktChart2.destroy();
-        tktChart2 = new Chart(document.getElementById('tktChart2'), { type: 'bar', data: emptyChartData, options: commonOpts });
-        if(tktChart3) tktChart3.destroy();
-        tktChart3 = new Chart(document.getElementById('tktChart3'), { type: 'line', data: emptyChartData, options: commonOpts });
-        if(tktChart4) tktChart4.destroy();
-        tktChart4 = new Chart(document.getElementById('tktChart4'), { type: 'bar', data: emptyChartData, options: commonOpts });
+        tktChart2 = new Chart(document.getElementById('tktChart2'), { type: 'bar', data: emptyBar, options: cleanOpts });
     }
 
     function renderDailyAndTicketingFromUploaded(){
         ensureChannelSummaryCard();
         polishSummaryTableHeaders();
+        simplifyReportLayout();
         if(!allInteractions.length){ renderZeroReports(); return; }
 
         const dateSet = new Set();
@@ -1191,6 +1285,8 @@
         const activeDate = selDateEl.value;
         const hStart = parseInt(document.getElementById('dailyHourStart').value, 10);
         const hEnd = parseInt(document.getElementById('dailyHourEnd').value, 10);
+        const minH = hStart <= hEnd ? hStart : 0;
+        const maxH = hStart <= hEnd ? hEnd : 23;
         const casnScope = document.getElementById('dailyCasnScope').value;
 
         const [ay, am, ad] = activeDate.split('-').map(Number);
@@ -1200,12 +1296,12 @@
         document.getElementById('tblDateVal').textContent = activeDateLabel;
         document.getElementById('tblHourStart').textContent = hStart + ':00';
         document.getElementById('tblHourEnd').textContent = hEnd + ':00';
-        document.getElementById('chart1Title').textContent = 'Pergerakan TOP 5 Interaksi CASN — ' + activeDateLabel;
+        document.getElementById('chart1Title').textContent = 'Tren Interaksi per Jam — ' + activeDateLabel;
 
         document.getElementById('tktDateVal').textContent = activeDateLabel;
         document.getElementById('tktHourStart').textContent = hStart + ':00';
         document.getElementById('tktHourEnd').textContent = hEnd + ':59';
-        document.getElementById('tktChart1Title').textContent = 'Pergerakan TOP 5 Tiket Eskalasi per Interval — ' + activeDateLabel;
+        document.getElementById('tktChart1Title').textContent = 'Tren Tiket Eskalasi per Jam — ' + activeDateLabel;
         document.getElementById('dailySourceBadge').textContent = 'Data Aktual · ' + allInteractions.length.toLocaleString('id-ID') + ' interaksi · ' + ticketsMap.size.toLocaleString('id-ID') + ' tiket eskalasi';
 
         const isCasn = (r) => {
@@ -1215,14 +1311,15 @@
             return sc === 'e-meterai' || dsc.includes('casn') || dsc.includes('sscasn') || dsc.includes('e-meterai');
         };
 
-        const palette = ['#3B82F6', '#F97316', '#94A3B8', '#FACC15', '#38BDF8'];
-        const hours = Array.from({ length: 24 }, (_, h) => h + ':00');
+        const activeHours = [];
+        for(let h = minH; h <= maxH; h++) activeHours.push(h);
+        const hourLabels = activeHours.map(h => h + ':00');
+
         const mtdDates = dates.filter(dt => dt.startsWith(monthPrefix) && dt <= activeDate);
         const mtdDateLabels = mtdDates.map(dt => {
             const [y, m, d] = dt.split('-').map(Number);
             return new Date(y, m - 1, d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
         });
-        const commonOpts = getChartCommonOptions();
 
         const buildTop10 = (list, tbodyId) => {
             const counts = new Map();
@@ -1236,27 +1333,19 @@
             const allSum = list.length || 1;
             const topPct = list.length ? ((topSum / allSum) * 100).toFixed(2) + '%' : '0.00%';
             fillTopTable(tbodyId, top10.map(it => [it[0], it[1], ((it[1] / allSum) * 100).toFixed(2) + '%']), topSum, topPct);
-            return top10.slice(0, 5).map(x => x[0]);
         };
 
-        const makeHourlySets = (list, topCats) => topCats.map((cat, idx) => ({
-            label: cat,
-            data: Array.from({ length: 24 }, (_, h) => list.filter(x => x.hour === h && (x.r.dsc || x.r.sc || '(Lainnya)') === cat).length),
-            backgroundColor: palette[idx % palette.length],
-            borderColor: palette[idx % palette.length],
-            borderRadius: 3,
-            barPercentage: 0.85,
-            categoryPercentage: 0.8,
-            tension: 0.3,
-            fill: false
-        }));
-
-        const makeDailySets = (list, topCats) => topCats.map((cat, idx) => ({
-            label: cat,
-            data: mtdDates.map(dt => list.filter(x => x.dKey === dt && (x.r.dsc || x.r.sc || '(Lainnya)') === cat).length),
-            backgroundColor: palette[idx % palette.length],
-            borderRadius: 3
-        }));
+        const topIssueByHour = (list, h) => {
+            const slice = list.filter(x => x.hour === h);
+            if(!slice.length) return null;
+            const counts = new Map();
+            slice.forEach(x => {
+                const k = x.r.dsc || x.r.sc || '(Lainnya)';
+                counts.set(k, (counts.get(k) || 0) + 1);
+            });
+            const top = Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0];
+            return top ? 'Top Isu: ' + top[0] + ' (' + top[1] + ')' : null;
+        };
 
         const intMeta = allInteractions.map(r => {
             const iso = r.doStart || r.doOpen;
@@ -1336,19 +1425,80 @@
                     '<td class="num">' + g.esc + '</td><td class="num">' + g.notEsc + '</td><td class="num">' + g.mtd + '</td><td class="num">' + avgMin + '</td></tr>';
             }).join('') || '<tr><td colspan="7" class="text-center text-muted py-3">Tidak ada data channel pada interval ini.</td></tr>';
 
-        const top5DailyCasnInt = buildTop10(dailyCasnInt, 'topDailyCasnBody');
-        const top5MtdCasnInt = buildTop10(mtdCasnInt, 'topMtdCasnBody');
-        const top5DailyAllInt = buildTop10(dailyAllInt, 'topDailyAllBody');
-        const top5MtdAllInt = buildTop10(mtdAllInt, 'topMtdAllBody');
+        buildTop10(dailyCasnInt, 'topDailyCasnBody');
+        buildTop10(mtdCasnInt, 'topMtdCasnBody');
+        buildTop10(dailyAllInt, 'topDailyAllBody');
+        buildTop10(mtdAllInt, 'topMtdAllBody');
 
         if(dailyChart1) dailyChart1.destroy();
-        dailyChart1 = new Chart(document.getElementById('dailyChart1'), { type: 'bar', data: { labels: hours, datasets: makeHourlySets(dailyCasnInt, top5DailyCasnInt) }, options: commonOpts });
+        dailyChart1 = new Chart(document.getElementById('dailyChart1'), {
+            type: 'line',
+            data: {
+                labels: hourLabels,
+                datasets: [
+                    {
+                        label: 'Total Interaksi',
+                        data: activeHours.map(h => dailyCasnInt.filter(x => x.hour === h).length),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.14)',
+                        borderWidth: 2.3,
+                        pointRadius: 2.5,
+                        pointHoverRadius: 5,
+                        tension: 0.35,
+                        fill: true
+                    },
+                    {
+                        label: 'Escalated',
+                        data: activeHours.map(h => dailyCasnInt.filter(x => x.hour === h && x.r.isEscalated).length),
+                        borderColor: '#f97316',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        pointRadius: 2,
+                        pointHoverRadius: 4,
+                        tension: 0.35,
+                        fill: false
+                    }
+                ]
+            },
+            options: getCleanChartOptions({
+                tooltip: {
+                    callbacks: {
+                        afterBody: (items) => {
+                            if(!items.length) return '';
+                            const h = activeHours[items[0].dataIndex];
+                            const info = topIssueByHour(dailyCasnInt, h);
+                            return info ? '\n' + info : '';
+                        }
+                    }
+                }
+            })
+        });
+
         if(dailyChart2) dailyChart2.destroy();
-        dailyChart2 = new Chart(document.getElementById('dailyChart2'), { type: 'bar', data: { labels: mtdDateLabels, datasets: makeDailySets(mtdCasnInt, top5MtdCasnInt) }, options: commonOpts });
-        if(dailyChart3) dailyChart3.destroy();
-        dailyChart3 = new Chart(document.getElementById('dailyChart3'), { type: 'line', data: { labels: hours, datasets: makeHourlySets(dailyAllInt, top5DailyAllInt) }, options: commonOpts });
-        if(dailyChart4) dailyChart4.destroy();
-        dailyChart4 = new Chart(document.getElementById('dailyChart4'), { type: 'bar', data: { labels: mtdDateLabels, datasets: makeDailySets(mtdAllInt, top5MtdAllInt) }, options: commonOpts });
+        dailyChart2 = new Chart(document.getElementById('dailyChart2'), {
+            type: 'bar',
+            plugins: [barTotalPlugin],
+            data: {
+                labels: mtdDateLabels,
+                datasets: [
+                    {
+                        label: 'Not Escalated',
+                        data: mtdDates.map(dt => mtdCasnInt.filter(x => x.dKey === dt && !x.r.isEscalated).length),
+                        backgroundColor: '#3b82f6',
+                        maxBarThickness: 38,
+                        borderRadius: 3
+                    },
+                    {
+                        label: 'Escalated',
+                        data: mtdDates.map(dt => mtdCasnInt.filter(x => x.dKey === dt && x.r.isEscalated).length),
+                        backgroundColor: '#f97316',
+                        maxBarThickness: 38,
+                        borderRadius: 3
+                    }
+                ]
+            },
+            options: getCleanChartOptions({ stacked: true })
+        });
 
         const tktMeta = Array.from(ticketsMap.values()).map(r => {
             const iso = r.doOpen || r.doStart;
@@ -1386,19 +1536,80 @@
             '<td class="big-num">' + r.outstanding + '</td><td class="big-num">' + r.pending + '</td></tr>'
         ).join('');
 
-        const top5DailyCasnTkt = buildTop10(dailyCasnTkt, 'topDailyTktCasnBody');
-        const top5MtdCasnTkt = buildTop10(mtdCasnTkt, 'topMtdTktCasnBody');
-        const top5DailyAllTkt = buildTop10(dailyAllTkt, 'topDailyTktAllBody');
-        const top5MtdAllTkt = buildTop10(mtdAllTkt, 'topMtdTktAllBody');
+        buildTop10(dailyCasnTkt, 'topDailyTktCasnBody');
+        buildTop10(mtdCasnTkt, 'topMtdTktCasnBody');
+        buildTop10(dailyAllTkt, 'topDailyTktAllBody');
+        buildTop10(mtdAllTkt, 'topMtdTktAllBody');
 
         if(tktChart1) tktChart1.destroy();
-        tktChart1 = new Chart(document.getElementById('tktChart1'), { type: 'line', data: { labels: hours, datasets: makeHourlySets(dailyCasnTkt, top5DailyCasnTkt) }, options: commonOpts });
+        tktChart1 = new Chart(document.getElementById('tktChart1'), {
+            type: 'line',
+            data: {
+                labels: hourLabels,
+                datasets: [
+                    {
+                        label: 'Total Tiket',
+                        data: activeHours.map(h => dailyCasnTkt.filter(x => x.hour === h).length),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.14)',
+                        borderWidth: 2.3,
+                        pointRadius: 2.5,
+                        pointHoverRadius: 5,
+                        tension: 0.35,
+                        fill: true
+                    },
+                    {
+                        label: 'Outstanding',
+                        data: activeHours.map(h => dailyCasnTkt.filter(x => x.hour === h && !FINISHED_STATUSES.has((x.r.st || '').toLowerCase())).length),
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        pointRadius: 2,
+                        pointHoverRadius: 4,
+                        tension: 0.35,
+                        fill: false
+                    }
+                ]
+            },
+            options: getCleanChartOptions({
+                tooltip: {
+                    callbacks: {
+                        afterBody: (items) => {
+                            if(!items.length) return '';
+                            const h = activeHours[items[0].dataIndex];
+                            const info = topIssueByHour(dailyCasnTkt, h);
+                            return info ? '\n' + info : '';
+                        }
+                    }
+                }
+            })
+        });
+
         if(tktChart2) tktChart2.destroy();
-        tktChart2 = new Chart(document.getElementById('tktChart2'), { type: 'bar', data: { labels: mtdDateLabels, datasets: makeDailySets(mtdCasnTkt, top5MtdCasnTkt) }, options: commonOpts });
-        if(tktChart3) tktChart3.destroy();
-        tktChart3 = new Chart(document.getElementById('tktChart3'), { type: 'line', data: { labels: hours, datasets: makeHourlySets(dailyAllTkt, top5DailyAllTkt) }, options: commonOpts });
-        if(tktChart4) tktChart4.destroy();
-        tktChart4 = new Chart(document.getElementById('tktChart4'), { type: 'bar', data: { labels: mtdDateLabels, datasets: makeDailySets(mtdAllTkt, top5MtdAllTkt) }, options: commonOpts });
+        tktChart2 = new Chart(document.getElementById('tktChart2'), {
+            type: 'bar',
+            plugins: [barTotalPlugin],
+            data: {
+                labels: mtdDateLabels,
+                datasets: [
+                    {
+                        label: 'Resolved',
+                        data: mtdDates.map(dt => mtdCasnTkt.filter(x => x.dKey === dt && FINISHED_STATUSES.has((x.r.st || '').toLowerCase())).length),
+                        backgroundColor: '#10b981',
+                        maxBarThickness: 38,
+                        borderRadius: 3
+                    },
+                    {
+                        label: 'Outstanding',
+                        data: mtdDates.map(dt => mtdCasnTkt.filter(x => x.dKey === dt && !FINISHED_STATUSES.has((x.r.st || '').toLowerCase())).length),
+                        backgroundColor: '#f59e0b',
+                        maxBarThickness: 38,
+                        borderRadius: 3
+                    }
+                ]
+            },
+            options: getCleanChartOptions({ stacked: true })
+        });
     }
 
     function getPendingCutoff(rec){
@@ -1622,15 +1833,16 @@
 
         const achData = PRIORITY_ORDER.map(pr => finished.filter(c => c.rec.pr === pr && c.sla.result === 'aman').length);
         const breachData = PRIORITY_ORDER.map(pr => finished.filter(c => c.rec.pr === pr && c.sla.result === 'breach').length);
-        const chartTheme = getChartCommonOptions();
+        const chartTheme = getCleanChartOptions();
         if(achievedChart) achievedChart.destroy();
         achievedChart = new Chart(document.getElementById('achievedChart'), {
             type: 'bar',
+            plugins: [barTotalPlugin],
             data: {
                 labels: PRIORITY_ORDER,
                 datasets: [
-                    { label: 'Achieved', data: achData, backgroundColor: '#198754', borderRadius: 4 },
-                    { label: 'Not Achieved (Breach)', data: breachData, backgroundColor: '#dc3545', borderRadius: 4 }
+                    { label: 'Achieved', data: achData, backgroundColor: '#10b981', borderRadius: 4, maxBarThickness: 36 },
+                    { label: 'Breach', data: breachData, backgroundColor: '#ef4444', borderRadius: 4, maxBarThickness: 36 }
                 ]
             },
             options: {
@@ -1658,25 +1870,32 @@
 
         const catCounts = new Map();
         scoped.forEach(c => {
-            const lbl = (c.rec.mc || '-') + ' - ' + (c.rec.sc || '-') + ' - ' + (c.rec.dsc || '-');
-            catCounts.set(lbl, (catCounts.get(lbl) || 0) + 1);
+            const fullLbl = (c.rec.dsc || c.rec.sc || '-');
+            catCounts.set(fullLbl, (catCounts.get(fullLbl) || 0) + 1);
         });
         const top10 = Array.from(catCounts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10);
         if(top10Chart) top10Chart.destroy();
         top10Chart = new Chart(document.getElementById('top10Chart'), {
             type: 'bar',
             data: {
-                labels: top10.map(x => x[0]),
-                datasets: [{ label: 'Jumlah Tiket', data: top10.map(x => x[1]), backgroundColor: '#3b82f6', borderRadius: 4 }]
+                labels: top10.map(x => x[0].length > 34 ? x[0].slice(0, 32) + '…' : x[0]),
+                datasets: [{ label: 'Jumlah Tiket', data: top10.map(x => x[1]), backgroundColor: '#3b82f6', borderRadius: 4, maxBarThickness: 22 }]
             },
             options: {
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: (items) => items.length ? top10[items[0].dataIndex][0] : ''
+                        }
+                    }
+                },
                 scales: {
-                    x: { beginAtZero: true, ticks: chartTheme.scales.x.ticks, grid: chartTheme.scales.y.grid },
-                    y: { ticks: chartTheme.scales.x.ticks, grid: { display: false } }
+                    x: { beginAtZero: true, ticks: chartTheme.scales.y.ticks, grid: chartTheme.scales.y.grid, border: { display: false } },
+                    y: { ticks: { color: chartTheme.scales.x.ticks.color, font: { size: 10.5 } }, grid: { display: false }, border: { display: false } }
                 }
             }
         });
@@ -1823,22 +2042,22 @@
             97.9,97.8,99.3,98.4,99.0,97.8,95.5,98.3,97.4,96.6,97.5,98.1,
             97.6,98.2,98.1,99.0,97.9,99.4,98.3
         ];
-        const chartTheme = getChartCommonOptions();
+        const chartTheme = getCleanChartOptions();
         if(histChart) histChart.destroy();
         histChart = new Chart(document.getElementById('histChart'), {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [
-                    { label: 'E-Meterai SLA %', data: emetData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.12)', tension: 0.25, fill: true },
-                    { label: 'Perisai SLA %', data: perisaiData, borderColor: '#a855f7', backgroundColor: 'transparent', tension: 0.25 }
+                    { label: 'E-Meterai SLA %', data: emetData, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.12)', borderWidth: 2, pointRadius: 2, tension: 0.3, fill: true },
+                    { label: 'Perisai SLA %', data: perisaiData, borderColor: '#a855f7', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 2, tension: 0.3 }
                 ]
             },
             options: {
                 ...chartTheme,
                 scales: {
                     x: chartTheme.scales.x,
-                    y: { min: 0, max: 100, ticks: chartTheme.scales.y.ticks, grid: chartTheme.scales.y.grid, title: { display: true, text: 'SLA Achievement %', color: chartTheme.scales.y.ticks.color } }
+                    y: { min: 0, max: 100, ticks: chartTheme.scales.y.ticks, grid: chartTheme.scales.y.grid, border: { display: false }, title: { display: true, text: 'SLA %', color: chartTheme.scales.y.ticks.color } }
                 }
             }
         });
@@ -1856,7 +2075,7 @@
         document.getElementById('sharedDailyControls').style.display = (target === 'daily' || target === 'ticketing') ? '' : 'none';
 
         setTimeout(() => {
-            [dailyChart1, dailyChart2, dailyChart3, dailyChart4, tktChart1, tktChart2, tktChart3, tktChart4, achievedChart, top10Chart, histChart].forEach(ch => {
+            [dailyChart1, dailyChart2, tktChart1, tktChart2, achievedChart, top10Chart, histChart].forEach(ch => {
                 if(ch) ch.resize();
             });
         }, 40);

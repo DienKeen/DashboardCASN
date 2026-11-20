@@ -562,8 +562,8 @@
                 if(!res.ok || !json.ok) throw new Error(json.reason || ('HTTP ' + res.status));
                 allInteractions = [];
                 ticketsMap = new Map();
-                document.getElementById('metaBadge').textContent = 'Cloudflare D1 · 0 interaksi (0 eskalasi)';
-                document.getElementById('dailySourceBadge').textContent = 'Database Kosong · 0 interaksi · 0 tiket eskalasi';
+                document.getElementById('metaBadge').textContent = 'Cloudflare D1 · 0 interaksi (0 N-FCR)';
+                document.getElementById('dailySourceBadge').textContent = 'Database Kosong · 0 interaksi · 0 tiket N-FCR';
                 showStatus('warning', 'Data di Cloudflare D1 berhasil dikosongkan (0).', 5000);
                 renderZeroReports();
                 renderActual();
@@ -602,8 +602,8 @@
             if(ths.length >= 7){
                 ths[0].textContent = 'Interaksi CASN';
                 ths[1].textContent = 'Total';
-                ths[2].textContent = 'Escalated';
-                ths[3].textContent = 'Not Escalated';
+                ths[2].textContent = 'FCR';
+                ths[3].textContent = 'N-FCR';
                 ths[4].textContent = 'Informasi';
                 ths[5].textContent = 'Keluhan';
                 ths[6].textContent = 'Permintaan';
@@ -617,8 +617,8 @@
         const cardHtml =
             '<div class="card" id="channelBreakdownCard">' +
               '<div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">' +
-                '<span><i class="fas fa-headset me-1 text-info"></i> Distribusi Interaksi & Kecepatan Eskalasi per Channel</span>' +
-                '<span class="badge bg-secondary bg-opacity-25 text-info border border-info border-opacity-25">Target Eskalasi Email & WhatsApp: ≤ 15 Menit</span>' +
+                '<span><i class="fas fa-headset me-1 text-info"></i> Distribusi Interaksi (FCR / N-FCR) & Kecepatan Dispatch per Channel</span>' +
+                '<span class="badge bg-secondary bg-opacity-25 text-info border border-info border-opacity-25">Target Dispatch N-FCR Email & WhatsApp: ≤ 15 Menit</span>' +
               '</div>' +
               '<div class="card-body p-2">' +
                 '<div class="table-responsive">' +
@@ -627,10 +627,10 @@
                       '<th class="text-start ps-2">Channel</th>' +
                       '<th class="text-end pe-2">Daily Interaksi</th>' +
                       '<th class="text-end pe-2">Porsi (%)</th>' +
-                      '<th class="text-end pe-2">Escalated</th>' +
-                      '<th class="text-end pe-2">Not Esc.</th>' +
+                      '<th class="text-end pe-2">FCR</th>' +
+                      '<th class="text-end pe-2">N-FCR</th>' +
                       '<th class="text-end pe-2">MTD Interaksi</th>' +
-                      '<th class="text-end pe-2">Avg Kecepatan Eskalasi</th>' +
+                      '<th class="text-end pe-2">Avg Dispatch N-FCR</th>' +
                     '</tr></thead>' +
                     '<tbody id="channelBreakdownBody"></tbody>' +
                   '</table>' +
@@ -809,11 +809,11 @@
                 `Scope : ${scopeLabel} (Database Kosong)`,
                 ``,
                 `*1. RINGKASAN INTERAKSI*`,
-                `• Daily Interaction : *0* (Escalated: 0 | Not Escalated: 0)`,
+                `• Daily Interaction : *0* (FCR: 0 | N-FCR: 0 | FCR Rate: 0.00%)`,
                 `  - Komposisi: Informasi 0.00% (0), Keluhan 0.00% (0), Permintaan 0.00% (0)`,
-                `• MTD Interaction : *0* (Escalated: 0 | Not Escalated: 0)`,
+                `• MTD Interaction : *0* (FCR: 0 | N-FCR: 0)`,
                 ``,
-                `*2. RINGKASAN TICKETING (ESKALASI)*`,
+                `*2. RINGKASAN TICKETING (N-FCR)*`,
                 `• Daily Ticket Created : *0* (Resolved: 0 | Outstanding: 0 | Pending: 0)`,
                 `• MTD Ticket Created : *0* (Resolved: 0 | Outstanding: 0 | Pending: 0)`
             ].join('\n');
@@ -843,20 +843,21 @@
         const mtdInt = intMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && isCasn(x.r));
 
         const sumInt = (list) => {
-            let esc = 0, notEsc = 0, info = 0, kel = 0, perm = 0;
+            let fcr = 0, nfcr = 0, info = 0, kel = 0, perm = 0;
             list.forEach(x => {
-                if(x.r.isEscalated) esc++; else notEsc++;
+                if(x.r.isEscalated) nfcr++; else fcr++;
                 const mc = (x.r.mc || '').toLowerCase();
                 if(mc === 'informasi') info++;
                 else if(mc === 'keluhan') kel++;
                 else if(mc === 'permintaan') perm++;
             });
-            return { total: list.length, esc, notEsc, info, kel, perm };
+            return { total: list.length, fcr, nfcr, info, kel, perm };
         };
 
         const sDailyInt = sumInt(dailyInt);
         const sMtdInt = sumInt(mtdInt);
         const denomInt = sDailyInt.total || 1;
+        const fcrRateDaily = sDailyInt.total ? ((sDailyInt.fcr / denomInt) * 100).toFixed(2) + '%' : '0.00%';
         const pctInfo = sDailyInt.total ? ((sDailyInt.info / denomInt) * 100).toFixed(2) + '%' : '0.00%';
         const pctKel = sDailyInt.total ? ((sDailyInt.kel / denomInt) * 100).toFixed(2) + '%' : '0.00%';
         const pctPerm = sDailyInt.total ? ((sDailyInt.perm / denomInt) * 100).toFixed(2) + '%' : '0.00%';
@@ -931,17 +932,17 @@
             `Scope : ${scopeLabel}`,
             ``,
             `*1. RINGKASAN INTERAKSI*`,
-            `• Daily Interaction : *${sDailyInt.total.toLocaleString('id-ID')}* (Escalated: ${sDailyInt.esc.toLocaleString('id-ID')} | Not Escalated: ${sDailyInt.notEsc.toLocaleString('id-ID')})`,
+            `• Daily Interaction : *${sDailyInt.total.toLocaleString('id-ID')}* (FCR: ${sDailyInt.fcr.toLocaleString('id-ID')} | N-FCR: ${sDailyInt.nfcr.toLocaleString('id-ID')} | FCR Rate: ${fcrRateDaily})`,
             `  - Channel Daily : ${chSummary}`,
             `  - Komposisi: Informasi ${pctInfo} (${sDailyInt.info}), Keluhan ${pctKel} (${sDailyInt.kel}), Permintaan ${pctPerm} (${sDailyInt.perm})`,
-            `• MTD Interaction : *${sMtdInt.total.toLocaleString('id-ID')}* (Escalated: ${sMtdInt.esc.toLocaleString('id-ID')} | Not Escalated: ${sMtdInt.notEsc.toLocaleString('id-ID')})`,
+            `• MTD Interaction : *${sMtdInt.total.toLocaleString('id-ID')}* (FCR: ${sMtdInt.fcr.toLocaleString('id-ID')} | N-FCR: ${sMtdInt.nfcr.toLocaleString('id-ID')})`,
             `• Top 3 Interaksi Harian:`,
             ...getTop3Lines(dailyInt),
             ``,
-            `*2. RINGKASAN TICKETING (ESKALASI)*`,
+            `*2. RINGKASAN TICKETING (N-FCR)*`,
             `• Daily Ticket Created : *${sDailyTkt.created.toLocaleString('id-ID')}* (Resolved: ${sDailyTkt.resolved.toLocaleString('id-ID')} | Outstanding: ${sDailyTkt.outstanding.toLocaleString('id-ID')} | Pending: ${sDailyTkt.pending.toLocaleString('id-ID')})`,
             `• MTD Ticket Created : *${sMtdTkt.created.toLocaleString('id-ID')}* (Resolved: ${sMtdTkt.resolved.toLocaleString('id-ID')} | Outstanding: ${sMtdTkt.outstanding.toLocaleString('id-ID')} | Pending: ${sMtdTkt.pending.toLocaleString('id-ID')})`,
-            `• Top 3 Tiket Eskalasi Harian:`,
+            `• Top 3 Tiket N-FCR Harian:`,
             ...getTop3Lines(dailyTkt),
             ``,
             `*3. PERFORMA SLA & KUALITAS (${modeLabel})*`,
@@ -1140,8 +1141,8 @@
             if(!data.ok || !Array.isArray(data.records) || data.records.length === 0){
                 allInteractions = [];
                 ticketsMap = new Map();
-                document.getElementById('metaBadge').textContent = 'Cloudflare D1 · 0 interaksi (0 eskalasi)';
-                document.getElementById('dailySourceBadge').textContent = 'Database Kosong · 0 interaksi · 0 tiket eskalasi';
+                document.getElementById('metaBadge').textContent = 'Cloudflare D1 · 0 interaksi (0 N-FCR)';
+                document.getElementById('dailySourceBadge').textContent = 'Database Kosong · 0 interaksi · 0 tiket N-FCR';
                 renderZeroReports();
                 renderActual();
                 return;
@@ -1159,7 +1160,7 @@
             allInteractions = data.records;
             ticketsMap = escalatedOut;
             document.getElementById('metaBadge').textContent =
-                'Cloudflare D1 · ' + allInteractions.length.toLocaleString('id-ID') + ' interaksi (' + ticketsMap.size.toLocaleString('id-ID') + ' eskalasi)';
+                'Cloudflare D1 · ' + allInteractions.length.toLocaleString('id-ID') + ' interaksi (' + ticketsMap.size.toLocaleString('id-ID') + ' N-FCR)';
             renderDailyAndTicketingFromUploaded();
             renderActual();
         } catch (err) {
@@ -1276,7 +1277,7 @@
         document.getElementById('tktDateVal').textContent = activeDateLabel;
         document.getElementById('tktHourStart').textContent = hStart + ':00';
         document.getElementById('tktHourEnd').textContent = hEnd + ':59';
-        document.getElementById('dailySourceBadge').textContent = 'Data Aktual · ' + allInteractions.length.toLocaleString('id-ID') + ' interaksi · ' + ticketsMap.size.toLocaleString('id-ID') + ' tiket eskalasi';
+        document.getElementById('dailySourceBadge').textContent = 'Data Aktual · ' + allInteractions.length.toLocaleString('id-ID') + ' interaksi · ' + ticketsMap.size.toLocaleString('id-ID') + ' tiket N-FCR';
 
         const isCasn = (r) => {
             if(casnScope === 'ALL') return true;
@@ -1313,15 +1314,15 @@
         const mtdCasnInt = mtdAllInt.filter(x => isCasn(x.r));
 
         const summarizeInt = (list) => {
-            let esc = 0, notEsc = 0, info = 0, kel = 0, perm = 0;
+            let fcr = 0, nfcr = 0, info = 0, kel = 0, perm = 0;
             list.forEach(x => {
-                if(x.r.isEscalated) esc++; else notEsc++;
+                if(x.r.isEscalated) nfcr++; else fcr++;
                 const mc = (x.r.mc || '').toLowerCase();
                 if(mc === 'informasi') info++;
                 else if(mc === 'keluhan') kel++;
                 else if(mc === 'permintaan') perm++;
             });
-            return { total: list.length, esc, notEsc, info, kel, perm };
+            return { total: list.length, fcr, nfcr, info, kel, perm };
         };
 
         const sDailyCasnInt = summarizeInt(dailyCasnInt);
@@ -1340,29 +1341,29 @@
             { label: 'Daily All Interaction', ...sDailyAllInt },
             { label: 'MTD All Interaction', ...sMtdAllInt },
         ].map(r =>
-            '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.total + '</td><td class="big-num">' + r.esc + '</td>' +
-            '<td class="big-num">' + r.notEsc + '</td><td class="big-num">' + r.info + '</td><td class="big-num">' + r.kel + '</td><td class="big-num">' + r.perm + '</td></tr>'
+            '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.total + '</td><td class="big-num">' + r.fcr + '</td>' +
+            '<td class="big-num">' + r.nfcr + '</td><td class="big-num">' + r.info + '</td><td class="big-num">' + r.kel + '</td><td class="big-num">' + r.perm + '</td></tr>'
         ).join('');
 
         const chMap = new Map();
         dailyCasnInt.forEach(x => {
             const ch = x.r.ch || '(Tanpa Channel)';
-            if(!chMap.has(ch)) chMap.set(ch, { daily: 0, esc: 0, notEsc: 0, mtd: 0, escHrs: [] });
+            if(!chMap.has(ch)) chMap.set(ch, { daily: 0, fcr: 0, nfcr: 0, mtd: 0, escHrs: [] });
             const g = chMap.get(ch);
             g.daily++;
             if(x.r.isEscalated){
-                g.esc++;
+                g.nfcr++;
                 if(x.r.doOpen && x.r.doStart){
                     const hrs = (new Date(x.r.doOpen).getTime() - new Date(x.r.doStart).getTime()) / 3600000;
                     if(hrs >= 0) g.escHrs.push(hrs);
                 }
             } else {
-                g.notEsc++;
+                g.fcr++;
             }
         });
         mtdCasnInt.forEach(x => {
             const ch = x.r.ch || '(Tanpa Channel)';
-            if(!chMap.has(ch)) chMap.set(ch, { daily: 0, esc: 0, notEsc: 0, mtd: 0, escHrs: [] });
+            if(!chMap.has(ch)) chMap.set(ch, { daily: 0, fcr: 0, nfcr: 0, mtd: 0, escHrs: [] });
             chMap.get(ch).mtd++;
         });
         const chTotalDaily = dailyCasnInt.length || 1;
@@ -1374,7 +1375,7 @@
                     ? ((g.escHrs.reduce((s, h) => s + h, 0) / g.escHrs.length) * 60).toFixed(1) + ' Menit'
                     : '—';
                 return '<tr><td class="row-title">' + ch + '</td><td class="num">' + g.daily + '</td><td class="num">' + pct + '</td>' +
-                    '<td class="num">' + g.esc + '</td><td class="num">' + g.notEsc + '</td><td class="num">' + g.mtd + '</td><td class="num">' + avgMin + '</td></tr>';
+                    '<td class="num">' + g.fcr + '</td><td class="num">' + g.nfcr + '</td><td class="num">' + g.mtd + '</td><td class="num">' + avgMin + '</td></tr>';
             }).join('') || '<tr><td colspan="7" class="text-center text-muted py-3">Tidak ada data channel pada interval ini.</td></tr>';
 
         buildTop10(dailyCasnInt, 'topDailyCasnBody');
@@ -1660,7 +1661,7 @@
         const escBreach = escItems.filter(x => x.esc.result === 'breach').length;
         const escAvgMin = escItems.length ? (escItems.reduce((s, x) => s + x.esc.hours, 0) / escItems.length) * 60 : null;
         document.getElementById('escalationCards').innerHTML = [
-            { label: 'Rata-rata Eskalasi', value: escAvgMin !== null ? escAvgMin.toFixed(1) + ' mnt' : '—', cls: 'border-primary' },
+            { label: 'Rata-rata Dispatch N-FCR', value: escAvgMin !== null ? escAvgMin.toFixed(1) + ' mnt' : '—', cls: 'border-primary' },
             { label: 'Dalam Target (≤15m)', value: escAman, cls: 'border-success' },
             { label: 'Breach (>15m)', value: escBreach, cls: escBreach > 0 ? 'border-danger' : 'border-success' },
         ].map(c => '<div class="col-4"><div class="card border-start border-4 ' + c.cls + ' mb-0"><div class="card-body p-2"><div class="small text-muted">' + c.label + '</div><div class="h5 mb-0 fw-bold">' + c.value + '</div></div></div></div>').join('');
@@ -1679,7 +1680,7 @@
             const pct = g.total ? ((g.aman / g.total) * 100).toFixed(0) : '0';
             const avgM = g.total ? ((g.sumHrs / g.total) * 60).toFixed(1) + 'm' : '-';
             return '<div class="breakdown-item"><div class="breakdown-name" title="' + name + '">' + name + '</div><div class="breakdown-bar"><div class="breakdown-fill" style="width:' + (g.total / maxEsc * 100) + '%"></div></div><div class="breakdown-val" style="flex:0 0 135px;">' + g.total + ' · ' + avgM + ' (' + pct + '%)</div></div>';
-        }).join('') || '<p class="small text-muted mb-0">Tidak ada data eskalasi Email/WhatsApp.</p>';
+        }).join('') || '<p class="small text-muted mb-0">Tidak ada data N-FCR Email/WhatsApp.</p>';
 
         const prods = Array.from(new Set(scoped.map(c => c.rec.sc).filter(Boolean))).sort();
         document.getElementById('productPriorityTables').innerHTML = prods.map(prod => {
@@ -1773,7 +1774,7 @@
 
         document.getElementById('simCards').innerHTML = [
             { label: 'Kapasitas Layan / Hari', value: capInteractions.toLocaleString('id-ID'), hint: 'AHT: ' + effAht.toFixed(1) + 'm · Backlog: ' + backlog, bg: backlog === 0 ? 'bg-success' : 'bg-warning text-dark' },
-            { label: 'Proyeksi Tiket Eskalasi', value: estTickets + ' tiket', hint: highSev ? 'Critical/High (8j–12j)' : 'Medium Standar (24j)', bg: 'bg-primary' },
+            { label: 'Proyeksi Tiket N-FCR', value: estTickets + ' tiket', hint: highSev ? 'Critical/High (8j–12j)' : 'Medium Standar (24j)', bg: 'bg-primary' },
             { label: 'Proyeksi SLA E-Meterai', value: emetSla.toFixed(1) + '%', hint: emetSla >= 85 ? 'Terkendali (≥85%)' : 'Risiko Breach Tinggi!', bg: emetSla >= 85 ? 'bg-success' : (emetSla >= 70 ? 'bg-warning text-dark' : 'bg-danger') },
             { label: 'Proyeksi SLA Perisai', value: perisaiSla.toFixed(1) + '%', hint: useSegment ? 'VIP Terisolasi' : 'Tercampur! Ideal: ' + recAgents + ' agt', bg: perisaiSla >= 90 ? 'bg-success' : 'bg-warning text-dark' }
         ].map(c =>
@@ -1855,11 +1856,11 @@
             try {
                 await syncToD1(parsed.interactions, syncMode);
                 document.getElementById('metaBadge').textContent =
-                    'Cloudflare D1 · ' + allInteractions.length.toLocaleString('id-ID') + ' interaksi (' + ticketsMap.size.toLocaleString('id-ID') + ' eskalasi)';
+                    'Cloudflare D1 · ' + allInteractions.length.toLocaleString('id-ID') + ' interaksi (' + ticketsMap.size.toLocaleString('id-ID') + ' N-FCR)';
                 showStatus('success', 'Berhasil memuat & menyimpan ' + parsed.interactions.length.toLocaleString('id-ID') + ' interaksi ke Cloudflare D1.', 6000);
             } catch (syncErr) {
                 document.getElementById('metaBadge').textContent =
-                    file.name + ' (Lokal) · ' + allInteractions.length + ' interaksi (' + ticketsMap.size + ' eskalasi)';
+                    file.name + ' (Lokal) · ' + allInteractions.length + ' interaksi (' + ticketsMap.size + ' N-FCR)';
                 showStatus('warning', 'Data tampil di layar, namun gagal sync ke D1 (' + syncErr.message + ').');
             }
         }catch(e){

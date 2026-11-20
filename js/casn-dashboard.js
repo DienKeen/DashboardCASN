@@ -221,36 +221,36 @@
             .report-tbl {
                 width: 100% !important;
                 table-layout: auto !important;
-                font-size: 0.75rem !important;
+                font-size: 0.72rem !important;
                 border-collapse: collapse;
             }
             .report-tbl th,
             .report-tbl td {
-                padding: 0.4rem 0.32rem !important;
+                padding: 0.38rem 0.2rem !important;
                 font-variant-numeric: tabular-nums;
                 vertical-align: middle !important;
             }
             .report-tbl th {
-                font-size: 0.7rem !important;
+                font-size: 0.66rem !important;
                 font-weight: 700 !important;
                 white-space: nowrap !important;
-                letter-spacing: 0.01em;
+                letter-spacing: 0 !important;
             }
             .report-tbl td.row-title {
                 font-weight: 600 !important;
                 white-space: nowrap !important;
                 text-align: left !important;
-                padding-left: 0.45rem !important;
+                padding-left: 0.35rem !important;
             }
             .report-tbl td.big-num {
-                font-size: 0.82rem !important;
+                font-size: 0.77rem !important;
                 font-weight: 700 !important;
                 text-align: center !important;
             }
             .report-tbl td.num {
-                font-size: 0.76rem !important;
+                font-size: 0.73rem !important;
                 text-align: right !important;
-                padding-right: 0.45rem !important;
+                padding-right: 0.35rem !important;
             }
             .sla-tbl {
                 font-size: 0.78rem !important;
@@ -417,7 +417,7 @@
                 const ok = await promptAdminUnlock();
                 if(!ok) return;
             }
-            if(!confirm('Hapus seluruh data tiket tersimpan di Cloudflare D1?')) return;
+            if(!confirm('Hapus seluruh data tiket tersimpan di Cloudflare D1 dan reset semua angka ke 0?')) return;
             try {
                 const res = await fetch('/api/tickets', {
                     method: 'DELETE',
@@ -427,10 +427,10 @@
                 if(!res.ok || !json.ok) throw new Error(json.reason || ('HTTP ' + res.status));
                 allInteractions = [];
                 ticketsMap = new Map();
-                document.getElementById('metaBadge').textContent = 'Mode Preview Data Referensi CASN';
-                document.getElementById('dailySourceBadge').textContent = 'Data Referensi CASN (Upload CSV/Excel untuk data real)';
-                showStatus('warning', 'Data di Cloudflare D1 berhasil dikosongkan.', 5000);
-                renderReferenceReports();
+                document.getElementById('metaBadge').textContent = 'Cloudflare D1 · 0 interaksi (0 eskalasi)';
+                document.getElementById('dailySourceBadge').textContent = 'Database Kosong · 0 interaksi · 0 tiket eskalasi';
+                showStatus('warning', 'Data di Cloudflare D1 berhasil dikosongkan (0).', 5000);
+                renderZeroReports();
                 renderActual();
             } catch (err) {
                 showStatus('danger', 'Gagal menghapus data D1: ' + err.message);
@@ -701,44 +701,20 @@
         const scopeLabel = scopeVal === 'ALL' ? 'Semua Produk' : 'E-Meterai / CASN';
 
         if(!allInteractions.length){
-            const intRows = Array.from(document.querySelectorAll('#dailySummaryBody tr')).map(tr =>
-                Array.from(tr.children).map(td => td.textContent.trim())
-            );
-            const tktRows = Array.from(document.querySelectorAll('#tktSummaryBody tr')).map(tr =>
-                Array.from(tr.children).map(td => td.textContent.trim())
-            );
-            const topInt = Array.from(document.querySelectorAll('#topDailyCasnBody tr:not(.total-row)')).slice(0, 3).map(tr => {
-                const c = tr.children;
-                return c.length >= 4 ? `  ${c[0].textContent.trim()}. ${c[1].textContent.trim()} (${c[2].textContent.trim()} | ${c[3].textContent.trim()})` : '';
-            }).filter(Boolean);
-            const topTkt = Array.from(document.querySelectorAll('#topDailyTktCasnBody tr:not(.total-row)')).slice(0, 3).map(tr => {
-                const c = tr.children;
-                return c.length >= 4 ? `  ${c[0].textContent.trim()}. ${c[1].textContent.trim()} (${c[2].textContent.trim()} | ${c[3].textContent.trim()})` : '';
-            }).filter(Boolean);
-
-            const dInt = intRows[0] || ['-', '0', '0', '0', '0', '0', '0'];
-            const mInt = intRows[1] || ['-', '0', '0', '0', '0', '0', '0'];
-            const dTkt = tktRows[0] || ['-', '0', '0', '0', '0'];
-            const mTkt = tktRows[1] || ['-', '0', '0', '0', '0'];
-
             return [
                 `*REPORT DAILY OPERATIONAL HELPDESK CASN*`,
-                `Tanggal : ${dateLabel}`,
+                `Tanggal : -`,
                 `Interval : ${hStart}:00 - ${hEnd}:59 WIB`,
-                `Scope : ${scopeLabel} (Data Referensi)`,
+                `Scope : ${scopeLabel} (Database Kosong)`,
                 ``,
                 `*1. RINGKASAN INTERAKSI*`,
-                `• Daily Interaction : *${dInt[1]}* (Escalated: ${dInt[2]} | Not Escalated: ${dInt[3]})`,
-                `  - Komposisi: Informasi ${document.getElementById('pctInfo').textContent} (${dInt[4]}), Keluhan ${document.getElementById('pctKeluhan').textContent} (${dInt[5]}), Permintaan ${document.getElementById('pctPermintaan').textContent} (${dInt[6]})`,
-                `• MTD Interaction : *${mInt[1]}* (Escalated: ${mInt[2]} | Not Escalated: ${mInt[3]})`,
-                `• Top 3 Interaksi Harian:`,
-                ...(topInt.length ? topInt : ['  - Belum ada data']),
+                `• Daily Interaction : *0* (Escalated: 0 | Not Escalated: 0)`,
+                `  - Komposisi: Informasi 0.00% (0), Keluhan 0.00% (0), Permintaan 0.00% (0)`,
+                `• MTD Interaction : *0* (Escalated: 0 | Not Escalated: 0)`,
                 ``,
                 `*2. RINGKASAN TICKETING (ESKALASI)*`,
-                `• Daily Ticket Created : *${dTkt[1]}* (Resolved: ${dTkt[2]} | Outstanding: ${dTkt[3]} | Pending: ${dTkt[4]})`,
-                `• MTD Ticket Created : *${mTkt[1]}* (Resolved: ${mTkt[2]} | Outstanding: ${mTkt[3]} | Pending: ${mTkt[4]})`,
-                `• Top 3 Tiket Eskalasi Harian:`,
-                ...(topTkt.length ? topTkt : ['  - Belum ada data'])
+                `• Daily Ticket Created : *0* (Resolved: 0 | Outstanding: 0 | Pending: 0)`,
+                `• MTD Ticket Created : *0* (Resolved: 0 | Outstanding: 0 | Pending: 0)`
             ].join('\n');
         }
 
@@ -1060,7 +1036,15 @@
             const res = await fetch('/api/tickets');
             if(!res.ok) return;
             const data = await res.json();
-            if(!data.ok || !Array.isArray(data.records) || data.records.length === 0) return;
+            if(!data.ok || !Array.isArray(data.records) || data.records.length === 0){
+                allInteractions = [];
+                ticketsMap = new Map();
+                document.getElementById('metaBadge').textContent = 'Cloudflare D1 · 0 interaksi (0 eskalasi)';
+                document.getElementById('dailySourceBadge').textContent = 'Database Kosong · 0 interaksi · 0 tiket eskalasi';
+                renderZeroReports();
+                renderActual();
+                return;
+            }
 
             const escalatedOut = new Map();
             let skippedNotEscalated = 0;
@@ -1096,299 +1080,94 @@
     function fillTopTable(tbodyId, items, sumTotal, sumPct){
         document.getElementById(tbodyId).innerHTML = (items.map((it, i) =>
             '<tr><td class="num">' + (i + 1) + '</td><td>' + it[0] + '</td><td class="num">' + it[1] + '</td><td class="num">' + it[2] + '</td></tr>'
-        ).join('') || '<tr><td colspan="4" class="text-center text-muted">Tidak ada data pada interval ini.</td></tr>') +
+        ).join('') || '<tr><td colspan="4" class="text-center text-muted py-2">Belum ada data (0).</td></tr>') +
         '<tr class="total-row"><td colspan="2" class="text-center">Jumlah</td><td class="num">' + sumTotal + '</td><td class="num">' + sumPct + '</td></tr>';
     }
 
-    function renderReferenceReports(){
+    function renderZeroReports(){
         ensureChannelSummaryCard();
         polishSummaryTableHeaders();
-        document.getElementById('dailyDateSelect').innerHTML = '<option value="REF">September 6, 2024 (Referensi)</option>';
+        document.getElementById('dailyDateSelect').innerHTML = '<option value="EMPTY">Belum ada data (0)</option>';
         document.getElementById('dailyHourStart').value = '0';
         document.getElementById('dailyHourEnd').value = '23';
 
-        const palette = ['#3B82F6', '#F97316', '#94A3B8', '#FACC15', '#38BDF8'];
         const hours = Array.from({ length: 24 }, (_, h) => h + ':00');
-        const daysRef = ['19-Aug','21-Aug','23-Aug','25-Aug','27-Aug','29-Aug','31-Aug','2-Sep','4-Sep','6-Sep'];
         const commonOpts = getChartCommonOptions();
 
-        document.getElementById('tblDateVal').textContent = 'September 6, 2024';
+        document.getElementById('tblDateVal').textContent = '-';
         document.getElementById('tblHourStart').textContent = '0:00';
-        document.getElementById('tblHourEnd').textContent = '11:00';
-        document.getElementById('pctInfo').textContent = '7.48%';
-        document.getElementById('pctKeluhan').textContent = '80.52%';
-        document.getElementById('pctPermintaan').textContent = '11.91%';
+        document.getElementById('tblHourEnd').textContent = '23:59';
+        document.getElementById('pctInfo').textContent = '0.00%';
+        document.getElementById('pctKeluhan').textContent = '0.00%';
+        document.getElementById('pctPermintaan').textContent = '0.00%';
+        document.getElementById('chart1Title').textContent = 'Pergerakan TOP 5 Interaksi CASN';
 
         document.getElementById('dailySummaryBody').innerHTML = [
-            { label: 'Daily Interaction CASN', total: 1083, esc: 118, notEsc: 965, info: 81, kel: 872, perm: 129 },
-            { label: 'Month to Date', total: 14144, esc: 1214, notEsc: 12930, info: 1773, kel: 12071, perm: 273 },
-            { label: 'Daily All Interaction', total: 2092, esc: 139, notEsc: 1953, info: 680, kel: 1211, perm: 147 },
-            { label: 'MTD All Interaction', total: 35639, esc: 1872, notEsc: 33767, info: 14205, kel: 20346, perm: 608 },
-        ].map(r =>
-            '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.total + '</td><td class="big-num">' + r.esc + '</td>' +
-            '<td class="big-num">' + r.notEsc + '</td><td class="big-num">' + r.info + '</td><td class="big-num">' + r.kel + '</td><td class="big-num">' + r.perm + '</td></tr>'
+            'Daily Interaction CASN',
+            'Month to Date',
+            'Daily All Interaction',
+            'MTD All Interaction',
+        ].map(label =>
+            '<tr><td class="row-title">' + label + '</td><td class="big-num">0</td><td class="big-num">0</td>' +
+            '<td class="big-num">0</td><td class="big-num">0</td><td class="big-num">0</td><td class="big-num">0</td></tr>'
         ).join('');
 
-        document.getElementById('channelBreakdownBody').innerHTML = [
-            { ch: 'WhatsApp', daily: 782, pct: '72.21%', esc: 76, notEsc: 706, mtd: 10240, avgEsc: '8.4 Menit' },
-            { ch: 'Email', daily: 268, pct: '24.75%', esc: 38, notEsc: 230, mtd: 3490, avgEsc: '11.2 Menit' },
-            { ch: 'Web / Live Chat', daily: 33, pct: '3.05%', esc: 4, notEsc: 29, mtd: 414, avgEsc: '6.9 Menit' }
-        ].map(r =>
-            '<tr><td class="row-title">' + r.ch + '</td><td class="num">' + r.daily + '</td><td class="num">' + r.pct + '</td>' +
-            '<td class="num">' + r.esc + '</td><td class="num">' + r.notEsc + '</td><td class="num">' + r.mtd + '</td><td class="num">' + r.avgEsc + '</td></tr>'
-        ).join('');
+        document.getElementById('channelBreakdownBody').innerHTML =
+            '<tr><td colspan="7" class="text-center text-muted py-3">Belum ada data interaksi (0). Silakan upload file CSV/Excel melalui menu Admin.</td></tr>';
 
-        fillTopTable('topDailyCasnBody', [
-            ['CASN METEL-Pembayaran berhasil, kuota tidak bertambah', 424, '44.54%'],
-            ['CASN-Pembayaran berhasil, kuota tidak bertambah', 219, '23.00%'],
-            ['CASN-Failed Upload Document PDF', 70, '7.35%'],
-            ['CASN-Panduan penggunaan e-Meterai', 46, '4.83%'],
-            ['CASN METEL-Tidak bisa Reset Password', 27, '2.84%'],
-            ['CASN METEL-Error Download File', 25, '2.63%'],
-            ['CASN-Pengembalian Kuota', 20, '2.10%'],
-            ['CASN-Informasi seputar E-Meterai SSCASN', 16, '1.68%'],
-            ['CASN METEL-Failed Login E-Meterai', 16, '1.68%'],
-            ['CASN-Error Download File', 11, '1.16%'],
-        ], 952, '91.81%');
+        fillTopTable('topDailyCasnBody', [], 0, '0.00%');
+        fillTopTable('topMtdCasnBody', [], 0, '0.00%');
+        fillTopTable('topDailyAllBody', [], 0, '0.00%');
+        fillTopTable('topMtdAllBody', [], 0, '0.00%');
 
-        fillTopTable('topMtdCasnBody', [
-            ['CASN-Pembayaran berhasil, kuota tidak bertambah', 4898, '36.81%'],
-            ['CASN METEL-Pembayaran berhasil, kuota tidak bertambah', 2703, '20.32%'],
-            ['CASN-Failed Upload Document PDF', 1375, '10.33%'],
-            ['CASN-Informasi seputar E-Meterai SSCASN', 772, '5.80%'],
-            ['CASN-Panduan penggunaan e-Meterai', 540, '4.06%'],
-            ['CASN-Failed Login E-Meterai', 385, '2.89%'],
-            ['CASN-Pembubuhan Gagal, Kuota berkurang', 287, '2.16%'],
-            ['CASN-Tanya Progress', 240, '1.80%'],
-            ['CASN METEL-Failed Login E-Meterai', 222, '1.67%'],
-            ['CASN METEL-Tidak bisa Reset Password', 208, '1.56%'],
-        ], 13305, '87.41%');
-
-        fillTopTable('topDailyAllBody', [
-            ['CASN METEL-Pembayaran berhasil, kuota tidak bertambah', 424, '25.98%'],
-            ['Deskripsi dan Panduan Produk E-Meterai', 393, '24.08%'],
-            ['CASN-Pembayaran berhasil, kuota tidak bertambah', 219, '13.42%'],
-            ['Deskripsi Produk', 112, '6.86%'],
-            ['Maintenance Layanan E-Meterai', 107, '6.56%'],
-            ['CASN-Failed Upload Document PDF', 70, '4.29%'],
-            ['CASN-Panduan penggunaan e-Meterai', 46, '2.82%'],
-            ['CASN-Panduan penggunaan e-Meterai', 46, '2.82%'],
-            ['CASN METEL-Tidak bisa Reset Password', 27, '1.65%'],
-            ['CASN METEL-Error Download File', 25, '1.53%'],
-        ], 1632, '90.01%');
-
-        fillTopTable('topMtdAllBody', [
-            ['Deskripsi dan Panduan Produk E-Meterai', 8619, '27.07%'],
-            ['CASN-Pembayaran berhasil, kuota tidak bertambah', 4898, '15.38%'],
-            ['CASN METEL-Pembayaran berhasil, kuota tidak bertambah', 2703, '8.49%'],
-            ['Deskripsi Produk', 1503, '4.72%'],
-            ['Maintenance Layanan E-Meterai', 1437, '4.51%'],
-            ['CASN-Failed Upload Document PDF', 1375, '4.32%'],
-            ['CASN-Informasi seputar E-Meterai SSCASN', 772, '2.42%'],
-            ['CASN-Informasi seputar E-Meterai SSCASN', 772, '2.42%'],
-            ['CASN-Panduan penggunaan e-Meterai', 540, '1.70%'],
-            ['CASN-Panduan penggunaan e-Meterai', 540, '1.70%'],
-        ], 31843, '72.73%');
+        const emptyChartData = {
+            labels: hours,
+            datasets: [{ label: 'Tidak ada data (0)', data: Array(24).fill(0), backgroundColor: '#3B82F6', borderColor: '#3B82F6' }]
+        };
 
         if(dailyChart1) dailyChart1.destroy();
-        dailyChart1 = new Chart(document.getElementById('dailyChart1'), {
-            type: 'bar',
-            data: {
-                labels: hours,
-                datasets: [
-                    { label: 'CASN METEL-Pembayaran berhasil', data: [4,5,6,8,12,18,35,88,122,110,95,82,0,0,0,0,0,0,0,0,0,0,0,0], backgroundColor: palette[0], borderRadius: 3 },
-                    { label: 'CASN-Pembayaran berhasil', data: [2,3,4,5,8,14,26,52,74,68,58,49,0,0,0,0,0,0,0,0,0,0,0,0], backgroundColor: palette[1], borderRadius: 3 },
-                    { label: 'CASN-Failed Upload Document PDF', data: [1,1,1,2,3,5,9,16,22,19,15,12,0,0,0,0,0,0,0,0,0,0,0,0], backgroundColor: palette[2], borderRadius: 3 },
-                    { label: 'CASN-Panduan penggunaan e-Meterai', data: [0,1,1,1,2,3,6,11,15,13,10,8,0,0,0,0,0,0,0,0,0,0,0,0], backgroundColor: palette[3], borderRadius: 3 },
-                    { label: 'CASN METEL-Tidak bisa Reset Password', data: [0,0,1,1,1,2,4,7,9,8,6,5,0,0,0,0,0,0,0,0,0,0,0,0], backgroundColor: palette[4], borderRadius: 3 },
-                ]
-            },
-            options: commonOpts
-        });
-
+        dailyChart1 = new Chart(document.getElementById('dailyChart1'), { type: 'bar', data: emptyChartData, options: commonOpts });
         if(dailyChart2) dailyChart2.destroy();
-        dailyChart2 = new Chart(document.getElementById('dailyChart2'), {
-            type: 'bar',
-            data: {
-                labels: daysRef,
-                datasets: [
-                    { label: 'CASN-Pembayaran berhasil', data: [40,65,90,110,145,180,220,580,1120,980], backgroundColor: palette[0], borderRadius: 3 },
-                    { label: 'CASN METEL-Pembayaran berhasil', data: [20,35,50,75,95,120,160,340,680,610], backgroundColor: palette[1], borderRadius: 3 },
-                    { label: 'CASN-Failed Upload Document PDF', data: [15,22,30,45,60,80,110,190,340,290], backgroundColor: palette[2], borderRadius: 3 },
-                    { label: 'CASN-Informasi seputar E-Meterai', data: [10,18,25,32,45,55,75,130,210,185], backgroundColor: palette[3], borderRadius: 3 },
-                    { label: 'CASN-Panduan penggunaan e-Meterai', data: [8,12,18,24,30,42,58,95,160,140], backgroundColor: palette[4], borderRadius: 3 },
-                ]
-            },
-            options: commonOpts
-        });
-
+        dailyChart2 = new Chart(document.getElementById('dailyChart2'), { type: 'bar', data: emptyChartData, options: commonOpts });
         if(dailyChart3) dailyChart3.destroy();
-        dailyChart3 = new Chart(document.getElementById('dailyChart3'), {
-            type: 'line',
-            data: {
-                labels: hours,
-                datasets: [
-                    { label: 'CASN METEL-Pembayaran berhasil', data: [4,5,6,8,12,18,35,88,122,110,95,82,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[0], tension: 0.3, fill: false },
-                    { label: 'Deskripsi dan Panduan Produk E-Meterai', data: [12,10,8,11,15,24,42,68,85,79,66,54,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[1], tension: 0.3, fill: false },
-                    { label: 'CASN-Pembayaran berhasil', data: [2,3,4,5,8,14,26,52,74,68,58,49,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[2], tension: 0.3, fill: false },
-                    { label: 'Deskripsi Produk', data: [3,4,3,5,7,11,18,25,31,28,22,19,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[3], tension: 0.3, fill: false },
-                    { label: 'Maintenance Layanan E-Meterai', data: [2,2,3,4,6,9,15,22,29,26,21,17,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[4], tension: 0.3, fill: false },
-                ]
-            },
-            options: commonOpts
-        });
-
+        dailyChart3 = new Chart(document.getElementById('dailyChart3'), { type: 'line', data: emptyChartData, options: commonOpts });
         if(dailyChart4) dailyChart4.destroy();
-        dailyChart4 = new Chart(document.getElementById('dailyChart4'), {
-            type: 'bar',
-            data: {
-                labels: daysRef,
-                datasets: [
-                    { label: 'Deskripsi dan Panduan Produk E-Meterai', data: [180,240,310,390,480,590,740,1280,2150,1890], backgroundColor: palette[0], borderRadius: 3 },
-                    { label: 'CASN-Pembayaran berhasil', data: [40,65,90,110,145,180,220,580,1120,980], backgroundColor: palette[1], borderRadius: 3 },
-                    { label: 'CASN METEL-Pembayaran berhasil', data: [20,35,50,75,95,120,160,340,680,610], backgroundColor: palette[2], borderRadius: 3 },
-                    { label: 'Deskripsi Produk', data: [45,60,75,95,120,145,180,260,410,370], backgroundColor: palette[3], borderRadius: 3 },
-                    { label: 'Maintenance Layanan E-Meterai', data: [35,48,62,80,105,130,165,240,390,350], backgroundColor: palette[4], borderRadius: 3 },
-                ]
-            },
-            options: commonOpts
-        });
+        dailyChart4 = new Chart(document.getElementById('dailyChart4'), { type: 'bar', data: emptyChartData, options: commonOpts });
 
-        document.getElementById('tktDateVal').textContent = 'September 6, 2024';
+        document.getElementById('tktDateVal').textContent = '-';
         document.getElementById('tktHourStart').textContent = '0:00';
         document.getElementById('tktHourEnd').textContent = '23:59';
+        document.getElementById('tktChart1Title').textContent = 'Pergerakan TOP 5 Tiket Eskalasi per Interval';
 
         document.getElementById('tktSummaryBody').innerHTML = [
-            { label: 'Daily Ticket CASN', created: 119, resolved: 7, outstanding: 112, pending: 0 },
-            { label: 'MTD Ticket CASN', created: 1214, resolved: 310, outstanding: 904, pending: 0 },
-            { label: 'Daily All Ticket', created: 140, resolved: 8, outstanding: 132, pending: 0 },
-            { label: 'MTD All Ticket', created: 1872, resolved: 534, outstanding: 1338, pending: 0 },
-        ].map(r =>
-            '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.created + '</td><td class="big-num">' + r.resolved + '</td>' +
-            '<td class="big-num">' + r.outstanding + '</td><td class="big-num">' + r.pending + '</td></tr>'
+            'Daily Ticket CASN',
+            'MTD Ticket CASN',
+            'Daily All Ticket',
+            'MTD All Ticket',
+        ].map(label =>
+            '<tr><td class="row-title">' + label + '</td><td class="big-num">0</td><td class="big-num">0</td>' +
+            '<td class="big-num">0</td><td class="big-num">0</td></tr>'
         ).join('');
 
-        fillTopTable('topDailyTktCasnBody', [
-            ['CASN METEL-Pembayaran berhasil, kuota tidak bertambah', 53, '58.24%'],
-            ['CASN-Pembayaran berhasil, kuota tidak bertambah', 24, '26.37%'],
-            ['CASN METEL-Tidak bisa Reset Password', 5, '5.49%'],
-            ['CASN METEL-Error Download File', 3, '3.30%'],
-            ['CASN-Tidak bisa Reset Password', 2, '2.20%'],
-            ['CASN METEL-Failed Login E-Meterai', 1, '1.10%'],
-            ['CASN-Error Download File', 1, '1.10%'],
-            ['(CASN_E-METERAI) ERROR DOWNLOAD FILE (EKS-PORTAL)', 1, '1.10%'],
-            ['CASN METEL-Error Kuota', 1, '1.10%'],
-            ['CASN METEL-Informasi seputar E-Meterai SSCASN', 0, '0.00%'],
-        ], 91, '100.00%');
-
-        fillTopTable('topMtdTktCasnBody', [
-            ['CASN METEL-Pembayaran berhasil, kuota tidak bertambah', 509, '44.65%'],
-            ['CASN-Pembayaran berhasil, kuota tidak bertambah', 504, '44.21%'],
-            ['CASN METEL-Tidak bisa Reset Password', 47, '4.12%'],
-            ['CASN-Tidak bisa Reset Password', 20, '1.75%'],
-            ['CASN METEL-Error Download File', 16, '1.40%'],
-            ['CASN-Error Download File', 11, '0.96%'],
-            ['CASN METEL-Failed Login E-Meterai', 7, '0.61%'],
-            ['CASN-Pembubuhan Gagal, Kuota berkurang', 5, '0.44%'],
-            ['CASN METEL-Pembubuhan Gagal, Kuota berkurang', 5, '0.44%'],
-            ['CASN-Pengembalian Kuota', 4, '0.35%'],
-        ], 1140, '98.95%');
-
-        fillTopTable('topDailyTktAllBody', [
-            ['Pembayaran Berhasil Kuota Tidak Bertambah', 10, '11.90%'],
-            ['Error Download File', 2, '2.38%'],
-            ['API-Error Generate SN', 1, '1.19%'],
-            ['Pengembalian Kuota e-Meterai', 1, '1.19%'],
-            ['Certificate Expired - Keterangan CA-19 (Renewal)', 1, '1.19%'],
-            ['Tidak bisa membubuhkan tanda tangan', 1, '1.19%'],
-            ['Mutasi Data Usage User', 1, '1.19%'],
-            ['Failed Login', 1, '1.19%'],
-            ['Gagal Upload Dokumen', 1, '1.19%'],
-            ['OTP tidak terkirim', 1, '1.19%'],
-        ], 84, '23.81%');
-
-        fillTopTable('topMtdTktAllBody', [
-            ['Pembayaran Berhasil Kuota Tidak Bertambah', 326, '50.78%'],
-            ['Rekonsiliasi Data', 98, '15.26%'],
-            ['Pengembalian Kuota e-Meterai', 63, '9.81%'],
-            ['Mutasi Data Usage User', 19, '2.96%'],
-            ['Error Download File', 17, '2.65%'],
-            ['Error Kuota (kuota tidak sesuai/selisih)', 13, '2.02%'],
-            ['API-Error Generate SN', 11, '1.71%'],
-            ['Failed Login', 11, '1.71%'],
-            ['Tidak bisa membubuhkan Tanda Tangan', 9, '1.40%'],
-            ['Pembubuhan Gagal, Kuota berkurang', 9, '1.40%'],
-        ], 642, '89.72%');
+        fillTopTable('topDailyTktCasnBody', [], 0, '0.00%');
+        fillTopTable('topMtdTktCasnBody', [], 0, '0.00%');
+        fillTopTable('topDailyTktAllBody', [], 0, '0.00%');
+        fillTopTable('topMtdTktAllBody', [], 0, '0.00%');
 
         if(tktChart1) tktChart1.destroy();
-        tktChart1 = new Chart(document.getElementById('tktChart1'), {
-            type: 'line',
-            data: {
-                labels: hours,
-                datasets: [
-                    { label: 'CASN METEL-Pembayaran berhasil', data: [0,0,1,0,0,0,2,8,19,14,9,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[0], tension: 0.3, fill: false },
-                    { label: 'CASN-Pembayaran berhasil', data: [0,0,0,0,1,0,1,4,9,6,3,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[1], tension: 0.3, fill: false },
-                    { label: 'CASN METEL-Tidak bisa Reset Password', data: [0,0,0,0,0,0,0,1,2,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[2], tension: 0.3, fill: false },
-                    { label: 'CASN METEL-Error Download File', data: [0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[3], tension: 0.3, fill: false },
-                    { label: 'CASN-Tidak bisa Reset Password', data: [0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[4], tension: 0.3, fill: false },
-                ]
-            },
-            options: commonOpts
-        });
-
+        tktChart1 = new Chart(document.getElementById('tktChart1'), { type: 'line', data: emptyChartData, options: commonOpts });
         if(tktChart2) tktChart2.destroy();
-        tktChart2 = new Chart(document.getElementById('tktChart2'), {
-            type: 'bar',
-            data: {
-                labels: daysRef,
-                datasets: [
-                    { label: 'CASN METEL-Pembayaran berhasil', data: [5,12,18,24,35,48,62,98,142,65], backgroundColor: palette[0], borderRadius: 3 },
-                    { label: 'CASN-Pembayaran berhasil', data: [4,10,16,22,32,45,60,95,138,82], backgroundColor: palette[1], borderRadius: 3 },
-                    { label: 'CASN METEL-Tidak bisa Reset Password', data: [1,2,3,4,5,6,8,10,8,0], backgroundColor: palette[2], borderRadius: 3 },
-                    { label: 'CASN-Tidak bisa Reset Password', data: [0,1,1,2,2,3,4,4,3,0], backgroundColor: palette[3], borderRadius: 3 },
-                    { label: 'CASN METEL-Error Download File', data: [0,1,1,1,2,2,3,3,3,0], backgroundColor: palette[4], borderRadius: 3 },
-                ]
-            },
-            options: commonOpts
-        });
-
+        tktChart2 = new Chart(document.getElementById('tktChart2'), { type: 'bar', data: emptyChartData, options: commonOpts });
         if(tktChart3) tktChart3.destroy();
-        tktChart3 = new Chart(document.getElementById('tktChart3'), {
-            type: 'line',
-            data: {
-                labels: hours,
-                datasets: [
-                    { label: 'Pembayaran Berhasil Kuota Tidak Bertambah', data: [0,0,0,0,0,0,0,1,4,3,2,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[0], tension: 0.3, fill: false },
-                    { label: 'Error Download File', data: [0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[1], tension: 0.3, fill: false },
-                    { label: 'API-Error Generate SN', data: [0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[2], tension: 0.3, fill: false },
-                    { label: 'Pengembalian Kuota e-Meterai', data: [0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[3], tension: 0.3, fill: false },
-                    { label: 'Certificate Expired - Keterangan CA-19', data: [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0], borderColor: palette[4], tension: 0.3, fill: false },
-                ]
-            },
-            options: commonOpts
-        });
-
+        tktChart3 = new Chart(document.getElementById('tktChart3'), { type: 'line', data: emptyChartData, options: commonOpts });
         if(tktChart4) tktChart4.destroy();
-        tktChart4 = new Chart(document.getElementById('tktChart4'), {
-            type: 'bar',
-            data: {
-                labels: daysRef,
-                datasets: [
-                    { label: 'Pembayaran Berhasil Kuota Tidak Bertambah', data: [12,24,38,54,75,98,132,245,380,210], backgroundColor: palette[0], borderRadius: 3 },
-                    { label: 'Rekonsiliasi Data', data: [8,12,18,22,28,35,48,72,95,62], backgroundColor: palette[1], borderRadius: 3 },
-                    { label: 'Pengembalian Kuota e-Meterai', data: [5,8,12,15,20,26,34,52,68,44], backgroundColor: palette[2], borderRadius: 3 },
-                    { label: 'Mutasi Data Usage User', data: [2,3,5,7,9,11,14,20,25,18], backgroundColor: palette[3], borderRadius: 3 },
-                    { label: 'Error Download File', data: [2,3,4,6,8,10,12,18,22,15], backgroundColor: palette[4], borderRadius: 3 },
-                ]
-            },
-            options: commonOpts
-        });
+        tktChart4 = new Chart(document.getElementById('tktChart4'), { type: 'bar', data: emptyChartData, options: commonOpts });
     }
 
     function renderDailyAndTicketingFromUploaded(){
         ensureChannelSummaryCard();
         polishSummaryTableHeaders();
-        if(!allInteractions.length){ renderReferenceReports(); return; }
+        if(!allInteractions.length){ renderZeroReports(); return; }
 
         const dateSet = new Set();
         allInteractions.forEach(r => {
@@ -2163,7 +1942,7 @@
             document.getElementById('themeToggleBtn').innerHTML = '<i class="fas fa-sun me-1"></i>Terang';
         }
         if(allInteractions.length) renderDailyAndTicketingFromUploaded();
-        else renderReferenceReports();
+        else renderZeroReports();
         if(ticketsMap.size > 0) renderActual();
         renderHistoricalChart();
     });
@@ -2219,7 +1998,7 @@
     injectProStyles();
     injectD1Controls();
     initHourSelectors();
-    renderReferenceReports();
+    renderZeroReports();
     runSimulation();
     renderHistoricalChart();
     loadFromD1();

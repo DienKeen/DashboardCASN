@@ -17,6 +17,16 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const db = env.dbcasn || env.DB;
+    const expectedPin = String(env.ADMIN_PIN || '2026');
+
+    if (url.pathname === '/api/auth/verify' && request.method === 'POST') {
+      const body = await request.json().catch(() => ({}));
+      const valid = String(body.pin || '') === expectedPin;
+      return new Response(JSON.stringify({ ok: valid }), {
+        status: valid ? 200 : 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     if (url.pathname === '/api/tickets') {
       if (!db) {
@@ -32,6 +42,14 @@ export default {
         const { results } = await db.prepare('SELECT payload FROM tickets').all();
         const records = results.map(row => JSON.parse(row.payload));
         return new Response(JSON.stringify({ ok: true, records }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      const providedPin = request.headers.get('X-Admin-Pin') || '';
+      if (providedPin !== expectedPin) {
+        return new Response(JSON.stringify({ ok: false, reason: 'PIN Admin tidak valid atau belum login' }), {
+          status: 401,
           headers: { 'Content-Type': 'application/json' }
         });
       }

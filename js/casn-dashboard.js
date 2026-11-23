@@ -163,7 +163,7 @@
                 display: flex !important;
                 flex-wrap: nowrap !important;
                 align-items: center !important;
-                justify-content: space-between !important;
+                justify-content: flex-start !important;
                 gap: 0.5rem 0.75rem !important;
                 padding: 0.55rem 0.85rem !important;
                 overflow-x: auto;
@@ -326,37 +326,45 @@
         document.head.appendChild(styleEl);
     }
 
-    function initScopeSelector(){
+    function simplifyScopeControl(){
         const scopeSel = document.getElementById('dailyCasnScope');
         if(!scopeSel) return;
-        const prev = scopeSel.value;
-        scopeSel.innerHTML =
-            '<option value="CASN">Khusus CASN / SSCASN</option>' +
-            '<option value="EMETERAI_CASN">CASN + E-Meterai</option>' +
-            '<option value="ALL">Semua Produk (All)</option>';
-        if(['CASN', 'EMETERAI_CASN', 'ALL'].includes(prev)){
-            scopeSel.value = prev;
-        } else {
-            scopeSel.value = 'CASN';
+
+        // Sembunyikan dropdown scope agar tidak membingungkan, karena tabel otomatis menampilkan CASN & All Produk
+        scopeSel.style.display = 'none';
+        const lblByFor = document.querySelector('label[for="dailyCasnScope"]');
+        if(lblByFor) lblByFor.style.display = 'none';
+        const prevEl = scopeSel.previousElementSibling;
+        if(prevEl && (prevEl.tagName === 'LABEL' || prevEl.tagName === 'SPAN') && !prevEl.querySelector('select')){
+            prevEl.style.display = 'none';
+        }
+
+        if(!document.getElementById('casnDefinitionPill')){
+            const pill = document.createElement('span');
+            pill.id = 'casnDefinitionPill';
+            pill.className = 'badge bg-primary bg-opacity-25 text-info border border-info border-opacity-25';
+            pill.innerHTML = '<i class="fas fa-layer-group me-1"></i>CASN (Produk E-Meterai) & All Produk';
+            scopeSel.parentElement.insertBefore(pill, scopeSel);
         }
     }
 
-    function matchesCasnScope(r, scopeVal){
-        if(scopeVal === 'ALL') return true;
+    // CASN adalah layanan yang menggunakan produk E-Meterai dengan kategori/detail CASN atau SSCASN
+    function isCasnRecord(r){
         const sc = (r.sc || '').toLowerCase();
         const dsc = (r.dsc || '').toLowerCase();
         const sj = (r.sj || '').toLowerCase();
-        const isCasnTag =
+        const hasCasnTag =
             dsc.includes('casn') ||
             dsc.includes('sscasn') ||
             sc.includes('casn') ||
             sc.includes('sscasn') ||
             sj.includes('casn') ||
             sj.includes('sscasn');
-        if(scopeVal === 'EMETERAI_CASN'){
-            return isCasnTag || sc === 'e-meterai' || dsc.includes('e-meterai');
+        if(!hasCasnTag) return false;
+        if(sc && !sc.includes('meterai') && !sc.includes('casn') && !sc.includes('sscasn')){
+            return false;
         }
-        return isCasnTag;
+        return true;
     }
 
     function splitStackedTopCard(dailyTbodyId, mtdTbodyId, dailyTitle, mtdTitle){
@@ -394,8 +402,8 @@
                 [cardTopDailyAll, cardTopMtdAll] = splitStackedTopCard(
                     'topDailyAllBody',
                     'topMtdAllBody',
-                    'TOP 10 All Interaction (Daily)',
-                    'TOP 10 All Interaction (Month to Date)'
+                    'TOP 10 All Interaction — Semua Produk (Daily)',
+                    'TOP 10 All Interaction — Semua Produk (Month to Date)'
                 );
             }
 
@@ -449,8 +457,8 @@
                 [cardTopDailyTktAll, cardTopMtdTktAll] = splitStackedTopCard(
                     'topDailyTktAllBody',
                     'topMtdTktAllBody',
-                    'TOP 10 All Ticket (Daily)',
-                    'TOP 10 All Ticket (Month to Date)'
+                    'TOP 10 All Ticket — Semua Produk (Daily)',
+                    'TOP 10 All Ticket — Semua Produk (Month to Date)'
                 );
             }
 
@@ -508,35 +516,35 @@
         });
     }
 
-    function renderDailyKpiCards(sDaily, sMtd){
+    function renderDailyKpiCards(sDailyCasn, sMtdCasn, sDailyAll, sMtdAll){
         const el = document.getElementById('dailyKpiStrip');
         if(!el) return;
-        const fcrRate = sDaily.total ? ((sDaily.fcr / sDaily.total) * 100).toFixed(1) + '%' : '0.0%';
-        const nfcrRate = sDaily.total ? ((sDaily.nfcr / sDaily.total) * 100).toFixed(1) + '%' : '0.0%';
+        const fcrRate = sDailyCasn.total ? ((sDailyCasn.fcr / sDailyCasn.total) * 100).toFixed(1) + '%' : '0.0%';
+        const nfcrRate = sDailyCasn.total ? ((sDailyCasn.nfcr / sDailyCasn.total) * 100).toFixed(1) + '%' : '0.0%';
         const cards = [
             {
-                label: 'Interaksi Terpickup (Daily)',
-                val: sDaily.total.toLocaleString('id-ID'),
-                sub: 'Keluhan: ' + sDaily.kel.toLocaleString('id-ID') + ' · Info: ' + sDaily.info.toLocaleString('id-ID'),
+                label: 'Interaksi CASN (Daily)',
+                val: sDailyCasn.total.toLocaleString('id-ID'),
+                sub: 'FCR: ' + sDailyCasn.fcr.toLocaleString('id-ID') + ' (' + fcrRate + ') · N-FCR: ' + sDailyCasn.nfcr.toLocaleString('id-ID') + ' (' + nfcrRate + ')',
                 accent: 'border-start border-4 border-primary'
             },
             {
-                label: 'FCR (Selesai L1)',
-                val: sDaily.fcr.toLocaleString('id-ID') + ' <span class="fs-6 text-success">(' + fcrRate + ')</span>',
-                sub: 'Terselesaikan tanpa tiket eskalasi',
+                label: 'Akumulasi CASN (MTD)',
+                val: sMtdCasn.total.toLocaleString('id-ID'),
+                sub: 'FCR: ' + sMtdCasn.fcr.toLocaleString('id-ID') + ' · N-FCR: ' + sMtdCasn.nfcr.toLocaleString('id-ID'),
+                accent: 'border-start border-4 border-info'
+            },
+            {
+                label: 'All Interaksi Semua Produk (Daily)',
+                val: sDailyAll.total.toLocaleString('id-ID'),
+                sub: 'FCR: ' + sDailyAll.fcr.toLocaleString('id-ID') + ' · N-FCR: ' + sDailyAll.nfcr.toLocaleString('id-ID'),
                 accent: 'border-start border-4 border-success'
             },
             {
-                label: 'N-FCR (Eskalasi Tiket)',
-                val: sDaily.nfcr.toLocaleString('id-ID') + ' <span class="fs-6 text-warning">(' + nfcrRate + ')</span>',
-                sub: 'Diteruskan ke solver L2/L3',
+                label: 'All Interaksi Semua Produk (MTD)',
+                val: sMtdAll.total.toLocaleString('id-ID'),
+                sub: 'FCR: ' + sMtdAll.fcr.toLocaleString('id-ID') + ' · N-FCR: ' + sMtdAll.nfcr.toLocaleString('id-ID'),
                 accent: 'border-start border-4 border-warning'
-            },
-            {
-                label: 'Akumulasi Terpickup (MTD)',
-                val: sMtd.total.toLocaleString('id-ID'),
-                sub: 'FCR: ' + sMtd.fcr.toLocaleString('id-ID') + ' · N-FCR: ' + sMtd.nfcr.toLocaleString('id-ID'),
-                accent: 'border-start border-4 border-info'
             }
         ];
         el.innerHTML = cards.map(c =>
@@ -552,36 +560,36 @@
         ).join('');
     }
 
-    function renderTicketingKpiCards(sDaily, sMtd, activeQueueTotal, activePendingTotal){
+    function renderTicketingKpiCards(sDailyCasn, sMtdCasn, sMtdAll, activeCasnQueue, activeCasnPending){
         const el = document.getElementById('tktKpiStrip');
         if(!el) return;
-        const queueDisplay = activeQueueTotal >= 1000
-            ? '1.000+ <span class="fs-6 text-danger">(' + activeQueueTotal.toLocaleString('id-ID') + ')</span>'
-            : activeQueueTotal.toLocaleString('id-ID');
+        const queueDisplay = activeCasnQueue >= 1000
+            ? '1.000+ <span class="fs-6 text-danger">(' + activeCasnQueue.toLocaleString('id-ID') + ')</span>'
+            : activeCasnQueue.toLocaleString('id-ID');
         const cards = [
             {
-                label: 'Tiket Created (MTD)',
-                val: sMtd.created.toLocaleString('id-ID'),
-                sub: 'Daily Interval: ' + sDaily.created.toLocaleString('id-ID') + ' tiket',
+                label: 'Tiket CASN Created (MTD)',
+                val: sMtdCasn.created.toLocaleString('id-ID'),
+                sub: 'Daily CASN: ' + sDailyCasn.created.toLocaleString('id-ID') + ' · All Produk MTD: ' + sMtdAll.created.toLocaleString('id-ID'),
                 accent: 'border-start border-4 border-primary'
             },
             {
-                label: 'Tiket Resolved (MTD)',
-                val: sMtd.resolved.toLocaleString('id-ID'),
-                sub: 'Daily Interval: ' + sDaily.resolved.toLocaleString('id-ID') + ' tiket',
+                label: 'Tiket CASN Resolved (MTD)',
+                val: sMtdCasn.resolved.toLocaleString('id-ID'),
+                sub: 'Daily CASN: ' + sDailyCasn.resolved.toLocaleString('id-ID') + ' · All Produk MTD: ' + sMtdAll.resolved.toLocaleString('id-ID'),
                 accent: 'border-start border-4 border-success'
             },
             {
-                label: 'Tiket Outstanding (MTD)',
-                val: sMtd.outstanding.toLocaleString('id-ID'),
-                sub: 'Pending MTD: ' + sMtd.pending.toLocaleString('id-ID') + ' tiket',
+                label: 'Tiket CASN Outstanding (MTD)',
+                val: sMtdCasn.outstanding.toLocaleString('id-ID'),
+                sub: 'Pending MTD: ' + sMtdCasn.pending.toLocaleString('id-ID') + ' · All Produk MTD: ' + sMtdAll.outstanding.toLocaleString('id-ID'),
                 accent: 'border-start border-4 border-warning'
             },
             {
-                label: 'Antrian Tiket SSCASN',
+                label: 'Antrian Tiket Helpdesk SSCASN',
                 val: queueDisplay,
-                sub: 'Total Antrian Aktif (Pending: ' + activePendingTotal.toLocaleString('id-ID') + ')',
-                accent: activeQueueTotal >= 1000 ? 'border-start border-4 border-danger' : 'border-start border-4 border-info'
+                sub: 'Antrian Aktif CASN (Pending: ' + activeCasnPending.toLocaleString('id-ID') + ')',
+                accent: activeCasnQueue >= 1000 ? 'border-start border-4 border-danger' : 'border-start border-4 border-info'
             }
         ];
         el.innerHTML = cards.map(c =>
@@ -782,7 +790,7 @@
         if(dailyTable){
             const ths = dailyTable.querySelectorAll('thead th');
             if(ths.length >= 7){
-                ths[0].textContent = 'Interaksi SSCASN';
+                ths[0].textContent = 'Kelompok Interaksi';
                 ths[1].textContent = 'Total';
                 ths[2].textContent = 'FCR';
                 ths[3].textContent = 'N-FCR';
@@ -799,7 +807,7 @@
         const cardHtml =
             '<div class="card" id="channelBreakdownCard">' +
               '<div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">' +
-                '<span><i class="fas fa-headset me-1 text-info"></i> Distribusi Interaksi (FCR / N-FCR) & Kecepatan Dispatch per Channel</span>' +
+                '<span><i class="fas fa-headset me-1 text-info"></i> Distribusi Interaksi CASN (FCR / N-FCR) & Kecepatan Dispatch per Channel</span>' +
                 '<span class="badge bg-secondary bg-opacity-25 text-info border border-info border-opacity-25">Target Dispatch N-FCR Email & WhatsApp: ≤ 15 Menit</span>' +
               '</div>' +
               '<div class="card-body p-2">' +
@@ -807,11 +815,11 @@
                   '<table class="report-tbl">' +
                     '<thead><tr>' +
                       '<th class="text-start ps-2">Channel</th>' +
-                      '<th class="text-end pe-2">Daily Interaksi</th>' +
+                      '<th class="text-end pe-2">Daily CASN</th>' +
                       '<th class="text-end pe-2">Porsi (%)</th>' +
                       '<th class="text-end pe-2">FCR</th>' +
                       '<th class="text-end pe-2">N-FCR</th>' +
-                      '<th class="text-end pe-2">MTD Interaksi</th>' +
+                      '<th class="text-end pe-2">MTD CASN</th>' +
                       '<th class="text-end pe-2">Avg Dispatch N-FCR</th>' +
                     '</tr></thead>' +
                     '<tbody id="channelBreakdownBody"></tbody>' +
@@ -977,15 +985,14 @@
         const selDateEl = document.getElementById('dailyDateSelect');
         const hStart = document.getElementById('dailyHourStart').value || '0';
         const hEnd = document.getElementById('dailyHourEnd').value || '23';
-        const scopeVal = document.getElementById('dailyCasnScope').value || 'CASN';
 
         if(!allInteractions.length){
             return [
                 `*Report Akumulasi Interaksi Terpickup SSCASN -*`,
-                `• Total Interaksi Daily : 0 (FCR: 0 | N-FCR: 0)`,
-                `• Total Interaksi MTD : 0 (FCR: 0 | N-FCR: 0)`,
+                `• Interaksi CASN Daily : 0 (FCR: 0 | N-FCR: 0)`,
+                `• Interaksi CASN MTD : 0 (FCR: 0 | N-FCR: 0)`,
                 ``,
-                `*Top 5 Interaction:*`,
+                `*Top 5 Interaction (CASN):*`,
                 `1. -`,
                 ``,
                 `*Monitoring Tiket Date: -*`,
@@ -996,7 +1003,11 @@
                 `• Total Tiket pending : 0`,
                 ``,
                 `*Antrian Tiket Helpdesk SSCASN*`,
-                `• Total Antrian : 0`
+                `• Total Antrian : 0`,
+                ``,
+                `*Ringkasan All Produk (Semua Layanan)*`,
+                `• All Interaksi Daily : 0 | MTD : 0`,
+                `• All Tiket Created MTD : 0 | Resolved MTD : 0 | Outstanding MTD : 0`
             ].join('\n');
         }
 
@@ -1015,24 +1026,22 @@
             return { r, dKey, hour: d.getHours() };
         }).filter(Boolean);
 
-        const dailyInt = intMeta.filter(x => x.dKey === activeDate && x.hour >= hStartNum && x.hour <= hEndNum && matchesCasnScope(x.r, scopeVal));
-        const mtdInt = intMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && matchesCasnScope(x.r, scopeVal));
+        const dailyAllInt = intMeta.filter(x => x.dKey === activeDate && x.hour >= hStartNum && x.hour <= hEndNum);
+        const dailyCasnInt = dailyAllInt.filter(x => isCasnRecord(x.r));
+        const mtdAllInt = intMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate);
+        const mtdCasnInt = mtdAllInt.filter(x => isCasnRecord(x.r));
 
         const sumInt = (list) => {
-            let fcr = 0, nfcr = 0, info = 0, kel = 0, perm = 0;
-            list.forEach(x => {
-                if(x.r.isEscalated) nfcr++; else fcr++;
-                const mc = (x.r.mc || '').toLowerCase();
-                if(mc === 'informasi') info++;
-                else if(mc === 'keluhan') kel++;
-                else if(mc === 'permintaan') perm++;
-            });
-            return { total: list.length, fcr, nfcr, info, kel, perm };
+            let fcr = 0, nfcr = 0;
+            list.forEach(x => { if(x.r.isEscalated) nfcr++; else fcr++; });
+            return { total: list.length, fcr, nfcr };
         };
 
-        const sDailyInt = sumInt(dailyInt);
-        const sMtdInt = sumInt(mtdInt);
-        const fcrRateDaily = sDailyInt.total ? ((sDailyInt.fcr / sDailyInt.total) * 100).toFixed(2) + '%' : '0.00%';
+        const sDailyCasnInt = sumInt(dailyCasnInt);
+        const sMtdCasnInt = sumInt(mtdCasnInt);
+        const sDailyAllInt = sumInt(dailyAllInt);
+        const sMtdAllInt = sumInt(mtdAllInt);
+        const fcrRateDaily = sDailyCasnInt.total ? ((sDailyCasnInt.fcr / sDailyCasnInt.total) * 100).toFixed(2) + '%' : '0.00%';
 
         const getTop5Lines = (list) => {
             const counts = new Map();
@@ -1041,7 +1050,7 @@
                 counts.set(k, (counts.get(k) || 0) + 1);
             });
             const sorted = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5);
-            if(!sorted.length) return ['1. Tidak ada data pada interval ini'];
+            if(!sorted.length) return ['1. Tidak ada data CASN pada interval ini'];
             return sorted.map((it, idx) => {
                 const pct = list.length ? ((it[1] / list.length) * 100).toFixed(2) + '%' : '0.00%';
                 return `${idx + 1}. ${it[0]} (${it[1].toLocaleString('id-ID')} | ${pct})`;
@@ -1056,8 +1065,10 @@
             return { r, dKey, hour: d.getHours() };
         }).filter(Boolean);
 
-        const dailyTkt = tktMeta.filter(x => x.dKey === activeDate && x.hour >= hStartNum && x.hour <= hEndNum && matchesCasnScope(x.r, scopeVal));
-        const mtdTkt = tktMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && matchesCasnScope(x.r, scopeVal));
+        const dailyAllTkt = tktMeta.filter(x => x.dKey === activeDate && x.hour >= hStartNum && x.hour <= hEndNum);
+        const dailyCasnTkt = dailyAllTkt.filter(x => isCasnRecord(x.r));
+        const mtdAllTkt = tktMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate);
+        const mtdCasnTkt = mtdAllTkt.filter(x => isCasnRecord(x.r));
 
         const sumTkt = (list) => {
             let resolved = 0, outstanding = 0, pending = 0;
@@ -1072,33 +1083,39 @@
             return { created: list.length, resolved, outstanding, pending };
         };
 
-        const sDailyTkt = sumTkt(dailyTkt);
-        const sMtdTkt = sumTkt(mtdTkt);
+        const sDailyCasnTkt = sumTkt(dailyCasnTkt);
+        const sMtdCasnTkt = sumTkt(mtdCasnTkt);
+        const sMtdAllTkt = sumTkt(mtdAllTkt);
 
-        const scopeTickets = Array.from(ticketsMap.values()).filter(r => matchesCasnScope(r, scopeVal));
-        const activeQueue = scopeTickets.filter(r => !FINISHED_STATUSES.has((r.st || '').toLowerCase()));
-        const activePending = activeQueue.filter(r => (r.st || '').toLowerCase() === 'pending').length;
-        const queueText = activeQueue.length >= 1000
-            ? `1000+ (${activeQueue.length.toLocaleString('id-ID')} tiket aktif | Pending: ${activePending.toLocaleString('id-ID')})`
-            : `${activeQueue.length.toLocaleString('id-ID')} tiket aktif (Pending: ${activePending.toLocaleString('id-ID')})`;
+        const casnTicketsAll = Array.from(ticketsMap.values()).filter(r => isCasnRecord(r));
+        const activeCasnQueue = casnTicketsAll.filter(r => !FINISHED_STATUSES.has((r.st || '').toLowerCase()));
+        const activeCasnPending = activeCasnQueue.filter(r => (r.st || '').toLowerCase() === 'pending').length;
+        const queueText = activeCasnQueue.length >= 1000
+            ? `1000+ (${activeCasnQueue.length.toLocaleString('id-ID')} tiket aktif | Pending: ${activeCasnPending.toLocaleString('id-ID')})`
+            : `${activeCasnQueue.length.toLocaleString('id-ID')} tiket aktif (Pending: ${activeCasnPending.toLocaleString('id-ID')})`;
 
         return [
             `*Report Akumulasi Interaksi Terpickup SSCASN ${indoDateLabel}*`,
-            `• Daily Interaksi : *${sDailyInt.total.toLocaleString('id-ID')}* (FCR: ${sDailyInt.fcr.toLocaleString('id-ID')} | N-FCR: ${sDailyInt.nfcr.toLocaleString('id-ID')} | FCR Rate: ${fcrRateDaily})`,
-            `• Akumulasi MTD : *${sMtdInt.total.toLocaleString('id-ID')}* (FCR: ${sMtdInt.fcr.toLocaleString('id-ID')} | N-FCR: ${sMtdInt.nfcr.toLocaleString('id-ID')})`,
+            `• Interaksi CASN Daily : *${sDailyCasnInt.total.toLocaleString('id-ID')}* (FCR: ${sDailyCasnInt.fcr.toLocaleString('id-ID')} | N-FCR: ${sDailyCasnInt.nfcr.toLocaleString('id-ID')} | FCR Rate: ${fcrRateDaily})`,
+            `• Interaksi CASN MTD : *${sMtdCasnInt.total.toLocaleString('id-ID')}* (FCR: ${sMtdCasnInt.fcr.toLocaleString('id-ID')} | N-FCR: ${sMtdCasnInt.nfcr.toLocaleString('id-ID')})`,
             ``,
-            `*Top 5 Interaction:*`,
-            ...getTop5Lines(dailyInt),
+            `*Top 5 Interaction (CASN):*`,
+            ...getTop5Lines(dailyCasnInt),
             ``,
             `*Monitoring Tiket Date: ${indoDateLabel}*`,
             `Interval : ${hStart}:00 - ${hEnd}:59 WIB`,
-            `• Total tiket created MTD: *${sMtdTkt.created.toLocaleString('id-ID')}* (Daily: ${sDailyTkt.created.toLocaleString('id-ID')})`,
-            `• Total tiket resolved MTD: *${sMtdTkt.resolved.toLocaleString('id-ID')}* (Daily: ${sDailyTkt.resolved.toLocaleString('id-ID')})`,
-            `• Total Tiket outstanding MTD: *${sMtdTkt.outstanding.toLocaleString('id-ID')}* (Daily: ${sDailyTkt.outstanding.toLocaleString('id-ID')})`,
-            `• Total Tiket pending : *${sMtdTkt.pending.toLocaleString('id-ID')}* (Daily: ${sDailyTkt.pending.toLocaleString('id-ID')})`,
+            `• Total tiket created MTD: *${sMtdCasnTkt.created.toLocaleString('id-ID')}* (Daily: ${sDailyCasnTkt.created.toLocaleString('id-ID')})`,
+            `• Total tiket resolved MTD: *${sMtdCasnTkt.resolved.toLocaleString('id-ID')}* (Daily: ${sDailyCasnTkt.resolved.toLocaleString('id-ID')})`,
+            `• Total Tiket outstanding MTD: *${sMtdCasnTkt.outstanding.toLocaleString('id-ID')}* (Daily: ${sDailyCasnTkt.outstanding.toLocaleString('id-ID')})`,
+            `• Total Tiket pending : *${sMtdCasnTkt.pending.toLocaleString('id-ID')}* (Daily: ${sDailyCasnTkt.pending.toLocaleString('id-ID')})`,
             ``,
             `*Antrian Tiket Helpdesk SSCASN*`,
-            `• Total Antrian : *${queueText}*`
+            `• Total Antrian : *${queueText}*`,
+            ``,
+            `*Ringkasan All Produk (Semua Layanan)*`,
+            `• All Interaksi Daily : *${sDailyAllInt.total.toLocaleString('id-ID')}* (FCR: ${sDailyAllInt.fcr.toLocaleString('id-ID')} | N-FCR: ${sDailyAllInt.nfcr.toLocaleString('id-ID')})`,
+            `• All Interaksi MTD : *${sMtdAllInt.total.toLocaleString('id-ID')}* (FCR: ${sMtdAllInt.fcr.toLocaleString('id-ID')} | N-FCR: ${sMtdAllInt.nfcr.toLocaleString('id-ID')})`,
+            `• All Tiket MTD : Created *${sMtdAllTkt.created.toLocaleString('id-ID')}* | Resolved *${sMtdAllTkt.resolved.toLocaleString('id-ID')}* | Outstanding *${sMtdAllTkt.outstanding.toLocaleString('id-ID')}*`
         ].join('\n');
     }
 
@@ -1336,7 +1353,7 @@
             const rowCls = isTop5 ? ' class="top5-row"' : '';
             const badge = isTop5 ? '<span class="top5-pill">TOP 5</span>' : '';
             return '<tr' + rowCls + '><td class="num fw-bold">' + (i + 1) + '</td><td>' + badge + it[0] + '</td><td class="num fw-semibold">' + it[1] + '</td><td class="num">' + it[2] + '</td></tr>';
-        }).join('') || '<tr><td colspan="4" class="text-center text-muted py-2">Belum ada data pada scope/interval ini (0).</td></tr>') +
+        }).join('') || '<tr><td colspan="4" class="text-center text-muted py-2">Belum ada data pada interval ini (0).</td></tr>') +
         '<tr class="total-row"><td colspan="2" class="text-center">Jumlah</td><td class="num">' + sumTotal + '</td><td class="num">' + sumPct + '</td></tr>';
     }
 
@@ -1344,10 +1361,10 @@
         applyNoChartLayout();
 
         const zeroStats = { total: 0, fcr: 0, nfcr: 0, info: 0, kel: 0, perm: 0 };
-        renderDailyKpiCards(zeroStats, zeroStats);
+        renderDailyKpiCards(zeroStats, zeroStats, zeroStats, zeroStats);
 
         const zeroTkt = { created: 0, resolved: 0, outstanding: 0, pending: 0 };
-        renderTicketingKpiCards(zeroTkt, zeroTkt, 0, 0);
+        renderTicketingKpiCards(zeroTkt, zeroTkt, zeroTkt, 0, 0);
 
         document.getElementById('dailyDateSelect').innerHTML = '<option value="EMPTY">Belum ada data (0)</option>';
         document.getElementById('dailyHourStart').value = '0';
@@ -1361,10 +1378,10 @@
         document.getElementById('pctPermintaan').textContent = '0.00%';
 
         document.getElementById('dailySummaryBody').innerHTML = [
-            'Daily Interaction SSCASN',
-            'Month to Date SSCASN',
-            'Daily All Interaction',
-            'MTD All Interaction',
+            'Daily Interaction CASN (E-Meterai)',
+            'Month to Date CASN (E-Meterai)',
+            'Daily All Interaction (Semua Produk)',
+            'MTD All Interaction (Semua Produk)',
         ].map(label =>
             '<tr><td class="row-title">' + label + '</td><td class="big-num">0</td><td class="big-num">0</td>' +
             '<td class="big-num">0</td><td class="big-num">0</td><td class="big-num">0</td><td class="big-num">0</td></tr>'
@@ -1383,10 +1400,10 @@
         document.getElementById('tktHourEnd').textContent = '23:59';
 
         document.getElementById('tktSummaryBody').innerHTML = [
-            'Daily Ticket SSCASN',
-            'MTD Ticket SSCASN',
-            'Daily All Ticket',
-            'MTD All Ticket',
+            'Daily Ticket CASN (E-Meterai)',
+            'MTD Ticket CASN (E-Meterai)',
+            'Daily All Ticket (Semua Produk)',
+            'MTD All Ticket (Semua Produk)',
         ].map(label =>
             '<tr><td class="row-title">' + label + '</td><td class="big-num">0</td><td class="big-num">0</td>' +
             '<td class="big-num">0</td><td class="big-num">0</td></tr>'
@@ -1424,7 +1441,6 @@
         const activeDate = selDateEl.value;
         const hStart = parseInt(document.getElementById('dailyHourStart').value, 10);
         const hEnd = parseInt(document.getElementById('dailyHourEnd').value, 10);
-        const casnScope = document.getElementById('dailyCasnScope').value || 'CASN';
 
         const [ay, am, ad] = activeDate.split('-').map(Number);
         const activeDateLabel = new Date(ay, am - 1, ad).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -1461,9 +1477,9 @@
         }).filter(Boolean);
 
         const dailyAllInt = intMeta.filter(x => x.dKey === activeDate && x.hour >= hStart && x.hour <= hEnd);
-        const dailyCasnInt = dailyAllInt.filter(x => matchesCasnScope(x.r, casnScope));
+        const dailyCasnInt = dailyAllInt.filter(x => isCasnRecord(x.r));
         const mtdAllInt = intMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate);
-        const mtdCasnInt = mtdAllInt.filter(x => matchesCasnScope(x.r, casnScope));
+        const mtdCasnInt = mtdAllInt.filter(x => isCasnRecord(x.r));
 
         const summarizeInt = (list) => {
             let fcr = 0, nfcr = 0, info = 0, kel = 0, perm = 0;
@@ -1482,7 +1498,7 @@
         const sDailyAllInt = summarizeInt(dailyAllInt);
         const sMtdAllInt = summarizeInt(mtdAllInt);
 
-        renderDailyKpiCards(sDailyCasnInt, sMtdCasnInt);
+        renderDailyKpiCards(sDailyCasnInt, sMtdCasnInt, sDailyAllInt, sMtdAllInt);
 
         const intDenom = sDailyCasnInt.total || 1;
         document.getElementById('pctInfo').textContent = sDailyCasnInt.total ? ((sDailyCasnInt.info / intDenom) * 100).toFixed(2) + '%' : '0.00%';
@@ -1490,10 +1506,10 @@
         document.getElementById('pctPermintaan').textContent = sDailyCasnInt.total ? ((sDailyCasnInt.perm / intDenom) * 100).toFixed(2) + '%' : '0.00%';
 
         document.getElementById('dailySummaryBody').innerHTML = [
-            { label: 'Daily Interaction SSCASN', ...sDailyCasnInt },
-            { label: 'Month to Date SSCASN', ...sMtdCasnInt },
-            { label: 'Daily All Interaction', ...sDailyAllInt },
-            { label: 'MTD All Interaction', ...sMtdAllInt },
+            { label: 'Daily Interaction CASN (E-Meterai)', ...sDailyCasnInt },
+            { label: 'Month to Date CASN (E-Meterai)', ...sMtdCasnInt },
+            { label: 'Daily All Interaction (Semua Produk)', ...sDailyAllInt },
+            { label: 'MTD All Interaction (Semua Produk)', ...sMtdAllInt },
         ].map(r =>
             '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.total + '</td><td class="big-num text-success">' + r.fcr + '</td>' +
             '<td class="big-num text-warning">' + r.nfcr + '</td><td class="big-num">' + r.info + '</td><td class="big-num">' + r.kel + '</td><td class="big-num">' + r.perm + '</td></tr>'
@@ -1533,7 +1549,7 @@
                 }
                 return '<tr><td class="row-title">' + ch + '</td><td class="num fw-bold">' + g.daily + '</td><td class="num">' + pct + '</td>' +
                     '<td class="num text-success fw-semibold">' + g.fcr + '</td><td class="num text-warning fw-semibold">' + g.nfcr + '</td><td class="num">' + g.mtd + '</td><td class="num">' + avgCell + '</td></tr>';
-            }).join('') || '<tr><td colspan="7" class="text-center text-muted py-3">Tidak ada data channel pada scope/interval ini.</td></tr>';
+            }).join('') || '<tr><td colspan="7" class="text-center text-muted py-3">Tidak ada data channel CASN pada interval ini.</td></tr>';
 
         buildTop10(dailyCasnInt, 'topDailyCasnBody');
         buildTop10(mtdCasnInt, 'topMtdCasnBody');
@@ -1549,9 +1565,9 @@
         }).filter(Boolean);
 
         const dailyAllTkt = tktMeta.filter(x => x.dKey === activeDate && x.hour >= hStart && x.hour <= hEnd);
-        const dailyCasnTkt = dailyAllTkt.filter(x => matchesCasnScope(x.r, casnScope));
+        const dailyCasnTkt = dailyAllTkt.filter(x => isCasnRecord(x.r));
         const mtdAllTkt = tktMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate);
-        const mtdCasnTkt = mtdAllTkt.filter(x => matchesCasnScope(x.r, casnScope));
+        const mtdCasnTkt = mtdAllTkt.filter(x => isCasnRecord(x.r));
 
         const summarizeTkt = (list) => {
             let resolved = 0, outstanding = 0, pending = 0;
@@ -1568,22 +1584,24 @@
 
         const sDailyCasnTkt = summarizeTkt(dailyCasnTkt);
         const sMtdCasnTkt = summarizeTkt(mtdCasnTkt);
+        const sDailyAllTkt = summarizeTkt(dailyAllTkt);
+        const sMtdAllTkt = summarizeTkt(mtdAllTkt);
 
-        const scopeAllTickets = Array.from(ticketsMap.values()).filter(r => matchesCasnScope(r, casnScope));
-        const activeQueueList = scopeAllTickets.filter(r => !FINISHED_STATUSES.has((r.st || '').toLowerCase()));
-        const activePendingCount = activeQueueList.filter(r => (r.st || '').toLowerCase() === 'pending').length;
+        const casnAllTickets = Array.from(ticketsMap.values()).filter(r => isCasnRecord(r));
+        const activeCasnQueueList = casnAllTickets.filter(r => !FINISHED_STATUSES.has((r.st || '').toLowerCase()));
+        const activeCasnPendingCount = activeCasnQueueList.filter(r => (r.st || '').toLowerCase() === 'pending').length;
 
-        renderTicketingKpiCards(sDailyCasnTkt, sMtdCasnTkt, activeQueueList.length, activePendingCount);
+        renderTicketingKpiCards(sDailyCasnTkt, sMtdCasnTkt, sMtdAllTkt, activeCasnQueueList.length, activeCasnPendingCount);
 
         document.getElementById('dailySourceBadge').textContent =
-            'Scope: ' + casnScope + ' · ' + sMtdCasnInt.total.toLocaleString('id-ID') + ' MTD interaksi · Antrian Aktif: ' +
-            (activeQueueList.length >= 1000 ? '1000+' : activeQueueList.length.toLocaleString('id-ID'));
+            'CASN MTD: ' + sMtdCasnInt.total.toLocaleString('id-ID') + ' · All MTD: ' + sMtdAllInt.total.toLocaleString('id-ID') +
+            ' · Antrian CASN: ' + (activeCasnQueueList.length >= 1000 ? '1000+' : activeCasnQueueList.length.toLocaleString('id-ID'));
 
         document.getElementById('tktSummaryBody').innerHTML = [
-            { label: 'Daily Ticket SSCASN', ...sDailyCasnTkt },
-            { label: 'MTD Ticket SSCASN', ...sMtdCasnTkt },
-            { label: 'Daily All Ticket', ...summarizeTkt(dailyAllTkt) },
-            { label: 'MTD All Ticket', ...summarizeTkt(mtdAllTkt) },
+            { label: 'Daily Ticket CASN (E-Meterai)', ...sDailyCasnTkt },
+            { label: 'MTD Ticket CASN (E-Meterai)', ...sMtdCasnTkt },
+            { label: 'Daily All Ticket (Semua Produk)', ...sDailyAllTkt },
+            { label: 'MTD All Ticket (Semua Produk)', ...sMtdAllTkt },
         ].map(r =>
             '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.created + '</td><td class="big-num text-success">' + r.resolved + '</td>' +
             '<td class="big-num text-warning">' + r.outstanding + '</td><td class="big-num">' + r.pending + '</td></tr>'
@@ -2039,7 +2057,7 @@
         ev.target.value = '';
     });
 
-    ['dailyDateSelect', 'dailyHourStart', 'dailyHourEnd', 'dailyCasnScope'].forEach(id => {
+    ['dailyDateSelect', 'dailyHourStart', 'dailyHourEnd'].forEach(id => {
         document.getElementById(id).addEventListener('change', () => {
             if(allInteractions.length) renderDailyAndTicketingFromUploaded();
         });
@@ -2121,7 +2139,7 @@
 
     injectProStyles();
     injectD1Controls();
-    initScopeSelector();
+    simplifyScopeControl();
     initHourSelectors();
     renderZeroReports();
     runSimulation();

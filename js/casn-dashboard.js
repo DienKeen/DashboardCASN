@@ -198,6 +198,39 @@
                 border-color: #bae6fd;
             }
 
+            /* Hero Metric Strip Cards */
+            .casn-kpi-card {
+                border-radius: 10px !important;
+                border: 1px solid rgba(148, 163, 184, 0.16) !important;
+                background: linear-gradient(145deg, rgba(30, 41, 59, 0.75), rgba(15, 23, 42, 0.9)) !important;
+                transition: transform 0.15s ease, border-color 0.15s ease;
+            }
+            html:not(.dark-mode) .casn-kpi-card {
+                background: linear-gradient(145deg, #ffffff, #f8fafc) !important;
+                border-color: #e2e8f0 !important;
+            }
+            .casn-kpi-card:hover {
+                transform: translateY(-1px);
+                border-color: rgba(59, 130, 246, 0.45) !important;
+            }
+            .casn-kpi-label {
+                font-size: 0.71rem;
+                font-weight: 700;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                opacity: 0.78;
+            }
+            .casn-kpi-val {
+                font-size: 1.45rem;
+                font-weight: 800;
+                line-height: 1.15;
+                font-variant-numeric: tabular-nums;
+            }
+            .casn-kpi-sub {
+                font-size: 0.72rem;
+                opacity: 0.8;
+            }
+
             /* Card Polish & Equal Height Alignment */
             .card {
                 border-radius: 10px !important;
@@ -223,7 +256,7 @@
             }
             .report-tbl th,
             .report-tbl td {
-                padding: 0.4rem 0.35rem !important;
+                padding: 0.42rem 0.4rem !important;
                 font-variant-numeric: tabular-nums;
                 vertical-align: middle !important;
             }
@@ -236,17 +269,34 @@
                 font-weight: 600 !important;
                 white-space: nowrap !important;
                 text-align: left !important;
-                padding-left: 0.5rem !important;
+                padding-left: 0.55rem !important;
             }
             .report-tbl td.big-num {
-                font-size: 0.8rem !important;
+                font-size: 0.82rem !important;
                 font-weight: 700 !important;
                 text-align: center !important;
             }
             .report-tbl td.num {
                 font-size: 0.75rem !important;
                 text-align: right !important;
-                padding-right: 0.5rem !important;
+                padding-right: 0.55rem !important;
+            }
+            .top5-row {
+                background: rgba(59, 130, 246, 0.06);
+            }
+            .top5-pill {
+                display: inline-block;
+                font-size: 0.62rem;
+                font-weight: 700;
+                padding: 1px 5px;
+                border-radius: 4px;
+                background: rgba(59, 130, 246, 0.2);
+                color: #93c5fd;
+                margin-right: 4px;
+            }
+            html:not(.dark-mode) .top5-pill {
+                background: #dbeafe;
+                color: #1d4ed8;
             }
             .sla-tbl {
                 font-size: 0.78rem !important;
@@ -274,6 +324,39 @@
         styleEl.id = 'casnProUiStyle';
         styleEl.textContent = css;
         document.head.appendChild(styleEl);
+    }
+
+    function initScopeSelector(){
+        const scopeSel = document.getElementById('dailyCasnScope');
+        if(!scopeSel) return;
+        const prev = scopeSel.value;
+        scopeSel.innerHTML =
+            '<option value="CASN">Khusus CASN / SSCASN</option>' +
+            '<option value="EMETERAI_CASN">CASN + E-Meterai</option>' +
+            '<option value="ALL">Semua Produk (All)</option>';
+        if(['CASN', 'EMETERAI_CASN', 'ALL'].includes(prev)){
+            scopeSel.value = prev;
+        } else {
+            scopeSel.value = 'CASN';
+        }
+    }
+
+    function matchesCasnScope(r, scopeVal){
+        if(scopeVal === 'ALL') return true;
+        const sc = (r.sc || '').toLowerCase();
+        const dsc = (r.dsc || '').toLowerCase();
+        const sj = (r.sj || '').toLowerCase();
+        const isCasnTag =
+            dsc.includes('casn') ||
+            dsc.includes('sscasn') ||
+            sc.includes('casn') ||
+            sc.includes('sscasn') ||
+            sj.includes('casn') ||
+            sj.includes('sscasn');
+        if(scopeVal === 'EMETERAI_CASN'){
+            return isCasnTag || sc === 'e-meterai' || dsc.includes('e-meterai');
+        }
+        return isCasnTag;
     }
 
     function splitStackedTopCard(dailyTbodyId, mtdTbodyId, dailyTitle, mtdTitle){
@@ -320,6 +403,11 @@
 
             const grid = document.createElement('div');
             grid.id = 'dailyNoChartGrid';
+
+            const kpiRow = document.createElement('div');
+            kpiRow.id = 'dailyKpiStrip';
+            kpiRow.className = 'row g-3 mb-1';
+            grid.appendChild(kpiRow);
 
             const makeRow = (cols) => {
                 const row = document.createElement('div');
@@ -371,6 +459,11 @@
             const grid = document.createElement('div');
             grid.id = 'tktNoChartGrid';
 
+            const tktKpiRow = document.createElement('div');
+            tktKpiRow.id = 'tktKpiStrip';
+            tktKpiRow.className = 'row g-3 mb-1';
+            grid.appendChild(tktKpiRow);
+
             const makeRow = (cols) => {
                 const row = document.createElement('div');
                 row.className = 'row g-3';
@@ -413,6 +506,95 @@
                 }
             }
         });
+    }
+
+    function renderDailyKpiCards(sDaily, sMtd){
+        const el = document.getElementById('dailyKpiStrip');
+        if(!el) return;
+        const fcrRate = sDaily.total ? ((sDaily.fcr / sDaily.total) * 100).toFixed(1) + '%' : '0.0%';
+        const nfcrRate = sDaily.total ? ((sDaily.nfcr / sDaily.total) * 100).toFixed(1) + '%' : '0.0%';
+        const cards = [
+            {
+                label: 'Interaksi Terpickup (Daily)',
+                val: sDaily.total.toLocaleString('id-ID'),
+                sub: 'Keluhan: ' + sDaily.kel.toLocaleString('id-ID') + ' · Info: ' + sDaily.info.toLocaleString('id-ID'),
+                accent: 'border-start border-4 border-primary'
+            },
+            {
+                label: 'FCR (Selesai L1)',
+                val: sDaily.fcr.toLocaleString('id-ID') + ' <span class="fs-6 text-success">(' + fcrRate + ')</span>',
+                sub: 'Terselesaikan tanpa tiket eskalasi',
+                accent: 'border-start border-4 border-success'
+            },
+            {
+                label: 'N-FCR (Eskalasi Tiket)',
+                val: sDaily.nfcr.toLocaleString('id-ID') + ' <span class="fs-6 text-warning">(' + nfcrRate + ')</span>',
+                sub: 'Diteruskan ke solver L2/L3',
+                accent: 'border-start border-4 border-warning'
+            },
+            {
+                label: 'Akumulasi Terpickup (MTD)',
+                val: sMtd.total.toLocaleString('id-ID'),
+                sub: 'FCR: ' + sMtd.fcr.toLocaleString('id-ID') + ' · N-FCR: ' + sMtd.nfcr.toLocaleString('id-ID'),
+                accent: 'border-start border-4 border-info'
+            }
+        ];
+        el.innerHTML = cards.map(c =>
+            '<div class="col-xl-3 col-md-6">' +
+              '<div class="card casn-kpi-card ' + c.accent + '">' +
+                '<div class="card-body py-2 px-3">' +
+                  '<div class="casn-kpi-label mb-1">' + c.label + '</div>' +
+                  '<div class="casn-kpi-val mb-1">' + c.val + '</div>' +
+                  '<div class="casn-kpi-sub">' + c.sub + '</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>'
+        ).join('');
+    }
+
+    function renderTicketingKpiCards(sDaily, sMtd, activeQueueTotal, activePendingTotal){
+        const el = document.getElementById('tktKpiStrip');
+        if(!el) return;
+        const queueDisplay = activeQueueTotal >= 1000
+            ? '1.000+ <span class="fs-6 text-danger">(' + activeQueueTotal.toLocaleString('id-ID') + ')</span>'
+            : activeQueueTotal.toLocaleString('id-ID');
+        const cards = [
+            {
+                label: 'Tiket Created (MTD)',
+                val: sMtd.created.toLocaleString('id-ID'),
+                sub: 'Daily Interval: ' + sDaily.created.toLocaleString('id-ID') + ' tiket',
+                accent: 'border-start border-4 border-primary'
+            },
+            {
+                label: 'Tiket Resolved (MTD)',
+                val: sMtd.resolved.toLocaleString('id-ID'),
+                sub: 'Daily Interval: ' + sDaily.resolved.toLocaleString('id-ID') + ' tiket',
+                accent: 'border-start border-4 border-success'
+            },
+            {
+                label: 'Tiket Outstanding (MTD)',
+                val: sMtd.outstanding.toLocaleString('id-ID'),
+                sub: 'Pending MTD: ' + sMtd.pending.toLocaleString('id-ID') + ' tiket',
+                accent: 'border-start border-4 border-warning'
+            },
+            {
+                label: 'Antrian Tiket SSCASN',
+                val: queueDisplay,
+                sub: 'Total Antrian Aktif (Pending: ' + activePendingTotal.toLocaleString('id-ID') + ')',
+                accent: activeQueueTotal >= 1000 ? 'border-start border-4 border-danger' : 'border-start border-4 border-info'
+            }
+        ];
+        el.innerHTML = cards.map(c =>
+            '<div class="col-xl-3 col-md-6">' +
+              '<div class="card casn-kpi-card ' + c.accent + '">' +
+                '<div class="card-body py-2 px-3">' +
+                  '<div class="casn-kpi-label mb-1">' + c.label + '</div>' +
+                  '<div class="casn-kpi-val mb-1">' + c.val + '</div>' +
+                  '<div class="casn-kpi-sub">' + c.sub + '</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>'
+        ).join('');
     }
 
     function showStatus(type, message, autoHideMs = 0){
@@ -580,7 +762,7 @@
         copyDashBtn.type = 'button';
         copyDashBtn.className = 'btn btn-success btn-sm fw-semibold';
         copyDashBtn.innerHTML = '<i class="fas fa-copy me-1"></i>Copy Report';
-        copyDashBtn.title = 'Salin teks summary & tangkapan layar dashboard';
+        copyDashBtn.title = 'Salin teks report SSCASN & tangkapan layar dashboard';
         copyDashBtn.addEventListener('click', handleCopyDashboardAndSummary);
 
         wrap.insertBefore(roleBtn, uploadLbl);
@@ -600,7 +782,7 @@
         if(dailyTable){
             const ths = dailyTable.querySelectorAll('thead th');
             if(ths.length >= 7){
-                ths[0].textContent = 'Interaksi CASN';
+                ths[0].textContent = 'Interaksi SSCASN';
                 ths[1].textContent = 'Total';
                 ths[2].textContent = 'FCR';
                 ths[3].textContent = 'N-FCR';
@@ -714,7 +896,7 @@
               '<div class="modal-dialog modal-xl modal-dialog-scrollable">' +
                 '<div class="modal-content bg-dark text-light border-secondary">' +
                   '<div class="modal-header border-secondary py-2">' +
-                    '<h6 class="modal-title fw-bold"><i class="fas fa-clipboard-check text-success me-2"></i>Summary Laporan & Screenshot Dashboard</h6>' +
+                    '<h6 class="modal-title fw-bold"><i class="fas fa-clipboard-check text-success me-2"></i>Report Monitoring SSCASN & Screenshot Dashboard</h6>' +
                     '<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>' +
                   '</div>' +
                   '<div class="modal-body">' +
@@ -722,7 +904,7 @@
                     '<div class="row g-3">' +
                       '<div class="col-lg-5">' +
                         '<div class="d-flex justify-content-between align-items-center mb-1">' +
-                          '<label class="small fw-bold text-uppercase text-info">Teks Summary (Siap Paste WA / Email)</label>' +
+                          '<label class="small fw-bold text-uppercase text-info">Teks Report SSCASN (Siap Paste WA / Email)</label>' +
                           '<button type="button" class="btn btn-primary btn-sm py-0 px-2" id="modalCopyTextBtn"><i class="fas fa-copy me-1"></i> Copy Teks</button>' +
                         '</div>' +
                         '<textarea id="modalSummaryTextarea" class="form-control form-control-sm font-monospace bg-black text-light border-secondary" rows="20" style="font-size:0.78rem;line-height:1.45;"></textarea>' +
@@ -752,12 +934,12 @@
             try {
                 await navigator.clipboard.writeText(txt);
                 toast.className = 'alert alert-success py-2 px-3 small mb-3';
-                toast.textContent = 'Teks summary berhasil disalin ke clipboard!';
+                toast.textContent = 'Teks report berhasil disalin ke clipboard!';
             } catch (e) {
                 document.getElementById('modalSummaryTextarea').select();
                 document.execCommand('copy');
                 toast.className = 'alert alert-success py-2 px-3 small mb-3';
-                toast.textContent = 'Teks summary berhasil disalin!';
+                toast.textContent = 'Teks report berhasil disalin!';
             }
         });
 
@@ -783,7 +965,7 @@
             const url = URL.createObjectURL(lastCapturedBlob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'dashboard_casn_' + new Date().toISOString().slice(0, 10) + '.png';
+            a.download = 'dashboard_sscasn_' + new Date().toISOString().slice(0, 10) + '.png';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -793,43 +975,37 @@
 
     function buildDashboardSummaryText(){
         const selDateEl = document.getElementById('dailyDateSelect');
-        const dateLabel = selDateEl && selDateEl.selectedOptions[0]
-            ? selDateEl.selectedOptions[0].textContent
-            : (document.getElementById('tblDateVal').textContent || '-');
         const hStart = document.getElementById('dailyHourStart').value || '0';
         const hEnd = document.getElementById('dailyHourEnd').value || '23';
-        const scopeVal = document.getElementById('dailyCasnScope').value;
-        const scopeLabel = scopeVal === 'ALL' ? 'Semua Produk' : 'E-Meterai / CASN';
+        const scopeVal = document.getElementById('dailyCasnScope').value || 'CASN';
 
         if(!allInteractions.length){
             return [
-                `*REPORT DAILY OPERATIONAL HELPDESK CASN*`,
-                `Tanggal : -`,
+                `*Report Akumulasi Interaksi Terpickup SSCASN -*`,
+                `• Total Interaksi Daily : 0 (FCR: 0 | N-FCR: 0)`,
+                `• Total Interaksi MTD : 0 (FCR: 0 | N-FCR: 0)`,
+                ``,
+                `*Top 5 Interaction:*`,
+                `1. -`,
+                ``,
+                `*Monitoring Tiket Date: -*`,
                 `Interval : ${hStart}:00 - ${hEnd}:59 WIB`,
-                `Scope : ${scopeLabel} (Database Kosong)`,
+                `• Total tiket created MTD: 0 (Daily: 0)`,
+                `• Total tiket resolved MTD: 0 (Daily: 0)`,
+                `• Total Tiket outstanding MTD: 0 (Daily: 0)`,
+                `• Total Tiket pending : 0`,
                 ``,
-                `*1. RINGKASAN INTERAKSI*`,
-                `• Daily Interaction : *0* (FCR: 0 | N-FCR: 0 | FCR Rate: 0.00%)`,
-                `  - Komposisi: Informasi 0.00% (0), Keluhan 0.00% (0), Permintaan 0.00% (0)`,
-                `• MTD Interaction : *0* (FCR: 0 | N-FCR: 0)`,
-                ``,
-                `*2. RINGKASAN TICKETING (N-FCR)*`,
-                `• Daily Ticket Created : *0* (Resolved: 0 | Outstanding: 0 | Pending: 0)`,
-                `• MTD Ticket Created : *0* (Resolved: 0 | Outstanding: 0 | Pending: 0)`
+                `*Antrian Tiket Helpdesk SSCASN*`,
+                `• Total Antrian : 0`
             ].join('\n');
         }
 
         const activeDate = selDateEl.value;
+        const [ay, am, ad] = activeDate.split('-').map(Number);
+        const indoDateLabel = new Date(ay, am - 1, ad).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
         const monthPrefix = activeDate.slice(0, 7);
         const hStartNum = parseInt(hStart, 10);
         const hEndNum = parseInt(hEnd, 10);
-
-        const isCasn = (r) => {
-            if(scopeVal === 'ALL') return true;
-            const sc = (r.sc || '').toLowerCase();
-            const dsc = (r.dsc || '').toLowerCase();
-            return sc === 'e-meterai' || dsc.includes('casn') || dsc.includes('sscasn') || dsc.includes('e-meterai');
-        };
 
         const intMeta = allInteractions.map(r => {
             const iso = r.doStart || r.doOpen;
@@ -839,8 +1015,8 @@
             return { r, dKey, hour: d.getHours() };
         }).filter(Boolean);
 
-        const dailyInt = intMeta.filter(x => x.dKey === activeDate && x.hour >= hStartNum && x.hour <= hEndNum && isCasn(x.r));
-        const mtdInt = intMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && isCasn(x.r));
+        const dailyInt = intMeta.filter(x => x.dKey === activeDate && x.hour >= hStartNum && x.hour <= hEndNum && matchesCasnScope(x.r, scopeVal));
+        const mtdInt = intMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && matchesCasnScope(x.r, scopeVal));
 
         const sumInt = (list) => {
             let fcr = 0, nfcr = 0, info = 0, kel = 0, perm = 0;
@@ -856,33 +1032,19 @@
 
         const sDailyInt = sumInt(dailyInt);
         const sMtdInt = sumInt(mtdInt);
-        const denomInt = sDailyInt.total || 1;
-        const fcrRateDaily = sDailyInt.total ? ((sDailyInt.fcr / denomInt) * 100).toFixed(2) + '%' : '0.00%';
-        const pctInfo = sDailyInt.total ? ((sDailyInt.info / denomInt) * 100).toFixed(2) + '%' : '0.00%';
-        const pctKel = sDailyInt.total ? ((sDailyInt.kel / denomInt) * 100).toFixed(2) + '%' : '0.00%';
-        const pctPerm = sDailyInt.total ? ((sDailyInt.perm / denomInt) * 100).toFixed(2) + '%' : '0.00%';
+        const fcrRateDaily = sDailyInt.total ? ((sDailyInt.fcr / sDailyInt.total) * 100).toFixed(2) + '%' : '0.00%';
 
-        const chCounts = new Map();
-        dailyInt.forEach(x => {
-            const ch = x.r.ch || '(Tanpa Channel)';
-            chCounts.set(ch, (chCounts.get(ch) || 0) + 1);
-        });
-        const chSummary = Array.from(chCounts.entries())
-            .sort((a, b) => b[1] - a[1])
-            .map(([ch, cnt]) => `${ch}: ${cnt.toLocaleString('id-ID')}`)
-            .join(' | ') || '-';
-
-        const getTop3Lines = (list) => {
+        const getTop5Lines = (list) => {
             const counts = new Map();
             list.forEach(x => {
                 const k = x.r.dsc || x.r.sc || '(Lainnya)';
                 counts.set(k, (counts.get(k) || 0) + 1);
             });
-            const sorted = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 3);
-            if(!sorted.length) return ['  - Tidak ada data pada interval ini'];
+            const sorted = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            if(!sorted.length) return ['1. Tidak ada data pada interval ini'];
             return sorted.map((it, idx) => {
                 const pct = list.length ? ((it[1] / list.length) * 100).toFixed(2) + '%' : '0.00%';
-                return `  ${idx + 1}. ${it[0]} (${it[1].toLocaleString('id-ID')} | ${pct})`;
+                return `${idx + 1}. ${it[0]} (${it[1].toLocaleString('id-ID')} | ${pct})`;
             });
         };
 
@@ -894,8 +1056,8 @@
             return { r, dKey, hour: d.getHours() };
         }).filter(Boolean);
 
-        const dailyTkt = tktMeta.filter(x => x.dKey === activeDate && x.hour >= hStartNum && x.hour <= hEndNum && isCasn(x.r));
-        const mtdTkt = tktMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && isCasn(x.r));
+        const dailyTkt = tktMeta.filter(x => x.dKey === activeDate && x.hour >= hStartNum && x.hour <= hEndNum && matchesCasnScope(x.r, scopeVal));
+        const mtdTkt = tktMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && matchesCasnScope(x.r, scopeVal));
 
         const sumTkt = (list) => {
             let resolved = 0, outstanding = 0, pending = 0;
@@ -913,41 +1075,30 @@
         const sDailyTkt = sumTkt(dailyTkt);
         const sMtdTkt = sumTkt(mtdTkt);
 
-        const now = Date.now();
-        const scopeTickets = Array.from(ticketsMap.values()).filter(r => isCasn(r));
-        const slaList = scopeTickets.map(r => computeSla(r, now));
-        const slaFin = slaList.filter(s => s.finished);
-        const slaComp = slaFin.filter(s => s.result === 'aman').length;
-        const slaBreach = slaFin.filter(s => s.result === 'breach').length;
-        const slaOut = slaList.filter(s => !s.finished).length;
-        const reopenCount = scopeTickets.filter(r => (r.st || '').toLowerCase().includes('reopen')).length;
-        const reopenRate = scopeTickets.length ? ((reopenCount / scopeTickets.length) * 100).toFixed(1) + '%' : '0.0%';
-        const slaPct = slaFin.length ? ((slaComp / slaFin.length) * 100).toFixed(1) + '%' : '—';
-        const modeLabel = slaViewMode === 'include' ? 'User / Include Pending' : 'Internal / Exclude Pending';
+        const scopeTickets = Array.from(ticketsMap.values()).filter(r => matchesCasnScope(r, scopeVal));
+        const activeQueue = scopeTickets.filter(r => !FINISHED_STATUSES.has((r.st || '').toLowerCase()));
+        const activePending = activeQueue.filter(r => (r.st || '').toLowerCase() === 'pending').length;
+        const queueText = activeQueue.length >= 1000
+            ? `1000+ (${activeQueue.length.toLocaleString('id-ID')} tiket aktif | Pending: ${activePending.toLocaleString('id-ID')})`
+            : `${activeQueue.length.toLocaleString('id-ID')} tiket aktif (Pending: ${activePending.toLocaleString('id-ID')})`;
 
         return [
-            `*REPORT DAILY OPERATIONAL HELPDESK CASN*`,
-            `Tanggal : ${dateLabel}`,
+            `*Report Akumulasi Interaksi Terpickup SSCASN ${indoDateLabel}*`,
+            `• Daily Interaksi : *${sDailyInt.total.toLocaleString('id-ID')}* (FCR: ${sDailyInt.fcr.toLocaleString('id-ID')} | N-FCR: ${sDailyInt.nfcr.toLocaleString('id-ID')} | FCR Rate: ${fcrRateDaily})`,
+            `• Akumulasi MTD : *${sMtdInt.total.toLocaleString('id-ID')}* (FCR: ${sMtdInt.fcr.toLocaleString('id-ID')} | N-FCR: ${sMtdInt.nfcr.toLocaleString('id-ID')})`,
+            ``,
+            `*Top 5 Interaction:*`,
+            ...getTop5Lines(dailyInt),
+            ``,
+            `*Monitoring Tiket Date: ${indoDateLabel}*`,
             `Interval : ${hStart}:00 - ${hEnd}:59 WIB`,
-            `Scope : ${scopeLabel}`,
+            `• Total tiket created MTD: *${sMtdTkt.created.toLocaleString('id-ID')}* (Daily: ${sDailyTkt.created.toLocaleString('id-ID')})`,
+            `• Total tiket resolved MTD: *${sMtdTkt.resolved.toLocaleString('id-ID')}* (Daily: ${sDailyTkt.resolved.toLocaleString('id-ID')})`,
+            `• Total Tiket outstanding MTD: *${sMtdTkt.outstanding.toLocaleString('id-ID')}* (Daily: ${sDailyTkt.outstanding.toLocaleString('id-ID')})`,
+            `• Total Tiket pending : *${sMtdTkt.pending.toLocaleString('id-ID')}* (Daily: ${sDailyTkt.pending.toLocaleString('id-ID')})`,
             ``,
-            `*1. RINGKASAN INTERAKSI*`,
-            `• Daily Interaction : *${sDailyInt.total.toLocaleString('id-ID')}* (FCR: ${sDailyInt.fcr.toLocaleString('id-ID')} | N-FCR: ${sDailyInt.nfcr.toLocaleString('id-ID')} | FCR Rate: ${fcrRateDaily})`,
-            `  - Channel Daily : ${chSummary}`,
-            `  - Komposisi: Informasi ${pctInfo} (${sDailyInt.info}), Keluhan ${pctKel} (${sDailyInt.kel}), Permintaan ${pctPerm} (${sDailyInt.perm})`,
-            `• MTD Interaction : *${sMtdInt.total.toLocaleString('id-ID')}* (FCR: ${sMtdInt.fcr.toLocaleString('id-ID')} | N-FCR: ${sMtdInt.nfcr.toLocaleString('id-ID')})`,
-            `• Top 3 Interaksi Harian:`,
-            ...getTop3Lines(dailyInt),
-            ``,
-            `*2. RINGKASAN TICKETING (N-FCR)*`,
-            `• Daily Ticket Created : *${sDailyTkt.created.toLocaleString('id-ID')}* (Resolved: ${sDailyTkt.resolved.toLocaleString('id-ID')} | Outstanding: ${sDailyTkt.outstanding.toLocaleString('id-ID')} | Pending: ${sDailyTkt.pending.toLocaleString('id-ID')})`,
-            `• MTD Ticket Created : *${sMtdTkt.created.toLocaleString('id-ID')}* (Resolved: ${sMtdTkt.resolved.toLocaleString('id-ID')} | Outstanding: ${sMtdTkt.outstanding.toLocaleString('id-ID')} | Pending: ${sMtdTkt.pending.toLocaleString('id-ID')})`,
-            `• Top 3 Tiket N-FCR Harian:`,
-            ...getTop3Lines(dailyTkt),
-            ``,
-            `*3. PERFORMA SLA & KUALITAS (${modeLabel})*`,
-            `• Total Tiket Scope : *${slaList.length.toLocaleString('id-ID')}* (Selesai: ${slaFin.length.toLocaleString('id-ID')} | Outstanding: ${slaOut.toLocaleString('id-ID')})`,
-            `• SLA Compliance : *${slaPct}* (Achieved: ${slaComp.toLocaleString('id-ID')} | Breach: ${slaBreach.toLocaleString('id-ID')} | Reopen Rate: ${reopenRate})`
+            `*Antrian Tiket Helpdesk SSCASN*`,
+            `• Total Antrian : *${queueText}*`
         ].join('\n');
     }
 
@@ -983,8 +1134,8 @@
 
         toast.className = 'alert alert-success py-2 px-3 small mb-3';
         toast.textContent = textCopied
-            ? 'Teks summary otomatis tersalin ke Clipboard! Tinggal Paste (Ctrl+V) di WhatsApp/Email.'
-            : 'Summary siap disalin. Klik "Copy Teks" atau "Copy Gambar Dashboard" di bawah.';
+            ? 'Teks report SSCASN otomatis tersalin ke Clipboard! Tinggal Paste (Ctrl+V) di WhatsApp/Email.'
+            : 'Report siap disalin. Klik "Copy Teks" atau "Copy Gambar Dashboard" di bawah.';
 
         try {
             const h2c = await ensureHtml2Canvas();
@@ -1002,7 +1153,7 @@
                 previewWrap.innerHTML = '<img src="' + imgUrl + '" alt="Dashboard Preview" class="img-fluid rounded border border-secondary" />';
             }, 'image/png');
         } catch (err) {
-            previewWrap.innerHTML = '<div class="text-warning small py-4">Gagal merender screenshot otomatis (' + err.message + '), namun teks summary tetap siap digunakan.</div>';
+            previewWrap.innerHTML = '<div class="text-warning small py-4">Gagal merender screenshot otomatis (' + err.message + '), namun teks report tetap siap digunakan.</div>';
         }
     }
 
@@ -1180,14 +1331,23 @@
     }
 
     function fillTopTable(tbodyId, items, sumTotal, sumPct){
-        document.getElementById(tbodyId).innerHTML = (items.map((it, i) =>
-            '<tr><td class="num">' + (i + 1) + '</td><td>' + it[0] + '</td><td class="num">' + it[1] + '</td><td class="num">' + it[2] + '</td></tr>'
-        ).join('') || '<tr><td colspan="4" class="text-center text-muted py-2">Belum ada data (0).</td></tr>') +
+        document.getElementById(tbodyId).innerHTML = (items.map((it, i) => {
+            const isTop5 = i < 5;
+            const rowCls = isTop5 ? ' class="top5-row"' : '';
+            const badge = isTop5 ? '<span class="top5-pill">TOP 5</span>' : '';
+            return '<tr' + rowCls + '><td class="num fw-bold">' + (i + 1) + '</td><td>' + badge + it[0] + '</td><td class="num fw-semibold">' + it[1] + '</td><td class="num">' + it[2] + '</td></tr>';
+        }).join('') || '<tr><td colspan="4" class="text-center text-muted py-2">Belum ada data pada scope/interval ini (0).</td></tr>') +
         '<tr class="total-row"><td colspan="2" class="text-center">Jumlah</td><td class="num">' + sumTotal + '</td><td class="num">' + sumPct + '</td></tr>';
     }
 
     function renderZeroReports(){
         applyNoChartLayout();
+
+        const zeroStats = { total: 0, fcr: 0, nfcr: 0, info: 0, kel: 0, perm: 0 };
+        renderDailyKpiCards(zeroStats, zeroStats);
+
+        const zeroTkt = { created: 0, resolved: 0, outstanding: 0, pending: 0 };
+        renderTicketingKpiCards(zeroTkt, zeroTkt, 0, 0);
 
         document.getElementById('dailyDateSelect').innerHTML = '<option value="EMPTY">Belum ada data (0)</option>';
         document.getElementById('dailyHourStart').value = '0';
@@ -1201,8 +1361,8 @@
         document.getElementById('pctPermintaan').textContent = '0.00%';
 
         document.getElementById('dailySummaryBody').innerHTML = [
-            'Daily Interaction CASN',
-            'Month to Date',
+            'Daily Interaction SSCASN',
+            'Month to Date SSCASN',
             'Daily All Interaction',
             'MTD All Interaction',
         ].map(label =>
@@ -1223,8 +1383,8 @@
         document.getElementById('tktHourEnd').textContent = '23:59';
 
         document.getElementById('tktSummaryBody').innerHTML = [
-            'Daily Ticket CASN',
-            'MTD Ticket CASN',
+            'Daily Ticket SSCASN',
+            'MTD Ticket SSCASN',
             'Daily All Ticket',
             'MTD All Ticket',
         ].map(label =>
@@ -1255,7 +1415,7 @@
         const prevVal = selDateEl.value;
         selDateEl.innerHTML = dates.map(dt => {
             const [y, m, d] = dt.split('-').map(Number);
-            const lbl = new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            const lbl = new Date(y, m - 1, d).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
             return '<option value="' + dt + '">' + lbl + '</option>';
         }).join('');
         if(dates.includes(prevVal)) selDateEl.value = prevVal;
@@ -1264,27 +1424,19 @@
         const activeDate = selDateEl.value;
         const hStart = parseInt(document.getElementById('dailyHourStart').value, 10);
         const hEnd = parseInt(document.getElementById('dailyHourEnd').value, 10);
-        const casnScope = document.getElementById('dailyCasnScope').value;
+        const casnScope = document.getElementById('dailyCasnScope').value || 'CASN';
 
         const [ay, am, ad] = activeDate.split('-').map(Number);
-        const activeDateLabel = new Date(ay, am - 1, ad).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        const activeDateLabel = new Date(ay, am - 1, ad).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
         const monthPrefix = activeDate.slice(0, 7);
 
         document.getElementById('tblDateVal').textContent = activeDateLabel;
         document.getElementById('tblHourStart').textContent = hStart + ':00';
-        document.getElementById('tblHourEnd').textContent = hEnd + ':00';
+        document.getElementById('tblHourEnd').textContent = hEnd + ':59';
 
         document.getElementById('tktDateVal').textContent = activeDateLabel;
         document.getElementById('tktHourStart').textContent = hStart + ':00';
         document.getElementById('tktHourEnd').textContent = hEnd + ':59';
-        document.getElementById('dailySourceBadge').textContent = 'Data Aktual · ' + allInteractions.length.toLocaleString('id-ID') + ' interaksi · ' + ticketsMap.size.toLocaleString('id-ID') + ' tiket N-FCR';
-
-        const isCasn = (r) => {
-            if(casnScope === 'ALL') return true;
-            const sc = (r.sc || '').toLowerCase();
-            const dsc = (r.dsc || '').toLowerCase();
-            return sc === 'e-meterai' || dsc.includes('casn') || dsc.includes('sscasn') || dsc.includes('e-meterai');
-        };
 
         const buildTop10 = (list, tbodyId) => {
             const counts = new Map();
@@ -1309,9 +1461,9 @@
         }).filter(Boolean);
 
         const dailyAllInt = intMeta.filter(x => x.dKey === activeDate && x.hour >= hStart && x.hour <= hEnd);
-        const dailyCasnInt = dailyAllInt.filter(x => isCasn(x.r));
+        const dailyCasnInt = dailyAllInt.filter(x => matchesCasnScope(x.r, casnScope));
         const mtdAllInt = intMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate);
-        const mtdCasnInt = mtdAllInt.filter(x => isCasn(x.r));
+        const mtdCasnInt = mtdAllInt.filter(x => matchesCasnScope(x.r, casnScope));
 
         const summarizeInt = (list) => {
             let fcr = 0, nfcr = 0, info = 0, kel = 0, perm = 0;
@@ -1330,19 +1482,21 @@
         const sDailyAllInt = summarizeInt(dailyAllInt);
         const sMtdAllInt = summarizeInt(mtdAllInt);
 
+        renderDailyKpiCards(sDailyCasnInt, sMtdCasnInt);
+
         const intDenom = sDailyCasnInt.total || 1;
         document.getElementById('pctInfo').textContent = sDailyCasnInt.total ? ((sDailyCasnInt.info / intDenom) * 100).toFixed(2) + '%' : '0.00%';
         document.getElementById('pctKeluhan').textContent = sDailyCasnInt.total ? ((sDailyCasnInt.kel / intDenom) * 100).toFixed(2) + '%' : '0.00%';
         document.getElementById('pctPermintaan').textContent = sDailyCasnInt.total ? ((sDailyCasnInt.perm / intDenom) * 100).toFixed(2) + '%' : '0.00%';
 
         document.getElementById('dailySummaryBody').innerHTML = [
-            { label: 'Daily Interaction CASN', ...sDailyCasnInt },
-            { label: 'Month to Date', ...sMtdCasnInt },
+            { label: 'Daily Interaction SSCASN', ...sDailyCasnInt },
+            { label: 'Month to Date SSCASN', ...sMtdCasnInt },
             { label: 'Daily All Interaction', ...sDailyAllInt },
             { label: 'MTD All Interaction', ...sMtdAllInt },
         ].map(r =>
-            '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.total + '</td><td class="big-num">' + r.fcr + '</td>' +
-            '<td class="big-num">' + r.nfcr + '</td><td class="big-num">' + r.info + '</td><td class="big-num">' + r.kel + '</td><td class="big-num">' + r.perm + '</td></tr>'
+            '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.total + '</td><td class="big-num text-success">' + r.fcr + '</td>' +
+            '<td class="big-num text-warning">' + r.nfcr + '</td><td class="big-num">' + r.info + '</td><td class="big-num">' + r.kel + '</td><td class="big-num">' + r.perm + '</td></tr>'
         ).join('');
 
         const chMap = new Map();
@@ -1371,12 +1525,15 @@
             .sort((a, b) => b[1].daily - a[1].daily)
             .map(([ch, g]) => {
                 const pct = dailyCasnInt.length ? ((g.daily / chTotalDaily) * 100).toFixed(2) + '%' : '0.00%';
-                const avgMin = g.escHrs.length
-                    ? ((g.escHrs.reduce((s, h) => s + h, 0) / g.escHrs.length) * 60).toFixed(1) + ' Menit'
-                    : '—';
-                return '<tr><td class="row-title">' + ch + '</td><td class="num">' + g.daily + '</td><td class="num">' + pct + '</td>' +
-                    '<td class="num">' + g.fcr + '</td><td class="num">' + g.nfcr + '</td><td class="num">' + g.mtd + '</td><td class="num">' + avgMin + '</td></tr>';
-            }).join('') || '<tr><td colspan="7" class="text-center text-muted py-3">Tidak ada data channel pada interval ini.</td></tr>';
+                let avgCell = '—';
+                if(g.escHrs.length){
+                    const avgMins = (g.escHrs.reduce((s, h) => s + h, 0) / g.escHrs.length) * 60;
+                    const badgeCls = avgMins > 15 ? 'bg-danger' : 'bg-success';
+                    avgCell = '<span class="badge ' + badgeCls + '">' + avgMins.toFixed(1) + ' Menit</span>';
+                }
+                return '<tr><td class="row-title">' + ch + '</td><td class="num fw-bold">' + g.daily + '</td><td class="num">' + pct + '</td>' +
+                    '<td class="num text-success fw-semibold">' + g.fcr + '</td><td class="num text-warning fw-semibold">' + g.nfcr + '</td><td class="num">' + g.mtd + '</td><td class="num">' + avgCell + '</td></tr>';
+            }).join('') || '<tr><td colspan="7" class="text-center text-muted py-3">Tidak ada data channel pada scope/interval ini.</td></tr>';
 
         buildTop10(dailyCasnInt, 'topDailyCasnBody');
         buildTop10(mtdCasnInt, 'topMtdCasnBody');
@@ -1392,9 +1549,9 @@
         }).filter(Boolean);
 
         const dailyAllTkt = tktMeta.filter(x => x.dKey === activeDate && x.hour >= hStart && x.hour <= hEnd);
-        const dailyCasnTkt = dailyAllTkt.filter(x => isCasn(x.r));
+        const dailyCasnTkt = dailyAllTkt.filter(x => matchesCasnScope(x.r, casnScope));
         const mtdAllTkt = tktMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate);
-        const mtdCasnTkt = mtdAllTkt.filter(x => isCasn(x.r));
+        const mtdCasnTkt = mtdAllTkt.filter(x => matchesCasnScope(x.r, casnScope));
 
         const summarizeTkt = (list) => {
             let resolved = 0, outstanding = 0, pending = 0;
@@ -1409,14 +1566,27 @@
             return { created: list.length, resolved, outstanding, pending };
         };
 
+        const sDailyCasnTkt = summarizeTkt(dailyCasnTkt);
+        const sMtdCasnTkt = summarizeTkt(mtdCasnTkt);
+
+        const scopeAllTickets = Array.from(ticketsMap.values()).filter(r => matchesCasnScope(r, casnScope));
+        const activeQueueList = scopeAllTickets.filter(r => !FINISHED_STATUSES.has((r.st || '').toLowerCase()));
+        const activePendingCount = activeQueueList.filter(r => (r.st || '').toLowerCase() === 'pending').length;
+
+        renderTicketingKpiCards(sDailyCasnTkt, sMtdCasnTkt, activeQueueList.length, activePendingCount);
+
+        document.getElementById('dailySourceBadge').textContent =
+            'Scope: ' + casnScope + ' · ' + sMtdCasnInt.total.toLocaleString('id-ID') + ' MTD interaksi · Antrian Aktif: ' +
+            (activeQueueList.length >= 1000 ? '1000+' : activeQueueList.length.toLocaleString('id-ID'));
+
         document.getElementById('tktSummaryBody').innerHTML = [
-            { label: 'Daily Ticket CASN', ...summarizeTkt(dailyCasnTkt) },
-            { label: 'MTD Ticket CASN', ...summarizeTkt(mtdCasnTkt) },
+            { label: 'Daily Ticket SSCASN', ...sDailyCasnTkt },
+            { label: 'MTD Ticket SSCASN', ...sMtdCasnTkt },
             { label: 'Daily All Ticket', ...summarizeTkt(dailyAllTkt) },
             { label: 'MTD All Ticket', ...summarizeTkt(mtdAllTkt) },
         ].map(r =>
-            '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.created + '</td><td class="big-num">' + r.resolved + '</td>' +
-            '<td class="big-num">' + r.outstanding + '</td><td class="big-num">' + r.pending + '</td></tr>'
+            '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.created + '</td><td class="big-num text-success">' + r.resolved + '</td>' +
+            '<td class="big-num text-warning">' + r.outstanding + '</td><td class="big-num">' + r.pending + '</td></tr>'
         ).join('');
 
         buildTop10(dailyCasnTkt, 'topDailyTktCasnBody');
@@ -1951,6 +2121,7 @@
 
     injectProStyles();
     injectD1Controls();
+    initScopeSelector();
     initHourSelectors();
     renderZeroReports();
     runSimulation();

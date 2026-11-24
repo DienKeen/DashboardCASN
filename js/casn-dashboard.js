@@ -38,208 +38,260 @@
     function injectProStyles(){
         if(document.getElementById('casnProUiStyle')) return;
         const css = `
-            /* Sticky & Single-Row Clean Top Navbar */
+            :root {
+                --ops-bg: #f5f6f8;
+                --ops-surface: #ffffff;
+                --ops-surface-subtle: #f9fafb;
+                --ops-border: #e2e5ea;
+                --ops-text: #111827;
+                --ops-muted: #6b7280;
+                --ops-accent: #1d4ed8;
+            }
+            html.dark-mode {
+                --ops-bg: #101113;
+                --ops-surface: #17181c;
+                --ops-surface-subtle: #1d1f24;
+                --ops-border: #282b32;
+                --ops-text: #eceef2;
+                --ops-muted: #8e95a2;
+                --ops-accent: #3b82f6;
+            }
+
+            body,
+            #layoutSidenav_content {
+                background-color: var(--ops-bg) !important;
+                color: var(--ops-text) !important;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+            }
+
+            /* Clean Flat Top Navbar */
             .sb-topnav {
                 position: sticky !important;
                 top: 0;
                 z-index: 1035;
-                min-height: 52px;
-                padding: 0.35rem 0.9rem !important;
-                border-bottom: 1px solid rgba(148, 163, 184, 0.14);
-                backdrop-filter: blur(10px);
+                min-height: 48px;
+                padding: 0.3rem 1rem !important;
+                background-color: var(--ops-surface) !important;
+                border-bottom: 1px solid var(--ops-border) !important;
+                box-shadow: none !important;
             }
             .sb-topnav .navbar-brand {
-                font-size: 1rem !important;
-                letter-spacing: -0.01em;
+                font-size: 0.94rem !important;
+                font-weight: 600 !important;
+                letter-spacing: -0.015em;
+                color: var(--ops-text) !important;
                 white-space: nowrap;
             }
             #navControlsWrap {
                 display: flex !important;
                 align-items: center !important;
                 flex-wrap: nowrap !important;
-                gap: 0.4rem !important;
+                gap: 0.35rem !important;
                 margin-left: auto !important;
             }
             #navControlsWrap .btn,
             #navControlsWrap .form-select {
-                font-size: 0.76rem !important;
-                line-height: 1.25 !important;
-                padding: 0.28rem 0.58rem !important;
-                border-radius: 6px !important;
+                font-size: 0.75rem !important;
+                font-weight: 500 !important;
+                line-height: 1.2 !important;
+                padding: 0.25rem 0.55rem !important;
+                border-radius: 5px !important;
                 white-space: nowrap !important;
-                height: 30px !important;
+                height: 28px !important;
                 display: inline-flex;
                 align-items: center;
+                box-shadow: none !important;
             }
             #navControlsWrap .form-select {
-                padding-right: 1.65rem !important;
+                padding-right: 1.55rem !important;
             }
             #adminControlsGroup {
                 display: inline-flex;
                 align-items: center;
-                gap: 0.3rem;
+                gap: 0.28rem;
                 padding: 2px 4px;
-                border-radius: 7px;
-                background: rgba(245, 158, 11, 0.08);
-                border: 1px solid rgba(245, 158, 11, 0.28);
+                border-radius: 5px;
+                background: var(--ops-surface-subtle);
+                border: 1px solid var(--ops-border);
             }
             #adminControlsGroup .btn,
             #adminControlsGroup .form-select {
-                height: 25px !important;
-                padding: 0.18rem 0.5rem !important;
-                font-size: 0.73rem !important;
+                height: 24px !important;
+                padding: 0.15rem 0.45rem !important;
+                font-size: 0.72rem !important;
             }
             #adminControlsGroup .form-select {
-                padding-right: 1.5rem !important;
+                padding-right: 1.45rem !important;
             }
             .nav-sep {
                 width: 1px;
-                height: 18px;
-                background: rgba(148, 163, 184, 0.22);
-                margin: 0 2px;
+                height: 16px;
+                background: var(--ops-border);
+                margin: 0 3px;
             }
 
-            /* Page Header & Metadata Pill */
+            /* Page Header & Metadata */
             #pageHeading {
-                font-size: 1.5rem !important;
-                font-weight: 700 !important;
+                font-size: 1.28rem !important;
+                font-weight: 600 !important;
                 letter-spacing: -0.02em;
+                color: var(--ops-text) !important;
+            }
+            .breadcrumb {
+                font-size: 0.75rem !important;
+                color: var(--ops-muted) !important;
             }
             #metaBadge {
-                font-size: 0.75rem !important;
-                font-weight: 600 !important;
-                padding: 0.38rem 0.75rem !important;
-                border-radius: 999px !important;
+                font-size: 0.73rem !important;
+                font-weight: 500 !important;
+                padding: 0.28rem 0.6rem !important;
+                border-radius: 4px !important;
                 white-space: nowrap !important;
-                background: rgba(59, 130, 246, 0.14) !important;
-                color: #93c5fd !important;
-                border: 1px solid rgba(59, 130, 246, 0.3) !important;
-            }
-            html:not(.dark-mode) #metaBadge {
-                background: #eff6ff !important;
-                color: #1d4ed8 !important;
-                border-color: #bfdbfe !important;
+                background: var(--ops-surface) !important;
+                color: var(--ops-muted) !important;
+                border: 1px solid var(--ops-border) !important;
             }
 
-            /* Slim Toast-Style Status Alert */
+            /* Quiet Status Bar */
             #statusAlert {
-                font-size: 0.79rem !important;
-                padding: 0.45rem 0.85rem !important;
-                border-radius: 8px !important;
+                font-size: 0.78rem !important;
+                padding: 0.45rem 0.8rem !important;
+                border-radius: 5px !important;
                 margin-bottom: 0.85rem !important;
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
                 gap: 0.5rem;
-                transition: opacity 0.25s ease;
+                transition: opacity 0.2s ease;
             }
             html.dark-mode #statusAlert.alert-info {
-                background: rgba(30, 41, 59, 0.85) !important;
+                background: #181a20 !important;
                 color: #cbd5e1 !important;
-                border: 1px solid rgba(148, 163, 184, 0.2) !important;
+                border: 1px solid #2b2f3a !important;
             }
             html.dark-mode #statusAlert.alert-success {
-                background: rgba(16, 185, 129, 0.14) !important;
+                background: #13221c !important;
                 color: #6ee7b7 !important;
-                border: 1px solid rgba(16, 185, 129, 0.32) !important;
+                border: 1px solid #1f3d31 !important;
             }
             html.dark-mode #statusAlert.alert-warning {
-                background: rgba(245, 158, 11, 0.14) !important;
+                background: #231e14 !important;
                 color: #fcd34d !important;
-                border: 1px solid rgba(245, 158, 11, 0.32) !important;
+                border: 1px solid #3f341d !important;
             }
             html.dark-mode #statusAlert.alert-danger {
-                background: rgba(239, 68, 68, 0.15) !important;
+                background: #241618 !important;
                 color: #fca5a5 !important;
-                border: 1px solid rgba(239, 68, 68, 0.35) !important;
+                border: 1px solid #422226 !important;
             }
 
-            /* Clean Single-Line Filter Toolbar */
+            /* Filter Toolbar */
             #sharedDailyControls {
-                border-radius: 10px !important;
+                background-color: var(--ops-surface) !important;
+                border: 1px solid var(--ops-border) !important;
+                border-radius: 6px !important;
                 margin-bottom: 1rem !important;
+                box-shadow: none !important;
             }
             #sharedDailyControls .card-body {
                 display: flex !important;
                 flex-wrap: nowrap !important;
                 align-items: center !important;
                 justify-content: flex-start !important;
-                gap: 0.5rem 0.75rem !important;
-                padding: 0.55rem 0.85rem !important;
+                gap: 0.5rem 0.7rem !important;
+                padding: 0.5rem 0.8rem !important;
                 overflow-x: auto;
             }
             #sharedDailyControls label,
             #sharedDailyControls .fw-bold,
             #sharedDailyControls span {
-                font-size: 0.73rem !important;
-                letter-spacing: 0.02em;
+                font-size: 0.74rem !important;
+                font-weight: 500 !important;
+                color: var(--ops-muted);
                 white-space: nowrap !important;
             }
             #sharedDailyControls .form-select {
                 font-size: 0.76rem !important;
-                padding: 0.22rem 1.65rem 0.22rem 0.5rem !important;
-                height: 29px !important;
-                border-radius: 6px !important;
+                padding: 0.2rem 1.6rem 0.2rem 0.5rem !important;
+                height: 28px !important;
+                border-radius: 4px !important;
+                background-color: var(--ops-surface-subtle) !important;
+                border-color: var(--ops-border) !important;
+                color: var(--ops-text) !important;
+            }
+            #casnScopeCaption {
+                font-size: 0.73rem !important;
+                color: var(--ops-muted) !important;
+                padding-left: 0.35rem;
+                border-left: 1px solid var(--ops-border);
             }
             #dailySourceBadge {
                 white-space: nowrap !important;
                 font-size: 0.72rem !important;
-                font-weight: 600 !important;
-                padding: 0.25rem 0.65rem !important;
-                border-radius: 999px !important;
-                background: rgba(14, 165, 233, 0.12);
-                color: #7dd3fc;
-                border: 1px solid rgba(14, 165, 233, 0.26);
+                font-weight: 500 !important;
+                padding: 0.2rem 0.55rem !important;
+                border-radius: 4px !important;
+                background: var(--ops-surface-subtle) !important;
+                color: var(--ops-muted) !important;
+                border: 1px solid var(--ops-border) !important;
                 margin-left: auto;
             }
-            html:not(.dark-mode) #dailySourceBadge {
-                background: #f0f9ff;
-                color: #0369a1;
-                border-color: #bae6fd;
-            }
 
-            /* Hero Metric Strip Cards */
+            /* Clean Enterprise KPI Cards (No Rainbow Gradients or Thick Borders) */
             .casn-kpi-card {
-                border-radius: 10px !important;
-                border: 1px solid rgba(148, 163, 184, 0.16) !important;
-                background: linear-gradient(145deg, rgba(30, 41, 59, 0.75), rgba(15, 23, 42, 0.9)) !important;
-                transition: transform 0.15s ease, border-color 0.15s ease;
-            }
-            html:not(.dark-mode) .casn-kpi-card {
-                background: linear-gradient(145deg, #ffffff, #f8fafc) !important;
-                border-color: #e2e8f0 !important;
-            }
-            .casn-kpi-card:hover {
-                transform: translateY(-1px);
-                border-color: rgba(59, 130, 246, 0.45) !important;
+                background: var(--ops-surface) !important;
+                border: 1px solid var(--ops-border) !important;
+                border-radius: 6px !important;
+                box-shadow: none !important;
             }
             .casn-kpi-label {
-                font-size: 0.71rem;
-                font-weight: 700;
-                letter-spacing: 0.04em;
-                text-transform: uppercase;
-                opacity: 0.78;
+                font-size: 0.74rem;
+                font-weight: 500;
+                color: var(--ops-muted);
+                display: flex;
+                align-items: center;
+                gap: 0.4rem;
             }
+            .kpi-dot {
+                width: 7px;
+                height: 7px;
+                border-radius: 50%;
+                display: inline-block;
+                flex-shrink: 0;
+            }
+            .kpi-dot.neutral { background: #64748b; }
+            .kpi-dot.blue { background: #3b82f6; }
+            .kpi-dot.green { background: #10b981; }
+            .kpi-dot.amber { background: #f59e0b; }
+            .kpi-dot.red { background: #ef4444; }
             .casn-kpi-val {
-                font-size: 1.45rem;
-                font-weight: 800;
-                line-height: 1.15;
+                font-size: 1.42rem;
+                font-weight: 600;
+                line-height: 1.2;
+                letter-spacing: -0.02em;
+                color: var(--ops-text);
                 font-variant-numeric: tabular-nums;
             }
             .casn-kpi-sub {
                 font-size: 0.72rem;
-                opacity: 0.8;
+                color: var(--ops-muted);
+                font-variant-numeric: tabular-nums;
             }
 
-            /* Card Polish & Equal Height Alignment */
+            /* Standard Cards */
             .card {
-                border-radius: 10px !important;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
+                background-color: var(--ops-surface) !important;
+                border: 1px solid var(--ops-border) !important;
+                border-radius: 6px !important;
+                box-shadow: none !important;
             }
             .card-header {
-                font-size: 0.84rem !important;
+                background-color: var(--ops-surface) !important;
+                border-bottom: 1px solid var(--ops-border) !important;
+                color: var(--ops-text) !important;
+                font-size: 0.82rem !important;
                 font-weight: 600 !important;
-                padding: 0.6rem 0.9rem !important;
+                padding: 0.58rem 0.85rem !important;
                 letter-spacing: -0.01em;
             }
             .row > [class*="col-"] > .card {
@@ -247,76 +299,117 @@
                 margin-bottom: 1rem !important;
             }
 
-            /* Compact Zero-Cutoff Summary Tables */
-            .report-tbl {
+            /* Crisp Operational Tables */
+            .report-tbl,
+            .sla-tbl {
                 width: 100% !important;
                 table-layout: auto !important;
-                font-size: 0.74rem !important;
+                font-size: 0.76rem !important;
                 border-collapse: collapse;
+                color: var(--ops-text) !important;
             }
             .report-tbl th,
-            .report-tbl td {
-                padding: 0.42rem 0.4rem !important;
+            .report-tbl td,
+            .sla-tbl th,
+            .sla-tbl td {
+                padding: 0.44rem 0.55rem !important;
+                border-bottom: 1px solid var(--ops-border) !important;
                 font-variant-numeric: tabular-nums;
                 vertical-align: middle !important;
             }
-            .report-tbl th {
-                font-size: 0.69rem !important;
-                font-weight: 700 !important;
-                white-space: nowrap !important;
-            }
-            .report-tbl td.row-title {
+            .report-tbl thead th,
+            .sla-tbl thead th {
+                background-color: var(--ops-surface-subtle) !important;
+                color: var(--ops-muted) !important;
+                font-size: 0.71rem !important;
                 font-weight: 600 !important;
                 white-space: nowrap !important;
+            }
+            .report-tbl tbody tr:hover,
+            .sla-tbl tbody tr:hover {
+                background-color: var(--ops-surface-subtle) !important;
+            }
+            .report-tbl td.row-title {
+                font-weight: 500 !important;
+                white-space: nowrap !important;
                 text-align: left !important;
-                padding-left: 0.55rem !important;
             }
             .report-tbl td.big-num {
                 font-size: 0.82rem !important;
-                font-weight: 700 !important;
+                font-weight: 600 !important;
                 text-align: center !important;
             }
             .report-tbl td.num {
-                font-size: 0.75rem !important;
+                font-size: 0.76rem !important;
                 text-align: right !important;
-                padding-right: 0.55rem !important;
             }
-            .top5-row {
-                background: rgba(59, 130, 246, 0.06);
+            .report-tbl tr.total-row td {
+                background-color: var(--ops-surface-subtle) !important;
+                font-weight: 600 !important;
+                border-top: 1px solid var(--ops-border) !important;
             }
-            .top5-pill {
-                display: inline-block;
-                font-size: 0.62rem;
+            .rank-num {
+                color: var(--ops-muted);
+                font-weight: 500;
+            }
+            .rank-num.top5 {
+                color: var(--ops-text);
                 font-weight: 700;
-                padding: 1px 5px;
-                border-radius: 4px;
-                background: rgba(59, 130, 246, 0.2);
-                color: #93c5fd;
-                margin-right: 4px;
-            }
-            html:not(.dark-mode) .top5-pill {
-                background: #dbeafe;
-                color: #1d4ed8;
-            }
-            .sla-tbl {
-                font-size: 0.78rem !important;
-            }
-            .sla-tbl th,
-            .sla-tbl td {
-                padding: 0.45rem 0.55rem !important;
-                font-variant-numeric: tabular-nums;
             }
 
-            /* Sidebar Polish */
+            /* Muted Status Badges (Not Loud Bootstrap Pills) */
+            .badge {
+                border-radius: 4px !important;
+                font-weight: 500 !important;
+                font-size: 0.7rem !important;
+                padding: 0.22rem 0.45rem !important;
+            }
+            html.dark-mode .badge.bg-success {
+                background-color: rgba(16, 185, 129, 0.14) !important;
+                color: #34d399 !important;
+                border: 1px solid rgba(16, 185, 129, 0.28);
+            }
+            html.dark-mode .badge.bg-danger {
+                background-color: rgba(239, 68, 68, 0.14) !important;
+                color: #f87171 !important;
+                border: 1px solid rgba(239, 68, 68, 0.28);
+            }
+            html.dark-mode .badge.bg-warning {
+                background-color: rgba(245, 158, 11, 0.14) !important;
+                color: #fbbf24 !important;
+                border: 1px solid rgba(245, 158, 11, 0.28);
+            }
+            html.dark-mode .badge.bg-info {
+                background-color: rgba(59, 130, 246, 0.14) !important;
+                color: #60a5fa !important;
+                border: 1px solid rgba(59, 130, 246, 0.28);
+            }
+            html.dark-mode .badge.bg-secondary {
+                background-color: rgba(148, 163, 184, 0.14) !important;
+                color: #94a3b8 !important;
+                border: 1px solid rgba(148, 163, 184, 0.24);
+            }
+
+            /* Sidebar */
+            #sidenavAccordion {
+                background-color: var(--ops-surface) !important;
+                border-right: 1px solid var(--ops-border) !important;
+            }
             #sidenavAccordion .nav-link {
-                font-size: 0.83rem !important;
-                padding: 0.55rem 0.9rem !important;
-                border-left: 3px solid transparent;
-                transition: all 0.15s ease;
+                font-size: 0.81rem !important;
+                color: var(--ops-muted) !important;
+                padding: 0.52rem 0.9rem !important;
+                border-left: 2px solid transparent;
+                transition: color 0.12s ease, background-color 0.12s ease;
+            }
+            #sidenavAccordion .nav-link:hover {
+                color: var(--ops-text) !important;
+                background: var(--ops-surface-subtle) !important;
             }
             #sidenavAccordion .nav-link.active {
-                border-left-color: #3b82f6 !important;
-                background: rgba(59, 130, 246, 0.14) !important;
+                color: var(--ops-text) !important;
+                border-left-color: var(--ops-accent) !important;
+                background: var(--ops-surface-subtle) !important;
                 font-weight: 600 !important;
             }
         `;
@@ -330,7 +423,6 @@
         const scopeSel = document.getElementById('dailyCasnScope');
         if(!scopeSel) return;
 
-        // Sembunyikan dropdown scope agar tidak membingungkan, karena tabel otomatis menampilkan CASN & All Produk
         scopeSel.style.display = 'none';
         const lblByFor = document.querySelector('label[for="dailyCasnScope"]');
         if(lblByFor) lblByFor.style.display = 'none';
@@ -339,16 +431,14 @@
             prevEl.style.display = 'none';
         }
 
-        if(!document.getElementById('casnDefinitionPill')){
-            const pill = document.createElement('span');
-            pill.id = 'casnDefinitionPill';
-            pill.className = 'badge bg-primary bg-opacity-25 text-info border border-info border-opacity-25';
-            pill.innerHTML = '<i class="fas fa-layer-group me-1"></i>CASN (Produk E-Meterai) & All Produk';
-            scopeSel.parentElement.insertBefore(pill, scopeSel);
+        if(!document.getElementById('casnScopeCaption')){
+            const cap = document.createElement('span');
+            cap.id = 'casnScopeCaption';
+            cap.textContent = 'Scope: CASN (E-Meterai) & Semua Produk';
+            scopeSel.parentElement.insertBefore(cap, scopeSel);
         }
     }
 
-    // CASN adalah layanan yang menggunakan produk E-Meterai dengan kategori/detail CASN atau SSCASN
     function isCasnRecord(r){
         const sc = (r.sc || '').toLowerCase();
         const dsc = (r.dsc || '').toLowerCase();
@@ -374,15 +464,24 @@
 
         const cardA = document.createElement('div');
         cardA.className = 'card';
-        cardA.innerHTML = '<div class="card-header"><i class="fas fa-list-ol me-1 text-primary"></i> ' + dailyTitle + '</div><div class="card-body p-2"><div class="table-responsive"></div></div>';
+        cardA.innerHTML = '<div class="card-header">' + dailyTitle + '</div><div class="card-body p-0"><div class="table-responsive"></div></div>';
         cardA.querySelector('.table-responsive').appendChild(dailyTbl);
 
         const cardB = document.createElement('div');
         cardB.className = 'card';
-        cardB.innerHTML = '<div class="card-header"><i class="fas fa-list-ol me-1 text-primary"></i> ' + mtdTitle + '</div><div class="card-body p-2"><div class="table-responsive"></div></div>';
+        cardB.innerHTML = '<div class="card-header">' + mtdTitle + '</div><div class="card-body p-0"><div class="table-responsive"></div></div>';
         cardB.querySelector('.table-responsive').appendChild(mtdTbl);
 
         return [cardA, cardB];
+    }
+
+    function cleanCardHeaders(container){
+        if(!container) return;
+        container.querySelectorAll('.card-header i.fas, .card-header i.far').forEach(ic => ic.remove());
+        container.querySelectorAll('.card-body.p-2').forEach(cb => {
+            cb.classList.remove('p-2');
+            cb.classList.add('p-0');
+        });
     }
 
     function applyNoChartLayout(){
@@ -402,8 +501,8 @@
                 [cardTopDailyAll, cardTopMtdAll] = splitStackedTopCard(
                     'topDailyAllBody',
                     'topMtdAllBody',
-                    'TOP 10 All Interaction — Semua Produk (Daily)',
-                    'TOP 10 All Interaction — Semua Produk (Month to Date)'
+                    'Top 10 Interaksi — Semua Produk (Daily)',
+                    'Top 10 Interaksi — Semua Produk (Month to Date)'
                 );
             }
 
@@ -414,7 +513,7 @@
 
             const kpiRow = document.createElement('div');
             kpiRow.id = 'dailyKpiStrip';
-            kpiRow.className = 'row g-3 mb-1';
+            kpiRow.className = 'row g-3 mb-2';
             grid.appendChild(kpiRow);
 
             const makeRow = (cols) => {
@@ -422,6 +521,7 @@
                 row.className = 'row g-3';
                 cols.forEach(({ cls, el }) => {
                     if(!el) return;
+                    cleanCardHeaders(el);
                     const col = document.createElement('div');
                     col.className = cls;
                     col.appendChild(el);
@@ -457,8 +557,8 @@
                 [cardTopDailyTktAll, cardTopMtdTktAll] = splitStackedTopCard(
                     'topDailyTktAllBody',
                     'topMtdTktAllBody',
-                    'TOP 10 All Ticket — Semua Produk (Daily)',
-                    'TOP 10 All Ticket — Semua Produk (Month to Date)'
+                    'Top 10 Tiket — Semua Produk (Daily)',
+                    'Top 10 Tiket — Semua Produk (Month to Date)'
                 );
             }
 
@@ -469,7 +569,7 @@
 
             const tktKpiRow = document.createElement('div');
             tktKpiRow.id = 'tktKpiStrip';
-            tktKpiRow.className = 'row g-3 mb-1';
+            tktKpiRow.className = 'row g-3 mb-2';
             grid.appendChild(tktKpiRow);
 
             const makeRow = (cols) => {
@@ -477,6 +577,7 @@
                 row.className = 'row g-3';
                 cols.forEach(({ cls, el }) => {
                     if(!el) return;
+                    cleanCardHeaders(el);
                     const col = document.createElement('div');
                     col.className = cls;
                     col.appendChild(el);
@@ -523,35 +624,35 @@
         const nfcrRate = sDailyCasn.total ? ((sDailyCasn.nfcr / sDailyCasn.total) * 100).toFixed(1) + '%' : '0.0%';
         const cards = [
             {
+                dot: 'blue',
                 label: 'Interaksi CASN (Daily)',
                 val: sDailyCasn.total.toLocaleString('id-ID'),
-                sub: 'FCR: ' + sDailyCasn.fcr.toLocaleString('id-ID') + ' (' + fcrRate + ') · N-FCR: ' + sDailyCasn.nfcr.toLocaleString('id-ID') + ' (' + nfcrRate + ')',
-                accent: 'border-start border-4 border-primary'
+                sub: 'FCR ' + sDailyCasn.fcr.toLocaleString('id-ID') + ' (' + fcrRate + ') · N-FCR ' + sDailyCasn.nfcr.toLocaleString('id-ID') + ' (' + nfcrRate + ')'
             },
             {
+                dot: 'neutral',
                 label: 'Akumulasi CASN (MTD)',
                 val: sMtdCasn.total.toLocaleString('id-ID'),
-                sub: 'FCR: ' + sMtdCasn.fcr.toLocaleString('id-ID') + ' · N-FCR: ' + sMtdCasn.nfcr.toLocaleString('id-ID'),
-                accent: 'border-start border-4 border-info'
+                sub: 'FCR ' + sMtdCasn.fcr.toLocaleString('id-ID') + ' · N-FCR ' + sMtdCasn.nfcr.toLocaleString('id-ID')
             },
             {
-                label: 'All Interaksi Semua Produk (Daily)',
+                dot: 'green',
+                label: 'Semua Produk (Daily)',
                 val: sDailyAll.total.toLocaleString('id-ID'),
-                sub: 'FCR: ' + sDailyAll.fcr.toLocaleString('id-ID') + ' · N-FCR: ' + sDailyAll.nfcr.toLocaleString('id-ID'),
-                accent: 'border-start border-4 border-success'
+                sub: 'FCR ' + sDailyAll.fcr.toLocaleString('id-ID') + ' · N-FCR ' + sDailyAll.nfcr.toLocaleString('id-ID')
             },
             {
-                label: 'All Interaksi Semua Produk (MTD)',
+                dot: 'neutral',
+                label: 'Semua Produk (MTD)',
                 val: sMtdAll.total.toLocaleString('id-ID'),
-                sub: 'FCR: ' + sMtdAll.fcr.toLocaleString('id-ID') + ' · N-FCR: ' + sMtdAll.nfcr.toLocaleString('id-ID'),
-                accent: 'border-start border-4 border-warning'
+                sub: 'FCR ' + sMtdAll.fcr.toLocaleString('id-ID') + ' · N-FCR ' + sMtdAll.nfcr.toLocaleString('id-ID')
             }
         ];
         el.innerHTML = cards.map(c =>
             '<div class="col-xl-3 col-md-6">' +
-              '<div class="card casn-kpi-card ' + c.accent + '">' +
+              '<div class="card casn-kpi-card">' +
                 '<div class="card-body py-2 px-3">' +
-                  '<div class="casn-kpi-label mb-1">' + c.label + '</div>' +
+                  '<div class="casn-kpi-label mb-1"><span class="kpi-dot ' + c.dot + '"></span>' + c.label + '</div>' +
                   '<div class="casn-kpi-val mb-1">' + c.val + '</div>' +
                   '<div class="casn-kpi-sub">' + c.sub + '</div>' +
                 '</div>' +
@@ -564,39 +665,39 @@
         const el = document.getElementById('tktKpiStrip');
         if(!el) return;
         const queueDisplay = activeCasnQueue >= 1000
-            ? '1.000+ <span class="fs-6 text-danger">(' + activeCasnQueue.toLocaleString('id-ID') + ')</span>'
+            ? '1.000+ <span class="fs-6 fw-normal text-muted">(' + activeCasnQueue.toLocaleString('id-ID') + ')</span>'
             : activeCasnQueue.toLocaleString('id-ID');
         const cards = [
             {
+                dot: 'blue',
                 label: 'Tiket CASN Created (MTD)',
                 val: sMtdCasn.created.toLocaleString('id-ID'),
-                sub: 'Daily CASN: ' + sDailyCasn.created.toLocaleString('id-ID') + ' · All Produk MTD: ' + sMtdAll.created.toLocaleString('id-ID'),
-                accent: 'border-start border-4 border-primary'
+                sub: 'Daily: ' + sDailyCasn.created.toLocaleString('id-ID') + ' · Semua Produk MTD: ' + sMtdAll.created.toLocaleString('id-ID')
             },
             {
+                dot: 'green',
                 label: 'Tiket CASN Resolved (MTD)',
                 val: sMtdCasn.resolved.toLocaleString('id-ID'),
-                sub: 'Daily CASN: ' + sDailyCasn.resolved.toLocaleString('id-ID') + ' · All Produk MTD: ' + sMtdAll.resolved.toLocaleString('id-ID'),
-                accent: 'border-start border-4 border-success'
+                sub: 'Daily: ' + sDailyCasn.resolved.toLocaleString('id-ID') + ' · Semua Produk MTD: ' + sMtdAll.resolved.toLocaleString('id-ID')
             },
             {
+                dot: 'amber',
                 label: 'Tiket CASN Outstanding (MTD)',
                 val: sMtdCasn.outstanding.toLocaleString('id-ID'),
-                sub: 'Pending MTD: ' + sMtdCasn.pending.toLocaleString('id-ID') + ' · All Produk MTD: ' + sMtdAll.outstanding.toLocaleString('id-ID'),
-                accent: 'border-start border-4 border-warning'
+                sub: 'Pending MTD: ' + sMtdCasn.pending.toLocaleString('id-ID') + ' · Semua Produk MTD: ' + sMtdAll.outstanding.toLocaleString('id-ID')
             },
             {
+                dot: activeCasnQueue >= 1000 ? 'red' : 'neutral',
                 label: 'Antrian Tiket Helpdesk SSCASN',
                 val: queueDisplay,
-                sub: 'Antrian Aktif CASN (Pending: ' + activeCasnPending.toLocaleString('id-ID') + ')',
-                accent: activeCasnQueue >= 1000 ? 'border-start border-4 border-danger' : 'border-start border-4 border-info'
+                sub: 'Antrian Aktif CASN · Pending: ' + activeCasnPending.toLocaleString('id-ID')
             }
         ];
         el.innerHTML = cards.map(c =>
             '<div class="col-xl-3 col-md-6">' +
-              '<div class="card casn-kpi-card ' + c.accent + '">' +
+              '<div class="card casn-kpi-card">' +
                 '<div class="card-body py-2 px-3">' +
-                  '<div class="casn-kpi-label mb-1">' + c.label + '</div>' +
+                  '<div class="casn-kpi-label mb-1"><span class="kpi-dot ' + c.dot + '"></span>' + c.label + '</div>' +
                   '<div class="casn-kpi-val mb-1">' + c.val + '</div>' +
                   '<div class="casn-kpi-sub">' + c.sub + '</div>' +
                 '</div>' +
@@ -612,18 +713,11 @@
             clearTimeout(statusTimer);
             statusTimer = null;
         }
-        const iconMap = {
-            info: 'fa-info-circle',
-            success: 'fa-check-circle',
-            warning: 'fa-exclamation-triangle',
-            danger: 'fa-times-circle'
-        };
-        const icon = iconMap[type] || 'fa-info-circle';
         alertEl.style.display = 'flex';
         alertEl.style.opacity = '1';
         alertEl.className = 'alert alert-' + type;
         alertEl.innerHTML =
-            '<span><i class="fas ' + icon + ' me-2"></i>' + message + '</span>' +
+            '<span>' + message + '</span>' +
             '<button type="button" class="btn-close btn-close-white ms-2" style="font-size:0.65rem;" aria-label="Close"></button>';
         const closeBtn = alertEl.querySelector('.btn-close');
         if(closeBtn){
@@ -634,7 +728,7 @@
         if(autoHideMs > 0){
             statusTimer = setTimeout(() => {
                 alertEl.style.opacity = '0';
-                setTimeout(() => { alertEl.style.display = 'none'; }, 260);
+                setTimeout(() => { alertEl.style.display = 'none'; }, 220);
             }, autoHideMs);
         }
     }
@@ -649,10 +743,8 @@
         const adminGroup = document.getElementById('adminControlsGroup');
 
         if(roleBtn){
-            roleBtn.className = unlocked ? 'btn btn-outline-warning btn-sm fw-semibold' : 'btn btn-outline-secondary btn-sm';
-            roleBtn.innerHTML = unlocked
-                ? '<i class="fas fa-shield-alt me-1"></i>Admin'
-                : '<i class="fas fa-lock me-1"></i>Viewer';
+            roleBtn.className = unlocked ? 'btn btn-outline-warning btn-sm' : 'btn btn-outline-secondary btn-sm';
+            roleBtn.textContent = unlocked ? 'Mode: Admin' : 'Mode: Viewer';
             roleBtn.title = unlocked ? 'Klik untuk mengunci kembali ke Mode Viewer' : 'Klik untuk membuka akses Upload & Reset D1 dengan PIN';
         }
         if(adminGroup){
@@ -666,7 +758,7 @@
                 adminPin = '';
                 sessionStorage.removeItem(PIN_STORAGE_KEY);
                 updateRoleUI();
-                showStatus('info', 'Dashboard dikunci ke Mode Viewer (Read-Only).', 4500);
+                showStatus('info', 'Dashboard dikunci ke Mode Viewer.', 4000);
             }
             return false;
         }
@@ -683,10 +775,10 @@
                 adminPin = input.trim();
                 sessionStorage.setItem(PIN_STORAGE_KEY, adminPin);
                 updateRoleUI();
-                showStatus('success', 'Akses Admin aktif. Fitur Upload CSV/Excel & Reset D1 terbuka.', 5000);
+                showStatus('success', 'Akses Admin aktif.', 4000);
                 return true;
             } else {
-                showStatus('danger', 'PIN Admin tidak sesuai. Akses tetap dalam Mode Viewer.', 5000);
+                showStatus('danger', 'PIN Admin tidak sesuai.', 4500);
                 return false;
             }
         } catch (err) {
@@ -705,14 +797,14 @@
         const themeBtn = document.getElementById('themeToggleBtn');
 
         if(uploadLbl){
-            uploadLbl.innerHTML = '<i class="fas fa-upload me-1"></i>Upload';
+            uploadLbl.textContent = 'Upload Data';
             uploadLbl.title = 'Upload file CSV / Excel ke Cloudflare D1';
         }
         if(slaBtn){
-            slaBtn.innerHTML = '<i class="fas fa-sliders-h me-1"></i>Internal (Excl. Pending)';
+            slaBtn.textContent = 'SLA: Internal (Excl. Pending)';
         }
         if(themeBtn){
-            themeBtn.innerHTML = '<i class="fas fa-moon me-1"></i>Gelap';
+            themeBtn.textContent = 'Tema: Gelap';
         }
 
         const roleBtn = document.createElement('button');
@@ -728,15 +820,15 @@
         modeSel.className = 'form-select form-select-sm bg-dark text-light border-secondary';
         modeSel.title = 'Mode penyimpanan ke database Cloudflare D1 saat upload file';
         modeSel.innerHTML =
-            '<option value="replace">Mode: Replace</option>' +
-            '<option value="upsert">Mode: Upsert</option>';
+            '<option value="replace">Replace</option>' +
+            '<option value="upsert">Upsert</option>';
 
         const clearBtn = document.createElement('button');
         clearBtn.id = 'clearD1Btn';
         clearBtn.type = 'button';
         clearBtn.className = 'btn btn-outline-danger btn-sm';
         clearBtn.title = 'Kosongkan seluruh data di Cloudflare D1';
-        clearBtn.innerHTML = '<i class="fas fa-trash-alt me-1"></i>Reset';
+        clearBtn.textContent = 'Reset';
         clearBtn.addEventListener('click', async () => {
             if(!isAdminUnlocked()){
                 const ok = await promptAdminUnlock();
@@ -752,9 +844,9 @@
                 if(!res.ok || !json.ok) throw new Error(json.reason || ('HTTP ' + res.status));
                 allInteractions = [];
                 ticketsMap = new Map();
-                document.getElementById('metaBadge').textContent = 'Cloudflare D1 · 0 interaksi (0 N-FCR)';
-                document.getElementById('dailySourceBadge').textContent = 'Database Kosong · 0 interaksi · 0 tiket N-FCR';
-                showStatus('warning', 'Data di Cloudflare D1 berhasil dikosongkan (0).', 5000);
+                document.getElementById('metaBadge').textContent = 'Cloudflare D1 · 0 interaksi';
+                document.getElementById('dailySourceBadge').textContent = 'Database Kosong (0)';
+                showStatus('warning', 'Data di Cloudflare D1 berhasil dikosongkan.', 4500);
                 renderZeroReports();
                 renderActual();
             } catch (err) {
@@ -768,8 +860,8 @@
         const copyDashBtn = document.createElement('button');
         copyDashBtn.id = 'copyDashboardBtn';
         copyDashBtn.type = 'button';
-        copyDashBtn.className = 'btn btn-success btn-sm fw-semibold';
-        copyDashBtn.innerHTML = '<i class="fas fa-copy me-1"></i>Copy Report';
+        copyDashBtn.className = 'btn btn-primary btn-sm';
+        copyDashBtn.textContent = 'Copy Report';
         copyDashBtn.title = 'Salin teks report SSCASN & tangkapan layar dashboard';
         copyDashBtn.addEventListener('click', handleCopyDashboardAndSummary);
 
@@ -807,20 +899,20 @@
         const cardHtml =
             '<div class="card" id="channelBreakdownCard">' +
               '<div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">' +
-                '<span><i class="fas fa-headset me-1 text-info"></i> Distribusi Interaksi CASN (FCR / N-FCR) & Kecepatan Dispatch per Channel</span>' +
-                '<span class="badge bg-secondary bg-opacity-25 text-info border border-info border-opacity-25">Target Dispatch N-FCR Email & WhatsApp: ≤ 15 Menit</span>' +
+                '<span>Distribusi Interaksi CASN & Waktu Dispatch per Channel</span>' +
+                '<span class="small text-muted">Target Dispatch N-FCR Email & WhatsApp: ≤ 15 Menit</span>' +
               '</div>' +
-              '<div class="card-body p-2">' +
+              '<div class="card-body p-0">' +
                 '<div class="table-responsive">' +
                   '<table class="report-tbl">' +
                     '<thead><tr>' +
-                      '<th class="text-start ps-2">Channel</th>' +
-                      '<th class="text-end pe-2">Daily CASN</th>' +
-                      '<th class="text-end pe-2">Porsi (%)</th>' +
-                      '<th class="text-end pe-2">FCR</th>' +
-                      '<th class="text-end pe-2">N-FCR</th>' +
-                      '<th class="text-end pe-2">MTD CASN</th>' +
-                      '<th class="text-end pe-2">Avg Dispatch N-FCR</th>' +
+                      '<th class="text-start">Channel</th>' +
+                      '<th class="text-end">Daily CASN</th>' +
+                      '<th class="text-end">Porsi</th>' +
+                      '<th class="text-end">FCR</th>' +
+                      '<th class="text-end">N-FCR</th>' +
+                      '<th class="text-end">MTD CASN</th>' +
+                      '<th class="text-end">Avg Dispatch N-FCR</th>' +
                     '</tr></thead>' +
                     '<tbody id="channelBreakdownBody"></tbody>' +
                   '</table>' +
@@ -834,14 +926,12 @@
         const overviewEl = document.getElementById('overviewCards');
         if(!overviewEl || document.getElementById('atRiskRadarCard')) return;
         const radarHtml =
-            '<div class="card mb-4 border-start border-4 border-danger" id="atRiskRadarCard">' +
+            '<div class="card mb-4" id="atRiskRadarCard">' +
               '<div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">' +
-                '<span class="text-danger fw-bold"><i class="fas fa-exclamation-triangle me-1"></i> Radar Prioritas: Top 5 Tiket Aktif Mendekati / Melewati Breach SLA</span>' +
-                '<button type="button" class="btn btn-outline-danger btn-sm py-1 px-2" id="copyAtRiskBtn">' +
-                  '<i class="fas fa-copy me-1"></i> Copy ID Tiket Kritis' +
-                '</button>' +
+                '<span>Tiket Aktif Mendekati / Melewati Batas SLA (Top 5)</span>' +
+                '<button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" id="copyAtRiskBtn">Salin Daftar Tiket</button>' +
               '</div>' +
-              '<div class="card-body p-2">' +
+              '<div class="card-body p-0">' +
                 '<div class="table-responsive">' +
                   '<table class="sla-tbl">' +
                     '<thead><tr>' +
@@ -851,7 +941,7 @@
                       '<th>Priority</th>' +
                       '<th>Status</th>' +
                       '<th>Durasi Berjalan</th>' +
-                      '<th>Countdown Sisa SLA</th>' +
+                      '<th>Sisa Waktu SLA</th>' +
                     '</tr></thead>' +
                     '<tbody id="atRiskRadarBody"></tbody>' +
                   '</table>' +
@@ -863,7 +953,7 @@
         document.getElementById('copyAtRiskBtn').addEventListener('click', async () => {
             const rows = Array.from(document.querySelectorAll('#atRiskRadarBody tr[data-ticket-id]'));
             if(!rows.length) return;
-            const lines = ['*ALERT MONITORING SLA TIKET AKTIF (PRIORITAS TINDAK LANJUT)*'];
+            const lines = ['*MONITORING SLA TIKET AKTIF (PRIORITAS TINDAK LANJUT)*'];
             rows.forEach((tr, idx) => {
                 lines.push(`${idx + 1}. *${tr.dataset.ticketId}* [${tr.dataset.priority}] - ${tr.dataset.subject} (${tr.dataset.countdown})`);
             });
@@ -871,8 +961,8 @@
             const btn = document.getElementById('copyAtRiskBtn');
             try {
                 await navigator.clipboard.writeText(text);
-                btn.innerHTML = '<i class="fas fa-check me-1"></i> Tersalin!';
-                setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy me-1"></i> Copy ID Tiket Kritis'; }, 2000);
+                btn.textContent = 'Tersalin';
+                setTimeout(() => { btn.textContent = 'Salin Daftar Tiket'; }, 2000);
             } catch (e) {
                 alert(text);
             }
@@ -904,7 +994,7 @@
               '<div class="modal-dialog modal-xl modal-dialog-scrollable">' +
                 '<div class="modal-content bg-dark text-light border-secondary">' +
                   '<div class="modal-header border-secondary py-2">' +
-                    '<h6 class="modal-title fw-bold"><i class="fas fa-clipboard-check text-success me-2"></i>Report Monitoring SSCASN & Screenshot Dashboard</h6>' +
+                    '<h6 class="modal-title fw-semibold">Report Monitoring SSCASN & Screenshot Dashboard</h6>' +
                     '<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>' +
                   '</div>' +
                   '<div class="modal-body">' +
@@ -912,17 +1002,17 @@
                     '<div class="row g-3">' +
                       '<div class="col-lg-5">' +
                         '<div class="d-flex justify-content-between align-items-center mb-1">' +
-                          '<label class="small fw-bold text-uppercase text-info">Teks Report SSCASN (Siap Paste WA / Email)</label>' +
-                          '<button type="button" class="btn btn-primary btn-sm py-0 px-2" id="modalCopyTextBtn"><i class="fas fa-copy me-1"></i> Copy Teks</button>' +
+                          '<label class="small fw-semibold text-muted">Teks Report SSCASN (WhatsApp / Email)</label>' +
+                          '<button type="button" class="btn btn-primary btn-sm py-0 px-2" id="modalCopyTextBtn">Copy Teks</button>' +
                         '</div>' +
                         '<textarea id="modalSummaryTextarea" class="form-control form-control-sm font-monospace bg-black text-light border-secondary" rows="20" style="font-size:0.78rem;line-height:1.45;"></textarea>' +
                       '</div>' +
                       '<div class="col-lg-7">' +
                         '<div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-1">' +
-                          '<label class="small fw-bold text-uppercase text-info">Preview Screenshot Dashboard</label>' +
+                          '<label class="small fw-semibold text-muted">Preview Screenshot Dashboard</label>' +
                           '<div class="d-flex gap-1">' +
-                            '<button type="button" class="btn btn-success btn-sm py-0 px-2" id="modalCopyImgBtn"><i class="fas fa-image me-1"></i> Copy Gambar Dashboard</button>' +
-                            '<button type="button" class="btn btn-outline-light btn-sm py-0 px-2" id="modalDownloadImgBtn"><i class="fas fa-download me-1"></i> Download PNG</button>' +
+                            '<button type="button" class="btn btn-outline-light btn-sm py-0 px-2" id="modalCopyImgBtn">Copy Gambar</button>' +
+                            '<button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" id="modalDownloadImgBtn">Download PNG</button>' +
                           '</div>' +
                         '</div>' +
                         '<div id="modalImgPreviewWrap" class="border border-secondary rounded p-2 text-center bg-black" style="max-height:430px;overflow:auto;">' +
@@ -942,12 +1032,12 @@
             try {
                 await navigator.clipboard.writeText(txt);
                 toast.className = 'alert alert-success py-2 px-3 small mb-3';
-                toast.textContent = 'Teks report berhasil disalin ke clipboard!';
+                toast.textContent = 'Teks report disalin ke clipboard.';
             } catch (e) {
                 document.getElementById('modalSummaryTextarea').select();
                 document.execCommand('copy');
                 toast.className = 'alert alert-success py-2 px-3 small mb-3';
-                toast.textContent = 'Teks report berhasil disalin!';
+                toast.textContent = 'Teks report disalin.';
             }
         });
 
@@ -961,7 +1051,7 @@
             try {
                 await navigator.clipboard.write([new ClipboardItem({ 'image/png': lastCapturedBlob })]);
                 toast.className = 'alert alert-success py-2 px-3 small mb-3';
-                toast.textContent = 'Gambar dashboard berhasil disalin ke clipboard! Langsung Paste (Ctrl+V) di WhatsApp/Email.';
+                toast.textContent = 'Gambar disalin ke clipboard. Langsung Paste (Ctrl+V) di WhatsApp/Email.';
             } catch (err) {
                 toast.className = 'alert alert-warning py-2 px-3 small mb-3';
                 toast.textContent = 'Browser memblokir copy gambar langsung (' + err.message + '). Silakan klik Download PNG.';
@@ -1128,7 +1218,7 @@
 
         textarea.value = summaryText;
         lastCapturedBlob = null;
-        previewWrap.innerHTML = '<div class="text-muted small py-5"><i class="fas fa-spinner fa-spin me-2"></i>Mengambil gambar dashboard...</div>';
+        previewWrap.innerHTML = '<div class="text-muted small py-5">Menyiapkan tangkapan layar dashboard...</div>';
 
         if(window.bootstrap && window.bootstrap.Modal){
             const modal = window.bootstrap.Modal.getOrCreateInstance(document.getElementById('copySummaryModal'));
@@ -1151,14 +1241,14 @@
 
         toast.className = 'alert alert-success py-2 px-3 small mb-3';
         toast.textContent = textCopied
-            ? 'Teks report SSCASN otomatis tersalin ke Clipboard! Tinggal Paste (Ctrl+V) di WhatsApp/Email.'
-            : 'Report siap disalin. Klik "Copy Teks" atau "Copy Gambar Dashboard" di bawah.';
+            ? 'Teks report SSCASN tersalin ke clipboard. Tinggal Paste (Ctrl+V) di WhatsApp atau Email.'
+            : 'Report siap disalin. Klik tombol Copy Teks di bawah.';
 
         try {
             const h2c = await ensureHtml2Canvas();
             const targetEl = document.querySelector('#layoutSidenav_content main .container-fluid') || document.body;
             const canvas = await h2c(targetEl, {
-                backgroundColor: isDark ? '#07090d' : '#f4f6f9',
+                backgroundColor: isDark ? '#101113' : '#f5f6f8',
                 scale: 1.5,
                 useCORS: true,
                 logging: false
@@ -1309,8 +1399,8 @@
             if(!data.ok || !Array.isArray(data.records) || data.records.length === 0){
                 allInteractions = [];
                 ticketsMap = new Map();
-                document.getElementById('metaBadge').textContent = 'Cloudflare D1 · 0 interaksi (0 N-FCR)';
-                document.getElementById('dailySourceBadge').textContent = 'Database Kosong · 0 interaksi · 0 tiket N-FCR';
+                document.getElementById('metaBadge').textContent = 'Cloudflare D1 · 0 interaksi';
+                document.getElementById('dailySourceBadge').textContent = 'Database Kosong (0)';
                 renderZeroReports();
                 renderActual();
                 return;
@@ -1328,7 +1418,7 @@
             allInteractions = data.records;
             ticketsMap = escalatedOut;
             document.getElementById('metaBadge').textContent =
-                'Cloudflare D1 · ' + allInteractions.length.toLocaleString('id-ID') + ' interaksi (' + ticketsMap.size.toLocaleString('id-ID') + ' N-FCR)';
+                'D1 · ' + allInteractions.length.toLocaleString('id-ID') + ' interaksi (' + ticketsMap.size.toLocaleString('id-ID') + ' N-FCR)';
             renderDailyAndTicketingFromUploaded();
             renderActual();
         } catch (err) {
@@ -1349,11 +1439,9 @@
 
     function fillTopTable(tbodyId, items, sumTotal, sumPct){
         document.getElementById(tbodyId).innerHTML = (items.map((it, i) => {
-            const isTop5 = i < 5;
-            const rowCls = isTop5 ? ' class="top5-row"' : '';
-            const badge = isTop5 ? '<span class="top5-pill">TOP 5</span>' : '';
-            return '<tr' + rowCls + '><td class="num fw-bold">' + (i + 1) + '</td><td>' + badge + it[0] + '</td><td class="num fw-semibold">' + it[1] + '</td><td class="num">' + it[2] + '</td></tr>';
-        }).join('') || '<tr><td colspan="4" class="text-center text-muted py-2">Belum ada data pada interval ini (0).</td></tr>') +
+            const rankCls = i < 5 ? 'rank-num top5' : 'rank-num';
+            return '<tr><td class="num ' + rankCls + '">' + (i + 1) + '</td><td>' + it[0] + '</td><td class="num fw-semibold">' + it[1] + '</td><td class="num">' + it[2] + '</td></tr>';
+        }).join('') || '<tr><td colspan="4" class="text-center text-muted py-3">Belum ada data pada interval ini.</td></tr>') +
         '<tr class="total-row"><td colspan="2" class="text-center">Jumlah</td><td class="num">' + sumTotal + '</td><td class="num">' + sumPct + '</td></tr>';
     }
 
@@ -1366,7 +1454,7 @@
         const zeroTkt = { created: 0, resolved: 0, outstanding: 0, pending: 0 };
         renderTicketingKpiCards(zeroTkt, zeroTkt, zeroTkt, 0, 0);
 
-        document.getElementById('dailyDateSelect').innerHTML = '<option value="EMPTY">Belum ada data (0)</option>';
+        document.getElementById('dailyDateSelect').innerHTML = '<option value="EMPTY">Belum ada data</option>';
         document.getElementById('dailyHourStart').value = '0';
         document.getElementById('dailyHourEnd').value = '23';
 
@@ -1388,7 +1476,7 @@
         ).join('');
 
         document.getElementById('channelBreakdownBody').innerHTML =
-            '<tr><td colspan="7" class="text-center text-muted py-3">Belum ada data interaksi (0). Silakan upload file CSV/Excel melalui menu Admin.</td></tr>';
+            '<tr><td colspan="7" class="text-center text-muted py-3">Belum ada data interaksi. Upload file CSV/Excel melalui Mode Admin.</td></tr>';
 
         fillTopTable('topDailyCasnBody', [], 0, '0.00%');
         fillTopTable('topMtdCasnBody', [], 0, '0.00%');
@@ -1511,8 +1599,8 @@
             { label: 'Daily All Interaction (Semua Produk)', ...sDailyAllInt },
             { label: 'MTD All Interaction (Semua Produk)', ...sMtdAllInt },
         ].map(r =>
-            '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.total + '</td><td class="big-num text-success">' + r.fcr + '</td>' +
-            '<td class="big-num text-warning">' + r.nfcr + '</td><td class="big-num">' + r.info + '</td><td class="big-num">' + r.kel + '</td><td class="big-num">' + r.perm + '</td></tr>'
+            '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.total + '</td><td class="big-num">' + r.fcr + '</td>' +
+            '<td class="big-num">' + r.nfcr + '</td><td class="big-num">' + r.info + '</td><td class="big-num">' + r.kel + '</td><td class="big-num">' + r.perm + '</td></tr>'
         ).join('');
 
         const chMap = new Map();
@@ -1545,10 +1633,10 @@
                 if(g.escHrs.length){
                     const avgMins = (g.escHrs.reduce((s, h) => s + h, 0) / g.escHrs.length) * 60;
                     const badgeCls = avgMins > 15 ? 'bg-danger' : 'bg-success';
-                    avgCell = '<span class="badge ' + badgeCls + '">' + avgMins.toFixed(1) + ' Menit</span>';
+                    avgCell = '<span class="badge ' + badgeCls + '">' + avgMins.toFixed(1) + ' mnt</span>';
                 }
-                return '<tr><td class="row-title">' + ch + '</td><td class="num fw-bold">' + g.daily + '</td><td class="num">' + pct + '</td>' +
-                    '<td class="num text-success fw-semibold">' + g.fcr + '</td><td class="num text-warning fw-semibold">' + g.nfcr + '</td><td class="num">' + g.mtd + '</td><td class="num">' + avgCell + '</td></tr>';
+                return '<tr><td class="row-title">' + ch + '</td><td class="num fw-semibold">' + g.daily + '</td><td class="num">' + pct + '</td>' +
+                    '<td class="num">' + g.fcr + '</td><td class="num">' + g.nfcr + '</td><td class="num">' + g.mtd + '</td><td class="num">' + avgCell + '</td></tr>';
             }).join('') || '<tr><td colspan="7" class="text-center text-muted py-3">Tidak ada data channel CASN pada interval ini.</td></tr>';
 
         buildTop10(dailyCasnInt, 'topDailyCasnBody');
@@ -1594,7 +1682,7 @@
         renderTicketingKpiCards(sDailyCasnTkt, sMtdCasnTkt, sMtdAllTkt, activeCasnQueueList.length, activeCasnPendingCount);
 
         document.getElementById('dailySourceBadge').textContent =
-            'CASN MTD: ' + sMtdCasnInt.total.toLocaleString('id-ID') + ' · All MTD: ' + sMtdAllInt.total.toLocaleString('id-ID') +
+            'CASN MTD: ' + sMtdCasnInt.total.toLocaleString('id-ID') + ' · Semua Produk MTD: ' + sMtdAllInt.total.toLocaleString('id-ID') +
             ' · Antrian CASN: ' + (activeCasnQueueList.length >= 1000 ? '1000+' : activeCasnQueueList.length.toLocaleString('id-ID'));
 
         document.getElementById('tktSummaryBody').innerHTML = [
@@ -1603,8 +1691,8 @@
             { label: 'Daily All Ticket (Semua Produk)', ...sDailyAllTkt },
             { label: 'MTD All Ticket (Semua Produk)', ...sMtdAllTkt },
         ].map(r =>
-            '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.created + '</td><td class="big-num text-success">' + r.resolved + '</td>' +
-            '<td class="big-num text-warning">' + r.outstanding + '</td><td class="big-num">' + r.pending + '</td></tr>'
+            '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.created + '</td><td class="big-num">' + r.resolved + '</td>' +
+            '<td class="big-num">' + r.outstanding + '</td><td class="big-num">' + r.pending + '</td></tr>'
         ).join('');
 
         buildTop10(dailyCasnTkt, 'topDailyTktCasnBody');
@@ -1781,15 +1869,18 @@
         const reopenPct = scoped.length ? ((reopenCount / scoped.length) * 100).toFixed(1) + '%' : '0.0%';
 
         const kpiCards = [
-            { label: 'Total Tiket', value: scoped.length, bg: 'bg-primary' },
-            { label: 'SLA Compliance', value: compliancePct + (compliancePct !== '—' ? '%' : ''), bg: compliancePct !== '—' && +compliancePct >= 90 ? 'bg-success' : 'bg-warning text-dark' },
-            { label: 'Breach (Selesai)', value: breachFinished, bg: breachFinished > 0 ? 'bg-danger' : 'bg-success' },
-            { label: 'Outstanding Warning', value: outWarning, bg: outWarning > 0 ? 'bg-warning text-dark' : 'bg-success' },
-            { label: 'Outstanding Breach', value: outBreach, bg: outBreach > 0 ? 'bg-danger' : 'bg-success' },
-            { label: 'Reopen Rate', value: reopenPct + ' (' + reopenCount + ')', bg: reopenCount > 0 ? 'bg-warning text-dark' : 'bg-secondary' },
+            { label: 'Total Tiket', value: scoped.length.toLocaleString('id-ID'), dot: 'blue' },
+            { label: 'SLA Compliance', value: compliancePct + (compliancePct !== '—' ? '%' : ''), dot: compliancePct !== '—' && +compliancePct >= 90 ? 'green' : 'amber' },
+            { label: 'Breach (Selesai)', value: breachFinished.toLocaleString('id-ID'), dot: breachFinished > 0 ? 'red' : 'green' },
+            { label: 'Outstanding Warning', value: outWarning.toLocaleString('id-ID'), dot: outWarning > 0 ? 'amber' : 'green' },
+            { label: 'Outstanding Breach', value: outBreach.toLocaleString('id-ID'), dot: outBreach > 0 ? 'red' : 'green' },
+            { label: 'Reopen Rate', value: reopenPct + ' (' + reopenCount + ')', dot: reopenCount > 0 ? 'amber' : 'neutral' },
         ];
         document.getElementById('overviewCards').innerHTML = kpiCards.map(c =>
-            '<div class="col-xl-2 col-md-4 col-sm-6"><div class="card ' + c.bg + ' text-white mb-4"><div class="card-body py-3"><div class="small text-uppercase fw-bold opacity-75">' + c.label + '</div><div class="h4 mb-0 fw-bold mt-1">' + c.value + '</div></div></div></div>'
+            '<div class="col-xl-2 col-md-4 col-sm-6"><div class="card casn-kpi-card mb-3"><div class="card-body py-2 px-3">' +
+              '<div class="casn-kpi-label mb-1"><span class="kpi-dot ' + c.dot + '"></span>' + c.label + '</div>' +
+              '<div class="casn-kpi-val">' + c.value + '</div>' +
+            '</div></div></div>'
         ).join('');
 
         const atRisk = outstanding
@@ -1800,10 +1891,10 @@
 
         document.getElementById('atRiskRadarBody').innerHTML = atRisk.map(c => {
             const cdText = fmtCountdown(c.remHours);
-            const badgeCls = c.remHours < 0 ? 'bg-danger' : (c.remHours <= 2 ? 'bg-warning text-dark' : 'bg-info text-dark');
+            const badgeCls = c.remHours < 0 ? 'bg-danger' : (c.remHours <= 2 ? 'bg-warning' : 'bg-info');
             const subj = (c.rec.sj || c.rec.dsc || '—').replace(/"/g, '&quot;');
             return '<tr data-ticket-id="' + c.rec.id + '" data-priority="' + (c.rec.pr || '-') + '" data-subject="' + subj + '" data-countdown="' + cdText + '">' +
-                '<td class="font-monospace fw-bold">' + c.rec.id + '</td>' +
+                '<td class="font-monospace fw-semibold">' + c.rec.id + '</td>' +
                 '<td>' + (c.rec.sc || '—') + '</td>' +
                 '<td>' + (c.rec.sj || c.rec.dsc || '—') + '</td>' +
                 '<td><strong>' + (c.rec.pr || '—') + '</strong></td>' +
@@ -1831,7 +1922,7 @@
         const totPct = totFin ? ((totComp / totFin) * 100).toFixed(1) : '—';
         const totMttr = allValidHrs.length ? (allValidHrs.reduce((s, h) => s + h, 0) / allValidHrs.length).toFixed(2) + ' jam' : '—';
         document.getElementById('achievementBody').innerHTML = achRows +
-            '<tr class="fw-bold table-active"><td>Total</td><td>' + totFin + '</td><td>' + totComp + '</td><td>' + totBreach + '</td><td>' + totPct + (totPct !== '—' ? '%' : '') + '</td><td>' + totMttr + '</td></tr>';
+            '<tr class="fw-semibold total-row"><td>Total</td><td>' + totFin + '</td><td>' + totComp + '</td><td>' + totBreach + '</td><td>' + totPct + (totPct !== '—' ? '%' : '') + '</td><td>' + totMttr + '</td></tr>';
 
         const finWithHours = finished.filter(c => c.sla.hours !== null);
         document.getElementById('distTableHead').innerHTML = '<th>Priority</th>' + DURATION_BUCKETS.map(b => '<th>' + b.label + '</th>').join('') + '<th>Total</th>';
@@ -1842,17 +1933,17 @@
         }).join('');
         const distTotals = DURATION_BUCKETS.map(b => finWithHours.filter(c => bucketOf(c.sla.hours) === b.label).length);
         document.getElementById('distTableBody').innerHTML = distRows +
-            '<tr class="fw-bold table-active"><td>Total</td>' + distTotals.map(n => '<td>' + n + '</td>').join('') + '<td>' + finWithHours.length + '</td></tr>';
+            '<tr class="fw-semibold total-row"><td>Total</td>' + distTotals.map(n => '<td>' + n + '</td>').join('') + '<td>' + finWithHours.length + '</td></tr>';
 
         const escItems = scoped.map(c => ({ rec: c.rec, esc: computeEscalation(c.rec) })).filter(x => x.esc.hours !== null);
         const escAman = escItems.filter(x => x.esc.result === 'aman').length;
         const escBreach = escItems.filter(x => x.esc.result === 'breach').length;
         const escAvgMin = escItems.length ? (escItems.reduce((s, x) => s + x.esc.hours, 0) / escItems.length) * 60 : null;
         document.getElementById('escalationCards').innerHTML = [
-            { label: 'Rata-rata Dispatch N-FCR', value: escAvgMin !== null ? escAvgMin.toFixed(1) + ' mnt' : '—', cls: 'border-primary' },
-            { label: 'Dalam Target (≤15m)', value: escAman, cls: 'border-success' },
-            { label: 'Breach (>15m)', value: escBreach, cls: escBreach > 0 ? 'border-danger' : 'border-success' },
-        ].map(c => '<div class="col-4"><div class="card border-start border-4 ' + c.cls + ' mb-0"><div class="card-body p-2"><div class="small text-muted">' + c.label + '</div><div class="h5 mb-0 fw-bold">' + c.value + '</div></div></div></div>').join('');
+            { label: 'Rata-rata Dispatch N-FCR', value: escAvgMin !== null ? escAvgMin.toFixed(1) + ' mnt' : '—', dot: 'blue' },
+            { label: 'Dalam Target (≤15m)', value: escAman, dot: 'green' },
+            { label: 'Breach (>15m)', value: escBreach, dot: escBreach > 0 ? 'red' : 'green' },
+        ].map(c => '<div class="col-4"><div class="card casn-kpi-card mb-0"><div class="card-body p-2"><div class="casn-kpi-label"><span class="kpi-dot ' + c.dot + '"></span>' + c.label + '</div><div class="h5 mb-0 fw-semibold mt-1">' + c.value + '</div></div></div></div>').join('');
 
         const escByChannel = new Map();
         escItems.forEach(x => {
@@ -1880,7 +1971,7 @@
                 const avgRes = rValid.length ? (rValid.reduce((s, c) => s + c.sla.hours, 0) / rValid.length).toFixed(2) + ' Jam' : '-';
                 return '<tr><td><strong>' + pr + '</strong></td><td>15 menit</td><td>' + SLA_TARGET[pr] + ' jam</td><td>' + avgResp + '</td><td>' + avgRes + '</td></tr>';
             }).join('');
-            return '<div class="mb-3"><h6 class="fw-bold text-primary mb-2">' + prod + '</h6>' +
+            return '<div class="mb-3"><div class="small fw-semibold mb-2">' + prod + '</div>' +
                 '<div class="table-responsive"><table class="sla-tbl"><thead><tr><th>Priority</th><th>Target Respons</th><th>Target Resolusi</th><th>Rata-rata Respons Aktual</th><th>Rata-rata Resolusi Aktual</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
         }).join('');
 
@@ -1909,14 +2000,14 @@
             if(c.sla.finished){
                 badge = c.sla.result === 'aman' ? '<span class="badge bg-success">Achieved</span>' : '<span class="badge bg-danger">Not Achieved</span>';
             } else if(c.sla.result !== 'unknown'){
-                const cls = c.sla.result === 'breach' ? 'bg-danger' : (c.sla.result === 'warning' ? 'bg-warning text-dark' : 'bg-success');
+                const cls = c.sla.result === 'breach' ? 'bg-danger' : (c.sla.result === 'warning' ? 'bg-warning' : 'bg-success');
                 const lbl = c.sla.result === 'breach' ? 'Outstanding — Breach' : (c.sla.result === 'warning' ? 'Outstanding — Warning' : 'Outstanding — Aman');
                 badge = '<span class="badge ' + cls + '">' + lbl + '</span>';
             }
             const pendingBadge = c.sla.pendingExcluded ? '<span class="pending-tag" title="Pending ' + c.sla.pendingHours.toFixed(2) + ' jam">pending</span>' : '';
-            const exclCls = c.sla.resultExclude === 'breach' ? ' class="text-danger fw-bold"' : '';
-            const inclCls = c.sla.resultInclude === 'breach' ? ' class="text-danger fw-bold"' : '';
-            return '<tr><td class="font-monospace fw-bold">' + c.rec.id + '</td><td>' + (c.rec.sc || '—') + '</td><td>' + (c.rec.sj || '—') + '</td><td>' + (c.rec.dsc || '—') + '</td>' +
+            const exclCls = c.sla.resultExclude === 'breach' ? ' class="text-danger fw-semibold"' : '';
+            const inclCls = c.sla.resultInclude === 'breach' ? ' class="text-danger fw-semibold"' : '';
+            return '<tr><td class="font-monospace fw-semibold">' + c.rec.id + '</td><td>' + (c.rec.sc || '—') + '</td><td>' + (c.rec.sj || '—') + '</td><td>' + (c.rec.dsc || '—') + '</td>' +
                 '<td><strong>' + (c.rec.pr || '—') + '</strong></td><td>' + (c.rec.st || '—') + '</td>' +
                 '<td' + exclCls + '>' + fmtHours(c.sla.hoursExclude) + pendingBadge + '</td>' +
                 '<td' + inclCls + '>' + fmtHours(c.sla.hoursInclude) + '</td><td>' + badge + '</td></tr>';
@@ -1961,12 +2052,16 @@
         const recAgents = Math.ceil((vol * effAht) / (480 * 0.88));
 
         document.getElementById('simCards').innerHTML = [
-            { label: 'Kapasitas Layan / Hari', value: capInteractions.toLocaleString('id-ID'), hint: 'AHT: ' + effAht.toFixed(1) + 'm · Backlog: ' + backlog, bg: backlog === 0 ? 'bg-success' : 'bg-warning text-dark' },
-            { label: 'Proyeksi Tiket N-FCR', value: estTickets + ' tiket', hint: highSev ? 'Critical/High (8j–12j)' : 'Medium Standar (24j)', bg: 'bg-primary' },
-            { label: 'Proyeksi SLA E-Meterai', value: emetSla.toFixed(1) + '%', hint: emetSla >= 85 ? 'Terkendali (≥85%)' : 'Risiko Breach Tinggi!', bg: emetSla >= 85 ? 'bg-success' : (emetSla >= 70 ? 'bg-warning text-dark' : 'bg-danger') },
-            { label: 'Proyeksi SLA Perisai', value: perisaiSla.toFixed(1) + '%', hint: useSegment ? 'VIP Terisolasi' : 'Tercampur! Ideal: ' + recAgents + ' agt', bg: perisaiSla >= 90 ? 'bg-success' : 'bg-warning text-dark' }
+            { label: 'Kapasitas Layan / Hari', value: capInteractions.toLocaleString('id-ID'), hint: 'AHT: ' + effAht.toFixed(1) + 'm · Backlog: ' + backlog, dot: backlog === 0 ? 'green' : 'amber' },
+            { label: 'Proyeksi Tiket N-FCR', value: estTickets + ' tiket', hint: highSev ? 'Critical/High (8j–12j)' : 'Medium Standar (24j)', dot: 'blue' },
+            { label: 'Proyeksi SLA E-Meterai', value: emetSla.toFixed(1) + '%', hint: emetSla >= 85 ? 'Terkendali (≥85%)' : 'Risiko Breach Tinggi', dot: emetSla >= 85 ? 'green' : (emetSla >= 70 ? 'amber' : 'red') },
+            { label: 'Proyeksi SLA Perisai', value: perisaiSla.toFixed(1) + '%', hint: useSegment ? 'VIP Terisolasi' : 'Tercampur (Ideal: ' + recAgents + ' agt)', dot: perisaiSla >= 90 ? 'green' : 'amber' }
         ].map(c =>
-            '<div class="col-md-3 col-sm-6"><div class="card ' + c.bg + ' text-white mb-4"><div class="card-body py-3"><div class="small text-uppercase fw-bold opacity-75">' + c.label + '</div><div class="h4 mb-1 fw-bold">' + c.value + '</div><div class="small opacity-75">' + c.hint + '</div></div></div></div>'
+            '<div class="col-md-3 col-sm-6"><div class="card casn-kpi-card mb-3"><div class="card-body py-2 px-3">' +
+              '<div class="casn-kpi-label mb-1"><span class="kpi-dot ' + c.dot + '"></span>' + c.label + '</div>' +
+              '<div class="casn-kpi-val mb-1">' + c.value + '</div>' +
+              '<div class="casn-kpi-sub">' + c.hint + '</div>' +
+            '</div></div></div>'
         ).join('');
     }
 
@@ -1990,7 +2085,7 @@
 
         wrap.innerHTML =
             '<div class="table-responsive"><table class="report-tbl">' +
-            '<thead><tr><th class="text-start ps-2">Produk / Tahun</th>' + months.map(m => '<th class="text-end pe-2">' + m + '</th>').join('') + '</tr></thead>' +
+            '<thead><tr><th class="text-start">Produk / Tahun</th>' + months.map(m => '<th class="text-end">' + m + '</th>').join('') + '</tr></thead>' +
             '<tbody>' +
             rowsData.map(r => makeRowHtml('E-Meterai ' + r.year, r.emet) + makeRowHtml('Perisai ' + r.year, r.perisai)).join('') +
             '</tbody></table></div>';
@@ -2044,8 +2139,8 @@
             try {
                 await syncToD1(parsed.interactions, syncMode);
                 document.getElementById('metaBadge').textContent =
-                    'Cloudflare D1 · ' + allInteractions.length.toLocaleString('id-ID') + ' interaksi (' + ticketsMap.size.toLocaleString('id-ID') + ' N-FCR)';
-                showStatus('success', 'Berhasil memuat & menyimpan ' + parsed.interactions.length.toLocaleString('id-ID') + ' interaksi ke Cloudflare D1.', 6000);
+                    'D1 · ' + allInteractions.length.toLocaleString('id-ID') + ' interaksi (' + ticketsMap.size.toLocaleString('id-ID') + ' N-FCR)';
+                showStatus('success', 'Berhasil memuat & menyimpan ' + parsed.interactions.length.toLocaleString('id-ID') + ' interaksi ke Cloudflare D1.', 5000);
             } catch (syncErr) {
                 document.getElementById('metaBadge').textContent =
                     file.name + ' (Lokal) · ' + allInteractions.length + ' interaksi (' + ticketsMap.size + ' N-FCR)';
@@ -2065,9 +2160,9 @@
 
     document.getElementById('slaViewToggle').addEventListener('click', () => {
         slaViewMode = slaViewMode === 'exclude' ? 'include' : 'exclude';
-        document.getElementById('slaViewToggle').innerHTML = slaViewMode === 'include'
-            ? '<i class="fas fa-sliders-h me-1"></i>User (Incl. Pending)'
-            : '<i class="fas fa-sliders-h me-1"></i>Internal (Excl. Pending)';
+        document.getElementById('slaViewToggle').textContent = slaViewMode === 'include'
+            ? 'SLA: User (Incl. Pending)'
+            : 'SLA: Internal (Excl. Pending)';
         if(ticketsMap.size > 0) renderActual();
     });
 
@@ -2079,13 +2174,13 @@
             document.documentElement.setAttribute('data-bs-theme', 'dark');
             sidenav.classList.remove('sb-sidenav-light');
             sidenav.classList.add('sb-sidenav-dark');
-            document.getElementById('themeToggleBtn').innerHTML = '<i class="fas fa-moon me-1"></i>Gelap';
+            document.getElementById('themeToggleBtn').textContent = 'Tema: Gelap';
         } else {
             document.documentElement.classList.remove('dark-mode');
             document.documentElement.removeAttribute('data-bs-theme');
             sidenav.classList.remove('sb-sidenav-dark');
             sidenav.classList.add('sb-sidenav-light');
-            document.getElementById('themeToggleBtn').innerHTML = '<i class="fas fa-sun me-1"></i>Terang';
+            document.getElementById('themeToggleBtn').textContent = 'Tema: Terang';
         }
     });
 

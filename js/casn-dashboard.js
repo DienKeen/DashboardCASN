@@ -11,6 +11,7 @@
     const PIN_STORAGE_KEY = 'casn_admin_pin_session';
     const AGENT_MAP_STORAGE_KEY = 'casn_agent_map_v1';
     const AGENT_COL_CANDIDATES = [
+        'created_by_name', 'create_by_name', 'created by name', 'create by name',
         'agent_name', 'agent', 'nama_agent', 'created_by', 'creator_name',
         'pic', 'handled_by', 'operator', 'username', 'user_name', 'owner',
         'assigned_to', 'first_response_by'
@@ -709,9 +710,9 @@
         if(!hasAnyNamedAgent && scopedRecords.length > 0){
             noticeEl.style.display = 'block';
             noticeEl.innerHTML =
-                '<strong>Kolom nama agent belum terdeteksi pada file data.</strong> ' +
-                'Sistem membaca kolom <code>agent_name</code>, <code>agent</code>, <code>nama_agent</code>, <code>created_by</code>, <code>pic</code>, atau <code>username</code>. ' +
-                'Seluruh interaksi saat ini dikelompokkan ke <em>(Tanpa Nama Agent)</em>.';
+                '<strong>Kolom <code>created_by_name</code> belum terdeteksi pada data tersimpan.</strong> ' +
+                'Silakan upload ulang file raw melalui Mode Admin (mode Replace) agar nama agent terbaca. ' +
+                'Saat ini seluruh interaksi dikelompokkan ke <em>(Tanpa Nama Agent)</em>.';
         } else {
             noticeEl.style.display = 'none';
         }
@@ -1816,7 +1817,7 @@
     function extractAgentName(row, colIndex){
         for(const cand of AGENT_COL_CANDIDATES){
             if(colIndex[cand] !== undefined){
-                const val = safeStr(row[colIndex[cand]]);
+                const val = safeStr(row[colIndex[cand]]).replace(/\s+/g, ' ');
                 if(val && val !== '-') return val;
             }
         }
@@ -1836,7 +1837,10 @@
 
         const header = aoa[headerIdx];
         const colIndex = {};
-        header.forEach((h, i) => { const k = safeStr(h).toLowerCase(); if(k) colIndex[k] = i; });
+        header.forEach((h, i) => {
+            const k = safeStr(h).toLowerCase().replace(/\s+/g, ' ');
+            if(k) colIndex[k] = i;
+        });
         const col = (row, name) => { const idx = colIndex[name]; return idx !== undefined ? row[idx] : null; };
 
         const escalatedOut = new Map();
@@ -1933,7 +1937,7 @@
             let skippedNotEscalated = 0;
             data.records.forEach(r => {
                 if(!r || !r.id) return;
-                r.agent = safeStr(r.agent || r.agent_name || r.created_by || r.pic || localAgentMap[r.id] || '');
+                r.agent = safeStr(r.agent || r.created_by_name || r.agent_name || localAgentMap[r.id] || '').replace(/\s+/g, ' ');
                 if(!r.isEscalated) skippedNotEscalated++;
                 else escalatedOut.set(r.id, r);
             });

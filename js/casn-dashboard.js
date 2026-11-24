@@ -45,7 +45,7 @@
     let adminPin = sessionStorage.getItem(PIN_STORAGE_KEY) || '';
     let statusTimer = null;
 
-    let agentProductScope = 'SHARED';
+    let agentProductScope = 'ALL';
     let selectedAgentNames = new Set();
     let agentFilterSearch = '';
     let lastAvailableAgents = [];
@@ -235,19 +235,20 @@
                 border-radius: 6px !important;
                 margin-bottom: 1rem !important;
                 box-shadow: none !important;
+                overflow: visible !important;
             }
             #sharedDailyControls .card-body {
                 display: flex !important;
                 flex-wrap: wrap !important;
                 align-items: center !important;
                 justify-content: flex-start !important;
-                gap: 0.45rem 0.65rem !important;
+                gap: 0.5rem 0.7rem !important;
                 padding: 0.5rem 0.8rem !important;
                 overflow: visible !important;
             }
             #sharedDailyControls label,
             #sharedDailyControls .fw-bold,
-            #sharedDailyControls span.ctrl-lbl {
+            #sharedDailyControls > .card-body > span {
                 font-size: 0.74rem !important;
                 font-weight: 500 !important;
                 color: var(--ops-muted);
@@ -438,7 +439,7 @@
             }
             .agent-toolbar-ctrl {
                 font-size: 0.74rem !important;
-                height: 28px !important;
+                height: 27px !important;
                 padding: 0.18rem 0.55rem !important;
                 border-radius: 4px !important;
                 background-color: var(--ops-surface-subtle) !important;
@@ -449,7 +450,7 @@
                 padding-right: 1.55rem !important;
             }
 
-            /* Multi-select Checkbox Dropdown (Agent & Produk) */
+            /* Multi-select Checkbox Dropdown */
             .agent-multiselect-wrap {
                 position: relative;
                 display: inline-block;
@@ -461,6 +462,7 @@
                 gap: 0.5rem;
                 min-width: 175px;
                 max-width: 260px;
+                height: 28px !important;
                 cursor: pointer;
                 text-align: left;
             }
@@ -471,25 +473,25 @@
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
+                font-size: 0.76rem !important;
+                color: var(--ops-text) !important;
             }
             .agent-multiselect-menu {
                 position: absolute;
                 right: 0;
                 top: calc(100% + 4px);
                 z-index: 1060;
-                min-width: 260px;
-                max-width: 320px;
+                min-width: 255px;
+                max-width: 310px;
                 background-color: var(--ops-surface);
                 border: 1px solid var(--ops-border);
                 border-radius: 6px;
-                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.38);
                 padding: 0.45rem;
                 display: none;
             }
-            .agent-multiselect-menu.floating-fixed {
-                position: fixed;
+            .agent-multiselect-menu.align-left {
                 right: auto;
-                top: 0;
                 left: 0;
             }
             .agent-multiselect-menu.open {
@@ -533,22 +535,22 @@
                 text-decoration: underline;
             }
             .agent-multiselect-list {
-                max-height: 230px;
+                max-height: 235px;
                 overflow-y: auto;
                 display: flex;
                 flex-direction: column;
                 gap: 1px;
             }
             .agent-multiselect-item {
-                display: flex;
+                display: flex !important;
                 align-items: center;
                 gap: 0.45rem;
-                padding: 0.32rem 0.42rem;
+                padding: 0.3rem 0.4rem;
                 border-radius: 4px;
                 cursor: pointer;
-                font-size: 0.75rem;
-                font-weight: 400;
-                color: var(--ops-text);
+                font-size: 0.75rem !important;
+                font-weight: 400 !important;
+                color: var(--ops-text) !important;
                 margin: 0;
                 user-select: none;
             }
@@ -559,6 +561,7 @@
                 margin: 0;
                 cursor: pointer;
                 flex-shrink: 0;
+                accent-color: var(--ops-accent);
             }
             .agent-multiselect-item-name {
                 flex: 1;
@@ -687,12 +690,12 @@
                           '<div id="agentCheckboxList" class="agent-multiselect-list"></div>' +
                         '</div>' +
                       '</div>' +
-                      '<select id="agentScopeSelect" class="form-select form-select-sm agent-toolbar-ctrl" style="width:auto;" title="Scope Produk">' +
-                        '<option value="SHARED">Produk: Semua Produk</option>' +
-                        '<option value="CASN">Khusus Tag CASN</option>' +
+                      '<select id="agentScopeSelect" class="form-select form-select-sm agent-toolbar-ctrl" style="width:auto;" title="Scope Produk Agent">' +
+                        '<option value="ALL">Sesuai Filter Produk</option>' +
+                        '<option value="CASN">CASN (Tag CASN)</option>' +
                       '</select>' +
-                      '<button type="button" id="copyAgentReportBtn" class="btn btn-outline-primary btn-sm py-0 px-2" style="height:28px;font-size:0.74rem;">Copy Rekap</button>' +
-                      '<button type="button" id="exportAgentCsvBtn" class="btn btn-outline-secondary btn-sm py-0 px-2" style="height:28px;font-size:0.74rem;">Export CSV</button>' +
+                      '<button type="button" id="copyAgentReportBtn" class="btn btn-outline-primary btn-sm py-0 px-2" style="height:27px;font-size:0.74rem;">Copy Rekap</button>' +
+                      '<button type="button" id="exportAgentCsvBtn" class="btn btn-outline-secondary btn-sm py-0 px-2" style="height:27px;font-size:0.74rem;">Export CSV</button>' +
                     '</div>' +
                   '</div>' +
                   '<div class="card-body p-0">' +
@@ -920,21 +923,6 @@
         });
     }
 
-    function positionSharedProductMenu(){
-        const btn = document.getElementById('sharedProductFilterBtn');
-        const menu = document.getElementById('sharedProductFilterMenu');
-        if(!btn || !menu || !menu.classList.contains('open')) return;
-        const rect = btn.getBoundingClientRect();
-        const menuWidth = Math.max(265, rect.width);
-        let left = rect.left;
-        if(left + menuWidth > window.innerWidth - 10){
-            left = Math.max(10, window.innerWidth - menuWidth - 10);
-        }
-        menu.style.left = left + 'px';
-        menu.style.top = (rect.bottom + 4) + 'px';
-        menu.style.minWidth = menuWidth + 'px';
-    }
-
     function setupSharedSubcategoryFilter(){
         const scopeSel = document.getElementById('dailyCasnScope');
         if(!scopeSel) return;
@@ -951,41 +939,36 @@
             const sep = document.createElement('span');
             sep.className = 'shared-filter-sep';
 
-            const lbl = document.createElement('span');
-            lbl.className = 'ctrl-lbl';
+            const lbl = document.createElement('label');
             lbl.textContent = 'Produk:';
 
             const wrap = document.createElement('div');
             wrap.id = 'sharedProductFilterWrap';
             wrap.className = 'agent-multiselect-wrap';
-
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.id = 'sharedProductFilterBtn';
-            btn.className = 'agent-toolbar-ctrl agent-multiselect-btn';
-            btn.title = 'Ceklist satu atau beberapa produk (kolom raw subcategory)';
-            btn.innerHTML =
-                '<span id="sharedProductFilterBtnText" class="agent-multiselect-btn-text">Semua Produk</span>' +
-                '<span style="font-size:0.65rem;opacity:0.75;">&#9662;</span>';
-
-            wrap.appendChild(btn);
-
-            const menu = document.createElement('div');
-            menu.id = 'sharedProductFilterMenu';
-            menu.className = 'agent-multiselect-menu floating-fixed';
-            menu.innerHTML =
-                '<input type="text" id="sharedProductSearchInput" class="agent-multiselect-search" placeholder="Cari produk..." autocomplete="off" />' +
-                '<div class="agent-multiselect-actions">' +
-                  '<div class="d-flex gap-2">' +
-                    '<button type="button" id="sharedProductSelectAllBtn">Pilih Semua</button>' +
-                    '<span>·</span>' +
-                    '<button type="button" id="sharedProductClearBtn">Reset</button>' +
+            wrap.innerHTML =
+                '<button type="button" id="sharedProductFilterBtn" class="agent-toolbar-ctrl agent-multiselect-btn" title="Ceklist satu atau beberapa produk (kolom raw subcategory)">' +
+                  '<span id="sharedProductFilterBtnText" class="agent-multiselect-btn-text">Semua Produk</span>' +
+                  '<span style="font-size:0.65rem;opacity:0.75;">&#9662;</span>' +
+                '</button>' +
+                '<div id="sharedProductFilterMenu" class="agent-multiselect-menu align-left">' +
+                  '<input type="text" id="sharedProductSearchInput" class="agent-multiselect-search" placeholder="Cari produk..." autocomplete="off" />' +
+                  '<div class="agent-multiselect-actions">' +
+                    '<div class="d-flex gap-2">' +
+                      '<button type="button" id="sharedProductSelectAllBtn">Pilih Semua</button>' +
+                      '<span>·</span>' +
+                      '<button type="button" id="sharedProductClearAllBtn">Reset</button>' +
+                    '</div>' +
+                    '<span id="sharedProductSelectedCountLbl">Semua</span>' +
                   '</div>' +
-                  '<span id="sharedProductCountLbl">Semua</span>' +
-                '</div>' +
-                '<div id="sharedProductCheckboxList" class="agent-multiselect-list"></div>';
-            document.body.appendChild(menu);
+                  '<div id="sharedProductCheckboxList" class="agent-multiselect-list"></div>' +
+                '</div>';
 
+            scopeSel.parentElement.insertBefore(sep, scopeSel);
+            scopeSel.parentElement.insertBefore(lbl, scopeSel);
+            scopeSel.parentElement.insertBefore(wrap, scopeSel);
+
+            const btn = document.getElementById('sharedProductFilterBtn');
+            const menu = document.getElementById('sharedProductFilterMenu');
             const searchInput = document.getElementById('sharedProductSearchInput');
 
             btn.addEventListener('click', (e) => {
@@ -993,7 +976,6 @@
                 const willOpen = !menu.classList.contains('open');
                 menu.classList.toggle('open', willOpen);
                 if(willOpen){
-                    positionSharedProductMenu();
                     setTimeout(() => searchInput.focus(), 20);
                 }
             });
@@ -1003,7 +985,7 @@
             });
 
             document.addEventListener('click', (e) => {
-                if(!wrap.contains(e.target) && !menu.contains(e.target)){
+                if(wrap && !wrap.contains(e.target)){
                     menu.classList.remove('open');
                 }
             });
@@ -1013,9 +995,6 @@
                     menu.classList.remove('open');
                 }
             });
-
-            window.addEventListener('resize', positionSharedProductMenu);
-            window.addEventListener('scroll', positionSharedProductMenu, true);
 
             searchInput.addEventListener('input', (e) => {
                 sharedProductSearch = e.target.value || '';
@@ -1031,70 +1010,51 @@
                 onSharedProductsChanged();
             });
 
-            document.getElementById('sharedProductClearBtn').addEventListener('click', () => {
+            document.getElementById('sharedProductClearAllBtn').addEventListener('click', () => {
                 selectedSharedProducts.clear();
                 sharedProductSearch = '';
                 searchInput.value = '';
                 onSharedProductsChanged();
             });
-
-            scopeSel.parentElement.insertBefore(sep, scopeSel);
-            scopeSel.parentElement.insertBefore(lbl, scopeSel);
-            scopeSel.parentElement.insertBefore(wrap, scopeSel);
         }
     }
 
     function onSharedProductsChanged(){
-        agentProductScope = 'SHARED';
-        syncAgentScopeSelectLabel();
+        agentProductScope = 'ALL';
+        const agSel = document.getElementById('agentScopeSelect');
+        if(agSel) agSel.value = 'ALL';
+
         renderSharedProductCheckboxDropdown();
         if(allInteractions.length) renderDailyAndTicketingFromUploaded();
         else renderAgentProductivity();
-    }
-
-    function getSharedProductDisplayLabel(){
-        if(selectedSharedProducts.size === 0) return 'Semua Produk';
-        const arr = Array.from(selectedSharedProducts);
-        if(arr.length === 1) return arr[0];
-        if(arr.length === 2) return arr.join(', ');
-        return arr.length + ' Produk Terpilih';
-    }
-
-    function syncAgentScopeSelectLabel(){
-        const agSel = document.getElementById('agentScopeSelect');
-        if(!agSel) return;
-        const optShared = agSel.querySelector('option[value="SHARED"]');
-        if(optShared){
-            optShared.textContent = 'Produk: ' + getSharedProductDisplayLabel();
-        }
-        agSel.value = agentProductScope;
     }
 
     function renderSharedProductCheckboxDropdown(){
         const listEl = document.getElementById('sharedProductCheckboxList');
         const btnEl = document.getElementById('sharedProductFilterBtn');
         const btnTextEl = document.getElementById('sharedProductFilterBtnText');
-        const countLblEl = document.getElementById('sharedProductCountLbl');
+        const countLblEl = document.getElementById('sharedProductSelectedCountLbl');
         if(!listEl || !btnEl || !btnTextEl) return;
 
         const totalCount = availableSubcategoryProducts.length;
         const selCount = selectedSharedProducts.size;
-        const selNames = Array.from(selectedSharedProducts);
 
         if(selCount === 0){
             btnEl.classList.remove('has-selection');
-            btnEl.title = 'Ceklist satu atau beberapa produk (kolom raw subcategory)';
-            btnTextEl.textContent = totalCount ? 'Semua Produk (' + totalCount + ')' : 'Semua Produk';
+            btnTextEl.textContent = 'Semua Produk';
+            btnEl.title = 'Semua Produk (' + totalCount + ' subcategory)';
             if(countLblEl) countLblEl.textContent = 'Semua';
         } else if(selCount === 1){
+            const onlyProd = Array.from(selectedSharedProducts)[0];
             btnEl.classList.add('has-selection');
-            btnEl.title = 'Produk: ' + selNames[0];
-            btnTextEl.textContent = selNames[0];
+            btnTextEl.textContent = onlyProd;
+            btnEl.title = onlyProd;
             if(countLblEl) countLblEl.textContent = '1 / ' + totalCount;
         } else {
+            const joined = Array.from(selectedSharedProducts).join(', ');
             btnEl.classList.add('has-selection');
-            btnEl.title = 'Produk (' + selCount + '): ' + selNames.join(', ');
-            btnTextEl.textContent = selCount <= 2 ? selNames.join(', ') : (selCount + ' Produk dipilih');
+            btnTextEl.textContent = selCount + ' Produk dipilih';
+            btnEl.title = joined;
             if(countLblEl) countLblEl.textContent = selCount + ' / ' + totalCount;
         }
 
@@ -1109,7 +1069,7 @@
             : availableSubcategoryProducts;
 
         if(!filtered.length){
-            listEl.innerHTML = '<div class="text-center text-muted small py-2">Produk tidak cocok</div>';
+            listEl.innerHTML = '<div class="text-center text-muted small py-2">Produk tidak ditemukan</div>';
             return;
         }
 
@@ -1146,17 +1106,24 @@
             .sort((a, b) => a.name.localeCompare(b.name));
 
         const validSet = new Set(availableSubcategoryProducts.map(p => p.name));
-        for(const nm of Array.from(selectedSharedProducts)){
-            if(!validSet.has(nm)) selectedSharedProducts.delete(nm);
+        for(const p of Array.from(selectedSharedProducts)){
+            if(!validSet.has(p)) selectedSharedProducts.delete(p);
         }
 
         renderSharedProductCheckboxDropdown();
-        syncAgentScopeSelectLabel();
     }
 
     function matchesSharedProduct(r){
         if(selectedSharedProducts.size === 0) return true;
         return selectedSharedProducts.has(safeStr(r.sc || r.subCategory));
+    }
+
+    function getSharedProductLabel(){
+        if(selectedSharedProducts.size === 0) return 'Semua Produk';
+        const arr = Array.from(selectedSharedProducts);
+        if(arr.length === 1) return arr[0];
+        if(arr.length === 2) return arr[0] + ' + ' + arr[1];
+        return arr.length + ' Produk Terpilih';
     }
 
     function isCasnRecord(r){
@@ -1202,7 +1169,6 @@
 
     function renderAgentProductivity(){
         ensureAgentNavigationAndSection();
-        syncAgentScopeSelectLabel();
         const kpiEl = document.getElementById('agentKpiStrip');
         const bodyEl = document.getElementById('agentProdBody');
         const chBodyEl = document.getElementById('agentChannelBody');
@@ -1255,12 +1221,9 @@
         document.getElementById('thGrpMonthly').textContent = 'Per Bulan / MTD (' + monthlyLabel + ')';
         capEl.textContent = '· Jam Daily: ' + hStart + ':00–' + hEnd + ':59 WIB';
 
-        let scopedRecords = allInteractions;
-        if(agentProductScope === 'CASN'){
-            scopedRecords = allInteractions.filter(r => isCasnRecord(r));
-        } else {
-            scopedRecords = allInteractions.filter(r => matchesSharedProduct(r));
-        }
+        const scopedRecords = agentProductScope === 'CASN'
+            ? allInteractions.filter(r => isCasnRecord(r))
+            : allInteractions.filter(r => matchesSharedProduct(r));
 
         const hasAnyNamedAgent = scopedRecords.some(r => Boolean((r.agent || '').trim()));
         if(!hasAnyNamedAgent && scopedRecords.length > 0){
@@ -1524,7 +1487,7 @@
         const [ay, am, ad] = activeDate.split('-').map(Number);
         const indoDate = new Date(ay, am - 1, ad).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
         const scopeLbl = agentProductScope === 'CASN'
-            ? 'Khusus Tag CASN'
+            ? 'CASN (Tag CASN)'
             : (selectedSharedProducts.size === 0 ? 'Semua Produk' : Array.from(selectedSharedProducts).join(', '));
         const agentLbl = selectedAgentNames.size === 0
             ? 'Semua Agent'
@@ -1929,7 +1892,7 @@
                 ticketsMap = new Map();
                 clearLocalAgentMap();
                 selectedSharedProducts.clear();
-                agentProductScope = 'SHARED';
+                agentProductScope = 'ALL';
                 populateSubcategoryProductOptions();
                 document.getElementById('metaBadge').textContent = 'Cloudflare D1 · 0 interaksi';
                 document.getElementById('dailySourceBadge').textContent = 'Database Kosong (0)';
@@ -2162,10 +2125,9 @@
         const selDateEl = document.getElementById('dailyDateSelect');
         const hStart = document.getElementById('dailyHourStart').value || '0';
         const hEnd = document.getElementById('dailyHourEnd').value || '23';
-        const selNames = Array.from(selectedSharedProducts);
-        const prodTitle = selNames.length === 0
+        const prodTitle = selectedSharedProducts.size === 0
             ? 'All Produk (Semua Layanan)'
-            : (selNames.length === 1 ? `Produk: ${selNames[0]}` : `Produk (${selNames.length}): ${selNames.join(', ')}`);
+            : 'Produk: ' + Array.from(selectedSharedProducts).join(', ');
 
         if(!allInteractions.length){
             return [
@@ -2404,4 +2366,977 @@
         return '';
     }
 
-    function parseWorkbook(fileBuffer, fileName
+    function parseWorkbook(fileBuffer, fileName){
+        const isCsv = /\.csv$/i.test(fileName || '');
+        const wb = isCsv
+            ? XLSX.read(new TextDecoder('utf-8').decode(fileBuffer), { type: 'string', cellDates: true })
+            : XLSX.read(fileBuffer, { type: 'array', cellDates: true });
+        const sheetName = wb.SheetNames.includes('Dbase') ? 'Dbase' : wb.SheetNames[0];
+        const ws = wb.Sheets[sheetName];
+        const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
+        const headerIdx = findHeaderRowIndex(aoa);
+        if(headerIdx === -1) throw new Error('Kolom "ticket_id" tidak ditemukan di sheet "' + sheetName + '".');
+
+        const header = aoa[headerIdx];
+        const colIndex = {};
+        header.forEach((h, i) => {
+            const k = safeStr(h).toLowerCase().replace(/\s+/g, ' ');
+            if(k) colIndex[k] = i;
+        });
+        const col = (row, name) => { const idx = colIndex[name]; return idx !== undefined ? row[idx] : null; };
+
+        const escalatedOut = new Map();
+        const interactionsOut = [];
+        let skippedNotEscalated = 0;
+
+        for(let r = headerIdx + 1; r < aoa.length; r++){
+            const row = aoa[r];
+            if(!row) continue;
+            const id = safeStr(col(row, 'ticket_id'));
+            if(!id) continue;
+
+            const escRaw = colIndex['is_escalated'] !== undefined ? safeStr(col(row, 'is_escalated')).toLowerCase() : 'escalated';
+            const isNotEscalated = (escRaw.indexOf('not') === 0 || escRaw === 'no' || escRaw === '0' || escRaw === 'false' || escRaw === '');
+
+            let doRes = toISO(col(row, 'date_resolved'));
+            if(!doRes) doRes = toISO(col(row, 'date_last_update'));
+            const doStart = toISO(col(row, 'date_start_interaction')) || toISO(col(row, 'date_origin_interaction')) || toISO(col(row, 'date_created_at'));
+            const doOpen = toISO(col(row, 'date_open'));
+            const scVal = safeStr(col(row, 'subcategory'));
+            const dscVal = safeStr(col(row, 'detailsubcategory'));
+            const stVal = safeStr(col(row, 'ticket_status_name'));
+            const chVal = safeStr(col(row, 'channel_name'));
+            const agentVal = extractAgentName(row, colIndex);
+
+            const rec = {
+                id: id,
+                agent: agentVal,
+                sj: safeStr(col(row, 'subject')),
+                sc: scVal,
+                mc: safeStr(col(row, 'maincategory')),
+                dsc: dscVal,
+                pr: safeStr(col(row, 'priority_name')).toUpperCase(),
+                st: stVal,
+                ch: chVal,
+                isEscalated: !isNotEscalated,
+                doStart: doStart,
+                doOpen: doOpen,
+                doRes: doRes,
+                doPending: toISO(col(row, 'date_pending')),
+                ticketDateYMD: toYMD(doOpen || doStart),
+                interactionDateYMD: toYMD(doStart),
+                subCategory: scVal,
+                detailCategory: dscVal,
+                statusName: stVal,
+                channel: chVal,
+            };
+
+            interactionsOut.push(rec);
+            if(isNotEscalated){ skippedNotEscalated++; continue; }
+            escalatedOut.set(id, rec);
+        }
+        escalatedOut._skippedNotEscalated = skippedNotEscalated;
+        return { escalated: escalatedOut, interactions: interactionsOut };
+    }
+
+    async function syncToD1(records, mode){
+        const CHUNK_SIZE = 500;
+        for(let i = 0; i < records.length; i += CHUNK_SIZE){
+            const chunk = records.slice(i, i + CHUNK_SIZE);
+            const chunkMode = (i === 0 && mode === 'replace') ? 'replace' : 'upsert';
+            const res = await fetch('/api/tickets', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Admin-Pin': adminPin
+                },
+                body: JSON.stringify({ mode: chunkMode, records: chunk })
+            });
+            const json = await res.json().catch(() => ({}));
+            if(!res.ok || !json.ok){
+                throw new Error(json.reason || ('HTTP ' + res.status));
+            }
+        }
+    }
+
+    async function loadFromD1(){
+        try {
+            const res = await fetch('/api/tickets');
+            if(!res.ok) return;
+            const data = await res.json();
+            if(!data.ok || !Array.isArray(data.records) || data.records.length === 0){
+                allInteractions = [];
+                ticketsMap = new Map();
+                populateSubcategoryProductOptions();
+                document.getElementById('metaBadge').textContent = 'Cloudflare D1 · 0 interaksi';
+                document.getElementById('dailySourceBadge').textContent = 'Database Kosong (0)';
+                renderZeroReports();
+                renderActual();
+                return;
+            }
+
+            const localAgentMap = loadLocalAgentMap();
+            const escalatedOut = new Map();
+            let skippedNotEscalated = 0;
+            data.records.forEach(r => {
+                if(!r || !r.id) return;
+                r.sc = safeStr(r.sc || r.subCategory || '');
+                r.agent = safeStr(r.agent || r.created_by_name || r.agent_name || localAgentMap[r.id] || '').replace(/\s+/g, ' ');
+                if(!r.isEscalated) skippedNotEscalated++;
+                else escalatedOut.set(r.id, r);
+            });
+            escalatedOut._skippedNotEscalated = skippedNotEscalated;
+
+            allInteractions = data.records;
+            ticketsMap = escalatedOut;
+            populateSubcategoryProductOptions();
+            document.getElementById('metaBadge').textContent =
+                'D1 · ' + allInteractions.length.toLocaleString('id-ID') + ' interaksi (' + ticketsMap.size.toLocaleString('id-ID') + ' N-FCR)';
+            renderDailyAndTicketingFromUploaded();
+            renderActual();
+        } catch (err) {
+            console.warn('D1 load skipped:', err);
+        }
+    }
+
+    function initHourSelectors(){
+        const sStart = document.getElementById('dailyHourStart');
+        const sEnd = document.getElementById('dailyHourEnd');
+        let hOpts = '';
+        for(let h = 0; h < 24; h++) hOpts += '<option value="' + h + '">' + h + ':00</option>';
+        sStart.innerHTML = hOpts;
+        sEnd.innerHTML = hOpts;
+        sStart.value = '0';
+        sEnd.value = '23';
+    }
+
+    function fillTopTable(tbodyId, items, sumTotal, sumPct){
+        document.getElementById(tbodyId).innerHTML = (items.map((it, i) => {
+            const rankCls = i < 5 ? 'rank-num top5' : 'rank-num';
+            return '<tr><td class="num ' + rankCls + '">' + (i + 1) + '</td><td>' + it[0] + '</td><td class="num fw-semibold">' + it[1] + '</td><td class="num">' + it[2] + '</td></tr>';
+        }).join('') || '<tr><td colspan="4" class="text-center text-muted py-3">Belum ada data pada interval ini.</td></tr>') +
+        '<tr class="total-row"><td colspan="2" class="text-center">Jumlah</td><td class="num">' + sumTotal + '</td><td class="num">' + sumPct + '</td></tr>';
+    }
+
+    function renderZeroReports(){
+        applyNoChartLayout();
+
+        const zeroTkt = { created: 0, resolved: 0, outstanding: 0, pending: 0 };
+        renderTicketingKpiCards(zeroTkt, zeroTkt, zeroTkt, 0, 0, 'Semua Produk');
+
+        document.getElementById('dailyDateSelect').innerHTML = '<option value="EMPTY">Belum ada data</option>';
+        document.getElementById('dailyHourStart').value = '0';
+        document.getElementById('dailyHourEnd').value = '23';
+
+        document.getElementById('tblDateVal').textContent = '-';
+        document.getElementById('tblHourStart').textContent = '0:00';
+        document.getElementById('tblHourEnd').textContent = '23:59';
+        document.getElementById('pctInfo').textContent = '0.00%';
+        document.getElementById('pctKeluhan').textContent = '0.00%';
+        document.getElementById('pctPermintaan').textContent = '0.00%';
+
+        document.getElementById('dailySummaryBody').innerHTML = [
+            'Daily Interaction CASN (E-Meterai)',
+            'Month to Date CASN (E-Meterai)',
+            'Daily All Interaction (Semua Produk)',
+            'MTD All Interaction (Semua Produk)',
+        ].map(label =>
+            '<tr><td class="row-title">' + label + '</td><td class="big-num">0</td><td class="big-num">0</td>' +
+            '<td class="big-num">0</td><td class="big-num">0</td><td class="big-num">0</td><td class="big-num">0</td></tr>'
+        ).join('');
+
+        document.getElementById('channelBreakdownBody').innerHTML =
+            '<tr><td colspan="7" class="text-center text-muted py-3">Belum ada data interaksi. Upload file CSV/Excel melalui Mode Admin.</td></tr>';
+
+        setCardHeaderTitle('topDailyAllBody', 'Top 10 Interaksi — Semua Produk (Daily)');
+        setCardHeaderTitle('topMtdAllBody', 'Top 10 Interaksi — Semua Produk (Month to Date)');
+        fillTopTable('topDailyCasnBody', [], 0, '0.00%');
+        fillTopTable('topMtdCasnBody', [], 0, '0.00%');
+        fillTopTable('topDailyAllBody', [], 0, '0.00%');
+        fillTopTable('topMtdAllBody', [], 0, '0.00%');
+
+        document.getElementById('tktDateVal').textContent = '-';
+        document.getElementById('tktHourStart').textContent = '0:00';
+        document.getElementById('tktHourEnd').textContent = '23:59';
+
+        document.getElementById('tktSummaryBody').innerHTML = [
+            'Daily Ticket CASN (E-Meterai)',
+            'MTD Ticket CASN (E-Meterai)',
+            'Daily All Ticket (Semua Produk)',
+            'MTD All Ticket (Semua Produk)',
+        ].map(label =>
+            '<tr><td class="row-title">' + label + '</td><td class="big-num">0</td><td class="big-num">0</td>' +
+            '<td class="big-num">0</td><td class="big-num">0</td></tr>'
+        ).join('');
+
+        setCardHeaderTitle('topDailyTktAllBody', 'Top 10 Tiket — Semua Produk (Daily)');
+        setCardHeaderTitle('topMtdTktAllBody', 'Top 10 Tiket — Semua Produk (Month to Date)');
+        fillTopTable('topDailyTktCasnBody', [], 0, '0.00%');
+        fillTopTable('topMtdTktCasnBody', [], 0, '0.00%');
+        fillTopTable('topDailyTktAllBody', [], 0, '0.00%');
+        fillTopTable('topMtdTktAllBody', [], 0, '0.00%');
+
+        renderAgentProductivity();
+    }
+
+    function renderDailyAndTicketingFromUploaded(){
+        applyNoChartLayout();
+        if(!allInteractions.length){ renderZeroReports(); return; }
+
+        const dateSet = new Set();
+        allInteractions.forEach(r => {
+            const iso = r.doStart || r.doOpen;
+            if(!iso) return;
+            const d = new Date(iso);
+            const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            dateSet.add(key);
+        });
+        const dates = Array.from(dateSet).sort();
+        const selDateEl = document.getElementById('dailyDateSelect');
+        const prevVal = selDateEl.value;
+        selDateEl.innerHTML = dates.map(dt => {
+            const [y, m, d] = dt.split('-').map(Number);
+            const lbl = new Date(y, m - 1, d).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+            return '<option value="' + dt + '">' + lbl + '</option>';
+        }).join('');
+        if(dates.includes(prevVal)) selDateEl.value = prevVal;
+        else if(dates.length) selDateEl.value = dates[dates.length - 1];
+
+        const activeDate = selDateEl.value;
+        const hStart = parseInt(document.getElementById('dailyHourStart').value, 10);
+        const hEnd = parseInt(document.getElementById('dailyHourEnd').value, 10);
+
+        const [ay, am, ad] = activeDate.split('-').map(Number);
+        const activeDateLabel = new Date(ay, am - 1, ad).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        const monthPrefix = activeDate.slice(0, 7);
+        const isAllProd = selectedSharedProducts.size === 0;
+        const prodDisplayLabel = getSharedProductLabel();
+
+        document.getElementById('tblDateVal').textContent = activeDateLabel;
+        document.getElementById('tblHourStart').textContent = hStart + ':00';
+        document.getElementById('tblHourEnd').textContent = hEnd + ':59';
+
+        document.getElementById('tktDateVal').textContent = activeDateLabel;
+        document.getElementById('tktHourStart').textContent = hStart + ':00';
+        document.getElementById('tktHourEnd').textContent = hEnd + ':59';
+
+        const buildTop10 = (list, tbodyId) => {
+            const counts = new Map();
+            list.forEach(x => {
+                const k = x.r.dsc || x.r.sc || '(Lainnya)';
+                counts.set(k, (counts.get(k) || 0) + 1);
+            });
+            const sorted = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+            const top10 = sorted.slice(0, 10);
+            const topSum = top10.reduce((s, x) => s + x[1], 0);
+            const allSum = list.length || 1;
+            const topPct = list.length ? ((topSum / allSum) * 100).toFixed(2) + '%' : '0.00%';
+            fillTopTable(tbodyId, top10.map(it => [it[0], it[1], ((it[1] / allSum) * 100).toFixed(2) + '%']), topSum, topPct);
+        };
+
+        const intMeta = allInteractions.map(r => {
+            const iso = r.doStart || r.doOpen;
+            if(!iso) return null;
+            const d = new Date(iso);
+            const dKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            return { r: r, dKey: dKey, hour: d.getHours() };
+        }).filter(Boolean);
+
+        const dailyAllInt = intMeta.filter(x => x.dKey === activeDate && x.hour >= hStart && x.hour <= hEnd && matchesSharedProduct(x.r));
+        const dailyCasnInt = intMeta.filter(x => x.dKey === activeDate && x.hour >= hStart && x.hour <= hEnd && isCasnRecord(x.r));
+        const mtdAllInt = intMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && matchesSharedProduct(x.r));
+        const mtdCasnInt = intMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && isCasnRecord(x.r));
+
+        const summarizeInt = (list) => {
+            let fcr = 0, nfcr = 0, info = 0, kel = 0, perm = 0;
+            list.forEach(x => {
+                if(x.r.isEscalated) nfcr++; else fcr++;
+                const mc = (x.r.mc || '').toLowerCase();
+                if(mc === 'informasi') info++;
+                else if(mc === 'keluhan') kel++;
+                else if(mc === 'permintaan') perm++;
+            });
+            return { total: list.length, fcr, nfcr, info, kel, perm };
+        };
+
+        const sDailyCasnInt = summarizeInt(dailyCasnInt);
+        const sMtdCasnInt = summarizeInt(mtdCasnInt);
+        const sDailyAllInt = summarizeInt(dailyAllInt);
+        const sMtdAllInt = summarizeInt(mtdAllInt);
+
+        const intDenom = sDailyCasnInt.total || 1;
+        document.getElementById('pctInfo').textContent = sDailyCasnInt.total ? ((sDailyCasnInt.info / intDenom) * 100).toFixed(2) + '%' : '0.00%';
+        document.getElementById('pctKeluhan').textContent = sDailyCasnInt.total ? ((sDailyCasnInt.kel / intDenom) * 100).toFixed(2) + '%' : '0.00%';
+        document.getElementById('pctPermintaan').textContent = sDailyCasnInt.total ? ((sDailyCasnInt.perm / intDenom) * 100).toFixed(2) + '%' : '0.00%';
+
+        document.getElementById('dailySummaryBody').innerHTML = [
+            { label: 'Daily Interaction CASN (E-Meterai)', ...sDailyCasnInt },
+            { label: 'Month to Date CASN (E-Meterai)', ...sMtdCasnInt },
+            { label: isAllProd ? 'Daily All Interaction (Semua Produk)' : 'Daily Interaction — ' + prodDisplayLabel, ...sDailyAllInt },
+            { label: isAllProd ? 'MTD All Interaction (Semua Produk)' : 'MTD Interaction — ' + prodDisplayLabel, ...sMtdAllInt },
+        ].map(r =>
+            '<tr><td class="row-title">' + escapeHtml(r.label) + '</td><td class="big-num">' + r.total + '</td><td class="big-num">' + r.fcr + '</td>' +
+            '<td class="big-num">' + r.nfcr + '</td><td class="big-num">' + r.info + '</td><td class="big-num">' + r.kel + '</td><td class="big-num">' + r.perm + '</td></tr>'
+        ).join('');
+
+        const chDailyList = isAllProd ? dailyCasnInt : dailyAllInt;
+        const chMtdList = isAllProd ? mtdCasnInt : mtdAllInt;
+        const chTitleEl = document.getElementById('channelBreakdownTitle');
+        const thChDailyEl = document.getElementById('thChDaily');
+        const thChMtdEl = document.getElementById('thChMtd');
+        if(chTitleEl) chTitleEl.textContent = isAllProd
+            ? 'Distribusi Interaksi CASN & Waktu Dispatch per Channel'
+            : 'Distribusi Interaksi ' + prodDisplayLabel + ' & Waktu Dispatch per Channel';
+        if(thChDailyEl) thChDailyEl.textContent = isAllProd ? 'Daily CASN' : 'Daily';
+        if(thChMtdEl) thChMtdEl.textContent = isAllProd ? 'MTD CASN' : 'MTD';
+
+        const chMap = new Map();
+        chDailyList.forEach(x => {
+            const ch = x.r.ch || '(Tanpa Channel)';
+            if(!chMap.has(ch)) chMap.set(ch, { daily: 0, fcr: 0, nfcr: 0, mtd: 0, escHrs: [] });
+            const g = chMap.get(ch);
+            g.daily++;
+            if(x.r.isEscalated){
+                g.nfcr++;
+                if(x.r.doOpen && x.r.doStart){
+                    const hrs = (new Date(x.r.doOpen).getTime() - new Date(x.r.doStart).getTime()) / 3600000;
+                    if(hrs >= 0) g.escHrs.push(hrs);
+                }
+            } else {
+                g.fcr++;
+            }
+        });
+        chMtdList.forEach(x => {
+            const ch = x.r.ch || '(Tanpa Channel)';
+            if(!chMap.has(ch)) chMap.set(ch, { daily: 0, fcr: 0, nfcr: 0, mtd: 0, escHrs: [] });
+            chMap.get(ch).mtd++;
+        });
+        const chTotalDaily = chDailyList.length || 1;
+        document.getElementById('channelBreakdownBody').innerHTML = Array.from(chMap.entries())
+            .sort((a, b) => b[1].daily - a[1].daily)
+            .map(([ch, g]) => {
+                const pct = chDailyList.length ? ((g.daily / chTotalDaily) * 100).toFixed(2) + '%' : '0.00%';
+                let avgCell = '—';
+                if(g.escHrs.length){
+                    const avgMins = (g.escHrs.reduce((s, h) => s + h, 0) / g.escHrs.length) * 60;
+                    const badgeCls = avgMins > 15 ? 'bg-danger' : 'bg-success';
+                    avgCell = '<span class="badge ' + badgeCls + '">' + avgMins.toFixed(1) + ' mnt</span>';
+                }
+                return '<tr><td class="row-title">' + escapeHtml(ch) + '</td><td class="num fw-semibold">' + g.daily + '</td><td class="num">' + pct + '</td>' +
+                    '<td class="num">' + g.fcr + '</td><td class="num">' + g.nfcr + '</td><td class="num">' + g.mtd + '</td><td class="num">' + avgCell + '</td></tr>';
+            }).join('') || '<tr><td colspan="7" class="text-center text-muted py-3">Tidak ada data channel pada interval ini.</td></tr>';
+
+        setCardHeaderTitle('topDailyAllBody', 'Top 10 Interaksi — ' + prodDisplayLabel + ' (Daily)');
+        setCardHeaderTitle('topMtdAllBody', 'Top 10 Interaksi — ' + prodDisplayLabel + ' (Month to Date)');
+        buildTop10(dailyCasnInt, 'topDailyCasnBody');
+        buildTop10(mtdCasnInt, 'topMtdCasnBody');
+        buildTop10(dailyAllInt, 'topDailyAllBody');
+        buildTop10(mtdAllInt, 'topMtdAllBody');
+
+        const tktMeta = Array.from(ticketsMap.values()).map(r => {
+            const iso = r.doOpen || r.doStart;
+            if(!iso) return null;
+            const d = new Date(iso);
+            const dKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            return { r: r, dKey: dKey, hour: d.getHours() };
+        }).filter(Boolean);
+
+        const dailyAllTkt = tktMeta.filter(x => x.dKey === activeDate && x.hour >= hStart && x.hour <= hEnd && matchesSharedProduct(x.r));
+        const dailyCasnTkt = tktMeta.filter(x => x.dKey === activeDate && x.hour >= hStart && x.hour <= hEnd && isCasnRecord(x.r));
+        const mtdAllTkt = tktMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && matchesSharedProduct(x.r));
+        const mtdCasnTkt = tktMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && isCasnRecord(x.r));
+
+        const summarizeTkt = (list) => {
+            let resolved = 0, outstanding = 0, pending = 0;
+            list.forEach(x => {
+                const st = (x.r.st || '').toLowerCase();
+                if(FINISHED_STATUSES.has(st)) resolved++;
+                else {
+                    outstanding++;
+                    if(st === 'pending') pending++;
+                }
+            });
+            return { created: list.length, resolved, outstanding, pending };
+        };
+
+        const sDailyCasnTkt = summarizeTkt(dailyCasnTkt);
+        const sMtdCasnTkt = summarizeTkt(mtdCasnTkt);
+        const sDailyAllTkt = summarizeTkt(dailyAllTkt);
+        const sMtdAllTkt = summarizeTkt(mtdAllTkt);
+
+        const casnAllTickets = Array.from(ticketsMap.values()).filter(r => isCasnRecord(r));
+        const activeCasnQueueList = casnAllTickets.filter(r => !FINISHED_STATUSES.has((r.st || '').toLowerCase()));
+        const activeCasnPendingCount = activeCasnQueueList.filter(r => (r.st || '').toLowerCase() === 'pending').length;
+
+        renderTicketingKpiCards(sDailyCasnTkt, sMtdCasnTkt, sMtdAllTkt, activeCasnQueueList.length, activeCasnPendingCount, prodDisplayLabel);
+
+        document.getElementById('dailySourceBadge').textContent =
+            'CASN MTD: ' + sMtdCasnInt.total.toLocaleString('id-ID') + ' · ' + prodDisplayLabel + ' MTD: ' + sMtdAllInt.total.toLocaleString('id-ID') +
+            ' · Antrian CASN: ' + (activeCasnQueueList.length >= 1000 ? '1000+' : activeCasnQueueList.length.toLocaleString('id-ID'));
+
+        document.getElementById('tktSummaryBody').innerHTML = [
+            { label: 'Daily Ticket CASN (E-Meterai)', ...sDailyCasnTkt },
+            { label: 'MTD Ticket CASN (E-Meterai)', ...sMtdCasnTkt },
+            { label: isAllProd ? 'Daily All Ticket (Semua Produk)' : 'Daily Ticket — ' + prodDisplayLabel, ...sDailyAllTkt },
+            { label: isAllProd ? 'MTD All Ticket (Semua Produk)' : 'MTD Ticket — ' + prodDisplayLabel, ...sMtdAllTkt },
+        ].map(r =>
+            '<tr><td class="row-title">' + escapeHtml(r.label) + '</td><td class="big-num">' + r.created + '</td><td class="big-num">' + r.resolved + '</td>' +
+            '<td class="big-num">' + r.outstanding + '</td><td class="big-num">' + r.pending + '</td></tr>'
+        ).join('');
+
+        setCardHeaderTitle('topDailyTktAllBody', 'Top 10 Tiket — ' + prodDisplayLabel + ' (Daily)');
+        setCardHeaderTitle('topMtdTktAllBody', 'Top 10 Tiket — ' + prodDisplayLabel + ' (Month to Date)');
+        buildTop10(dailyCasnTkt, 'topDailyTktCasnBody');
+        buildTop10(mtdCasnTkt, 'topMtdTktCasnBody');
+        buildTop10(dailyAllTkt, 'topDailyTktAllBody');
+        buildTop10(mtdAllTkt, 'topMtdTktAllBody');
+
+        renderAgentProductivity();
+    }
+
+    function getPendingCutoff(rec){
+        if(!rec.doPending) return null;
+        const openT = rec.doOpen ? new Date(rec.doOpen).getTime() : null;
+        const pendingT = new Date(rec.doPending).getTime();
+        if(openT !== null && pendingT <= openT) return null;
+        return pendingT;
+    }
+
+    function classifyPct(pct){
+        if(pct >= 100) return 'breach';
+        if(pct >= 90) return 'warning';
+        return 'aman';
+    }
+
+    function computeSla(rec, nowMs){
+        const target = SLA_TARGET[rec.pr] || null;
+        const isFinished = FINISHED_STATUSES.has((rec.st || '').toLowerCase());
+        const pendingCutoff = getPendingCutoff(rec);
+
+        if(isFinished && rec.doOpen && rec.doRes && target){
+            const openT = new Date(rec.doOpen).getTime();
+            const resT = new Date(rec.doRes).getTime();
+            const usesPending = pendingCutoff !== null && pendingCutoff < resT;
+            const pendingHours = usesPending ? (resT - pendingCutoff) / 3600000 : 0;
+            const hoursExclude = ((usesPending ? pendingCutoff : resT) - openT) / 3600000;
+            const hoursInclude = (resT - openT) / 3600000;
+            const resultExclude = hoursExclude <= target ? 'aman' : 'breach';
+            const resultInclude = hoursInclude <= target ? 'aman' : 'breach';
+            const hours = slaViewMode === 'include' ? hoursInclude : hoursExclude;
+            const result = slaViewMode === 'include' ? resultInclude : resultExclude;
+
+            return {
+                finished: true, target, pendingExcluded: usesPending, pendingHours,
+                hours, pct: (hours / target) * 100, result,
+                hoursExclude, hoursInclude, resultExclude, resultInclude
+            };
+        }
+        if(!isFinished && rec.doOpen && target){
+            const openT = new Date(rec.doOpen).getTime();
+            const isCurrentlyPending = (rec.st || '').toLowerCase() === 'pending';
+            const usesPending = pendingCutoff !== null && isCurrentlyPending;
+            const pendingHours = usesPending ? (nowMs - pendingCutoff) / 3600000 : 0;
+            const hoursExclude = ((usesPending ? pendingCutoff : nowMs) - openT) / 3600000;
+            const hoursInclude = (nowMs - openT) / 3600000;
+            const pctExclude = (hoursExclude / target) * 100;
+            const pctInclude = (hoursInclude / target) * 100;
+            const resultExclude = classifyPct(pctExclude);
+            const resultInclude = classifyPct(pctInclude);
+            const hours = slaViewMode === 'include' ? hoursInclude : hoursExclude;
+            const pct = slaViewMode === 'include' ? pctInclude : pctExclude;
+            const result = slaViewMode === 'include' ? resultInclude : resultExclude;
+
+            return {
+                finished: false, target, pendingExcluded: usesPending, pendingHours,
+                hours, pct, result,
+                hoursExclude, hoursInclude, resultExclude, resultInclude
+            };
+        }
+        return { finished: isFinished, hours: null, target, pct: null, result: 'unknown' };
+    }
+
+    function computeEscalation(rec){
+        const eligible = ESCALATION_ELIGIBLE.has((rec.st || '').toLowerCase());
+        const channelOk = ESCALATION_CHANNELS.has((rec.ch || '').toLowerCase());
+        if(eligible && channelOk && rec.doOpen && rec.doStart){
+            const hrs = (new Date(rec.doOpen).getTime() - new Date(rec.doStart).getTime()) / 3600000;
+            return { hours: hrs, result: hrs <= ESCALATION_TARGET_HOURS ? 'aman' : 'breach' };
+        }
+        return { hours: null, result: 'unknown' };
+    }
+
+    function bucketOf(hours){
+        for(const b of DURATION_BUCKETS){ if(hours <= b.max) return b.label; }
+        return DURATION_BUCKETS[DURATION_BUCKETS.length - 1].label;
+    }
+
+    function monthKeyOf(iso){
+        const d = new Date(iso);
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    }
+
+    function monthLabel(key){
+        const [y, m] = key.split('-').map(Number);
+        return new Date(y, m - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+    }
+
+    function fmtHours(hrs){
+        if(hrs === null || hrs === undefined || isNaN(hrs)) return '—';
+        if(hrs < 24) return hrs.toFixed(2) + ' jam';
+        return hrs.toFixed(2) + ' jam (' + (hrs / 24).toFixed(1) + ' hari)';
+    }
+
+    function fmtCountdown(remHours){
+        if(remHours === null || remHours === undefined || isNaN(remHours)) return '—';
+        const abs = Math.abs(remHours);
+        const label = abs < 1 ? Math.round(abs * 60) + ' menit' : abs.toFixed(1) + ' jam';
+        return remHours >= 0 ? 'Sisa ' + label : 'Lewat ' + label;
+    }
+
+    function applyProductFilter(list, sel){
+        if(sel === 'ALL') return list;
+        if(sel.indexOf('COMBINED:') === 0){
+            const names = sel.slice(9).split('|');
+            return list.filter(c => names.includes(c.rec.sc));
+        }
+        return list.filter(c => c.rec.sc === sel);
+    }
+
+    function updateFilters(allComputed){
+        const products = Array.from(new Set(allComputed.map(c => c.rec.sc).filter(Boolean))).sort();
+        let pHtml = '<option value="ALL">Semua Produk (' + allComputed.length + ')</option>';
+        if(products.includes('E-Meterai') && products.includes('Perisai')){
+            pHtml += '<option value="' + COMBINED_VALUE + '">E-Meterai + Perisai (Gabungan)</option>';
+        }
+        pHtml += products.map(p => '<option value="' + p + '">' + p + '</option>').join('');
+        document.getElementById('productFilter').innerHTML = pHtml;
+        if(['ALL', COMBINED_VALUE].concat(products).includes(selectedProduct)) document.getElementById('productFilter').value = selectedProduct;
+        else selectedProduct = 'ALL';
+
+        const byProd = applyProductFilter(allComputed, selectedProduct);
+        const cats = Array.from(new Set(byProd.map(c => c.rec.dsc).filter(Boolean))).sort();
+        document.getElementById('categoryFilter').innerHTML = '<option value="ALL">Semua Kategori</option>' +
+            cats.map(cat => '<option value="' + cat + '">' + cat + '</option>').join('');
+        if(selectedCategory === 'ALL' || cats.includes(selectedCategory)) document.getElementById('categoryFilter').value = selectedCategory;
+        else selectedCategory = 'ALL';
+
+        const months = Array.from(new Set(byProd.filter(c => c.rec.doOpen).map(c => monthKeyOf(c.rec.doOpen)))).sort().reverse();
+        document.getElementById('monthFilter').innerHTML = '<option value="ALL">Semua Bulan</option>' +
+            months.map(m => '<option value="' + m + '">' + monthLabel(m) + '</option>').join('');
+        if(selectedMonth === 'ALL' || months.includes(selectedMonth)) document.getElementById('monthFilter').value = selectedMonth;
+        else selectedMonth = 'ALL';
+    }
+
+    function renderActual(){
+        ensureAtRiskRadarCard();
+        applyNoChartLayout();
+        if(ticketsMap.size === 0){
+            document.getElementById('emptyState').style.display = '';
+            document.getElementById('actualDashboard').style.display = 'none';
+            return;
+        }
+        document.getElementById('emptyState').style.display = 'none';
+        document.getElementById('actualDashboard').style.display = '';
+        document.getElementById('sidebarSlaFilters').style.display = '';
+        document.getElementById('modeSubtitle').textContent = slaViewMode === 'include'
+            ? 'Mode Aktif: User (Include Pending — Waktu Kalender Penuh)'
+            : 'Mode Aktif: Internal (Exclude Pending — Performa Solver)';
+
+        const now = Date.now();
+        const allComputed = Array.from(ticketsMap.values()).map(rec => ({ rec, sla: computeSla(rec, now) }));
+        updateFilters(allComputed);
+
+        let scoped = applyProductFilter(allComputed, selectedProduct);
+        if(selectedCategory !== 'ALL') scoped = scoped.filter(c => c.rec.dsc === selectedCategory);
+        if(selectedMonth !== 'ALL') scoped = scoped.filter(c => c.rec.doOpen && monthKeyOf(c.rec.doOpen) === selectedMonth);
+        currentScopedRows = scoped;
+
+        const finished = scoped.filter(c => c.sla.finished);
+        const outstanding = scoped.filter(c => !c.sla.finished);
+        const compliant = finished.filter(c => c.sla.result === 'aman').length;
+        const breachFinished = finished.filter(c => c.sla.result === 'breach').length;
+        const compliancePct = finished.length ? ((compliant / finished.length) * 100).toFixed(1) : '—';
+        const outWarning = outstanding.filter(c => c.sla.result === 'warning').length;
+        const outBreach = outstanding.filter(c => c.sla.result === 'breach').length;
+        const reopenCount = scoped.filter(c => (c.rec.st || '').toLowerCase().includes('reopen')).length;
+        const reopenPct = scoped.length ? ((reopenCount / scoped.length) * 100).toFixed(1) + '%' : '0.0%';
+
+        const kpiCards = [
+            { label: 'Total Tiket', value: scoped.length.toLocaleString('id-ID'), dot: 'blue' },
+            { label: 'SLA Compliance', value: compliancePct + (compliancePct !== '—' ? '%' : ''), dot: compliancePct !== '—' && +compliancePct >= 90 ? 'green' : 'amber' },
+            { label: 'Breach (Selesai)', value: breachFinished.toLocaleString('id-ID'), dot: breachFinished > 0 ? 'red' : 'green' },
+            { label: 'Outstanding Warning', value: outWarning.toLocaleString('id-ID'), dot: outWarning > 0 ? 'amber' : 'green' },
+            { label: 'Outstanding Breach', value: outBreach.toLocaleString('id-ID'), dot: outBreach > 0 ? 'red' : 'green' },
+            { label: 'Reopen Rate', value: reopenPct + ' (' + reopenCount + ')', dot: reopenCount > 0 ? 'amber' : 'neutral' },
+        ];
+        document.getElementById('overviewCards').innerHTML = kpiCards.map(c =>
+            '<div class="col-xl-2 col-md-4 col-sm-6"><div class="card casn-kpi-card mb-3"><div class="card-body py-2 px-3">' +
+              '<div class="casn-kpi-label mb-1"><span class="kpi-dot ' + c.dot + '"></span>' + c.label + '</div>' +
+              '<div class="casn-kpi-val">' + c.value + '</div>' +
+            '</div></div></div>'
+        ).join('');
+
+        const atRisk = outstanding
+            .filter(c => c.sla.target !== null && c.sla.hours !== null)
+            .map(c => ({ ...c, remHours: c.sla.target - c.sla.hours }))
+            .sort((a, b) => a.remHours - b.remHours)
+            .slice(0, 5);
+
+        document.getElementById('atRiskRadarBody').innerHTML = atRisk.map(c => {
+            const cdText = fmtCountdown(c.remHours);
+            const badgeCls = c.remHours < 0 ? 'bg-danger' : (c.remHours <= 2 ? 'bg-warning' : 'bg-info');
+            const subj = (c.rec.sj || c.rec.dsc || '—').replace(/"/g, '&quot;');
+            return '<tr data-ticket-id="' + c.rec.id + '" data-priority="' + (c.rec.pr || '-') + '" data-subject="' + subj + '" data-countdown="' + cdText + '">' +
+                '<td class="font-monospace fw-semibold">' + c.rec.id + '</td>' +
+                '<td>' + (c.rec.sc || '—') + '</td>' +
+                '<td>' + (c.rec.sj || c.rec.dsc || '—') + '</td>' +
+                '<td><strong>' + (c.rec.pr || '—') + '</strong></td>' +
+                '<td>' + (c.rec.st || '—') + '</td>' +
+                '<td>' + fmtHours(c.sla.hours) + ' / ' + c.sla.target + 'j</td>' +
+                '<td><span class="badge ' + badgeCls + '">' + cdText + '</span></td>' +
+            '</tr>';
+        }).join('') || '<tr><td colspan="7" class="text-center text-muted py-3">Tidak ada tiket aktif (Outstanding) pada filter ini.</td></tr>';
+
+        let totFin = 0, totComp = 0, totBreach = 0;
+        const allValidHrs = [];
+        const achRows = PRIORITY_ORDER.map(pr => {
+            const items = finished.filter(c => c.rec.pr === pr);
+            const comp = items.filter(c => c.sla.result === 'aman').length;
+            const br = items.filter(c => c.sla.result === 'breach').length;
+            const validHrs = items.filter(c => c.sla.hours !== null && c.sla.hours >= 0).map(c => c.sla.hours);
+            validHrs.forEach(h => allValidHrs.push(h));
+            const mttr = validHrs.length ? (validHrs.reduce((s, h) => s + h, 0) / validHrs.length).toFixed(2) + ' jam' : '—';
+            totFin += items.length; totComp += comp; totBreach += br;
+            const pct = items.length ? ((comp / items.length) * 100).toFixed(1) : '—';
+            const badgeCls = pct === '—' ? 'bg-secondary' : (+pct >= 90 ? 'bg-success' : 'bg-danger');
+            return '<tr><td><strong>' + pr + '</strong></td><td>' + items.length + '</td><td>' + comp + '</td><td>' + br + '</td>' +
+                '<td><span class="badge ' + badgeCls + '">' + pct + (pct !== '—' ? '%' : '') + '</span></td><td>' + mttr + '</td></tr>';
+        }).join('');
+        const totPct = totFin ? ((totComp / totFin) * 100).toFixed(1) : '—';
+        const totMttr = allValidHrs.length ? (allValidHrs.reduce((s, h) => s + h, 0) / allValidHrs.length).toFixed(2) + ' jam' : '—';
+        document.getElementById('achievementBody').innerHTML = achRows +
+            '<tr class="fw-semibold total-row"><td>Total</td><td>' + totFin + '</td><td>' + totComp + '</td><td>' + totBreach + '</td><td>' + totPct + (totPct !== '—' ? '%' : '') + '</td><td>' + totMttr + '</td></tr>';
+
+        const finWithHours = finished.filter(c => c.sla.hours !== null);
+        document.getElementById('distTableHead').innerHTML = '<th>Priority</th>' + DURATION_BUCKETS.map(b => '<th>' + b.label + '</th>').join('') + '<th>Total</th>';
+        const distRows = PRIORITY_ORDER.map(pr => {
+            const items = finWithHours.filter(c => c.rec.pr === pr);
+            const counts = DURATION_BUCKETS.map(b => items.filter(c => bucketOf(c.sla.hours) === b.label).length);
+            return '<tr><td><strong>' + pr + '</strong></td>' + counts.map(n => '<td>' + n + '</td>').join('') + '<td><strong>' + items.length + '</strong></td></tr>';
+        }).join('');
+        const distTotals = DURATION_BUCKETS.map(b => finWithHours.filter(c => bucketOf(c.sla.hours) === b.label).length);
+        document.getElementById('distTableBody').innerHTML = distRows +
+            '<tr class="fw-semibold total-row"><td>Total</td>' + distTotals.map(n => '<td>' + n + '</td>').join('') + '<td>' + finWithHours.length + '</td></tr>';
+
+        const escItems = scoped.map(c => ({ rec: c.rec, esc: computeEscalation(c.rec) })).filter(x => x.esc.hours !== null);
+        const escAman = escItems.filter(x => x.esc.result === 'aman').length;
+        const escBreach = escItems.filter(x => x.esc.result === 'breach').length;
+        const escAvgMin = escItems.length ? (escItems.reduce((s, x) => s + x.esc.hours, 0) / escItems.length) * 60 : null;
+        document.getElementById('escalationCards').innerHTML = [
+            { label: 'Rata-rata Dispatch N-FCR', value: escAvgMin !== null ? escAvgMin.toFixed(1) + ' mnt' : '—', dot: 'blue' },
+            { label: 'Dalam Target (≤15m)', value: escAman, dot: 'green' },
+            { label: 'Breach (>15m)', value: escBreach, dot: escBreach > 0 ? 'red' : 'green' },
+        ].map(c => '<div class="col-4"><div class="card casn-kpi-card mb-0"><div class="card-body p-2"><div class="casn-kpi-label"><span class="kpi-dot ' + c.dot + '"></span>' + c.label + '</div><div class="h5 mb-0 fw-semibold mt-1">' + c.value + '</div></div></div></div>').join('');
+
+        const escByChannel = new Map();
+        escItems.forEach(x => {
+            const p = (x.rec.ch || '(Lainnya)') + ' · ' + (x.rec.sc || '-');
+            if(!escByChannel.has(p)) escByChannel.set(p, { total: 0, aman: 0, sumHrs: 0 });
+            const g = escByChannel.get(p);
+            g.total++;
+            g.sumHrs += Math.max(0, x.esc.hours);
+            if(x.esc.result === 'aman') g.aman++;
+        });
+        const maxEsc = Math.max(1, ...Array.from(escByChannel.values()).map(g => g.total));
+        document.getElementById('escalationByProduct').innerHTML = Array.from(escByChannel.entries()).sort((a, b) => b[1].total - a[1].total).map(([name, g]) => {
+            const pct = g.total ? ((g.aman / g.total) * 100).toFixed(0) : '0';
+            const avgM = g.total ? ((g.sumHrs / g.total) * 60).toFixed(1) + 'm' : '-';
+            return '<div class="breakdown-item"><div class="breakdown-name" title="' + name + '">' + name + '</div><div class="breakdown-bar"><div class="breakdown-fill" style="width:' + (g.total / maxEsc * 100) + '%"></div></div><div class="breakdown-val" style="flex:0 0 135px;">' + g.total + ' · ' + avgM + ' (' + pct + '%)</div></div>';
+        }).join('') || '<p class="small text-muted mb-0">Tidak ada data N-FCR Email/WhatsApp.</p>';
+
+        const prods = Array.from(new Set(scoped.map(c => c.rec.sc).filter(Boolean))).sort();
+        document.getElementById('productPriorityTables').innerHTML = prods.map(prod => {
+            const rows = PRIORITY_ORDER.map(pr => {
+                const inGroup = scoped.filter(c => c.rec.sc === prod && c.rec.pr === pr);
+                const eValid = inGroup.map(c => computeEscalation(c.rec)).filter(e => e.hours !== null && e.hours >= 0);
+                const avgResp = eValid.length ? ((eValid.reduce((s, e) => s + e.hours, 0) / eValid.length) * 60).toFixed(2) + ' Menit' : '-';
+                const rValid = inGroup.filter(c => c.sla.finished && c.sla.hours !== null && c.sla.hours >= 0);
+                const avgRes = rValid.length ? (rValid.reduce((s, c) => s + c.sla.hours, 0) / rValid.length).toFixed(2) + ' Jam' : '-';
+                return '<tr><td><strong>' + pr + '</strong></td><td>15 menit</td><td>' + SLA_TARGET[pr] + ' jam</td><td>' + avgResp + '</td><td>' + avgRes + '</td></tr>';
+            }).join('');
+            return '<div class="mb-3"><div class="small fw-semibold mb-2">' + prod + '</div>' +
+                '<div class="table-responsive"><table class="sla-tbl"><thead><tr><th>Priority</th><th>Target Respons</th><th>Target Resolusi</th><th>Rata-rata Respons Aktual</th><th>Rata-rata Resolusi Aktual</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+        }).join('');
+
+        drawTicketTable();
+    }
+
+    function getFilteredTickets(){
+        const q = (document.getElementById('ticketSearch').value || '').toLowerCase().trim();
+        const st = document.getElementById('ticketStatusFilter').value;
+        const pr = document.getElementById('ticketPriorityFilter').value;
+        return currentScopedRows.filter(c => {
+            if(st === 'achieved' && !(c.sla.finished && c.sla.result === 'aman')) return false;
+            if(st === 'not_achieved' && !(c.sla.finished && c.sla.result === 'breach')) return false;
+            if(st === 'outstanding' && c.sla.finished) return false;
+            if(pr !== 'ALL' && c.rec.pr !== pr) return false;
+            if(q && !(c.rec.id + ' ' + c.rec.sj + ' ' + c.rec.dsc + ' ' + c.rec.sc + ' ' + (c.rec.agent || '')).toLowerCase().includes(q)) return false;
+            return true;
+        });
+    }
+
+    function drawTicketTable(){
+        const list = getFilteredTickets();
+        const shown = list.slice(0, 300);
+        document.getElementById('ticketListBody').innerHTML = shown.map(c => {
+            let badge = '<span class="badge bg-secondary">—</span>';
+            if(c.sla.finished){
+                badge = c.sla.result === 'aman' ? '<span class="badge bg-success">Achieved</span>' : '<span class="badge bg-danger">Not Achieved</span>';
+            } else if(c.sla.result !== 'unknown'){
+                const cls = c.sla.result === 'breach' ? 'bg-danger' : (c.sla.result === 'warning' ? 'bg-warning' : 'bg-success');
+                const lbl = c.sla.result === 'breach' ? 'Outstanding — Breach' : (c.sla.result === 'warning' ? 'Outstanding — Warning' : 'Outstanding — Aman');
+                badge = '<span class="badge ' + cls + '">' + lbl + '</span>';
+            }
+            const pendingBadge = c.sla.pendingExcluded ? '<span class="pending-tag" title="Pending ' + c.sla.pendingHours.toFixed(2) + ' jam">pending</span>' : '';
+            const exclCls = c.sla.resultExclude === 'breach' ? ' class="text-danger fw-semibold"' : '';
+            const inclCls = c.sla.resultInclude === 'breach' ? ' class="text-danger fw-semibold"' : '';
+            return '<tr><td class="font-monospace fw-semibold">' + c.rec.id + '</td><td>' + (c.rec.sc || '—') + '</td><td>' + (c.rec.sj || '—') + '</td><td>' + (c.rec.dsc || '—') + '</td>' +
+                '<td><strong>' + (c.rec.pr || '—') + '</strong></td><td>' + (c.rec.st || '—') + '</td>' +
+                '<td' + exclCls + '>' + fmtHours(c.sla.hoursExclude) + pendingBadge + '</td>' +
+                '<td' + inclCls + '>' + fmtHours(c.sla.hoursInclude) + '</td><td>' + badge + '</td></tr>';
+        }).join('') || '<tr><td colspan="9" class="text-center text-muted py-4">Tidak ada tiket yang cocok.</td></tr>';
+
+        document.getElementById('ticketListCount').textContent = list.length + ' tiket';
+        document.getElementById('ticketListNote').textContent = 'Menampilkan ' + shown.length + ' dari ' + list.length + ' tiket. Kolom "Internal" mengecualikan durasi pending; kolom "User" menghitung waktu penuh.';
+    }
+
+    function runSimulation(){
+        const vol = +document.getElementById('inVolume').value;
+        const agents = +document.getElementById('inAgents').value;
+        const baseAht = +document.getElementById('inAht').value;
+        const escRate = +document.getElementById('inEscRate').value / 100;
+        const useSegment = document.getElementById('chkSegment').checked;
+        const useCanned = document.getElementById('chkCanned').checked;
+        const useLifo = document.getElementById('chkLifo').checked;
+        const highSev = document.getElementById('chkSeverity').checked;
+
+        const otAgents = Math.max(0, agents - 6);
+        document.getElementById('valVolume').textContent = vol.toLocaleString('id-ID') + ' interaksi/hari';
+        document.getElementById('valAgents').textContent = agents + ' agent (' + otAgents + ' OT)';
+        document.getElementById('valAht').textContent = baseAht.toFixed(1) + ' menit';
+        document.getElementById('valEscRate').textContent = Math.round(escRate * 100) + '%';
+
+        const effAht = useCanned ? baseAht * 0.75 : baseAht;
+        const capInteractions = Math.floor((agents * 480) / effAht);
+        const backlog = Math.max(0, vol - capInteractions);
+        const estTickets = Math.round(vol * escRate);
+
+        const loadRatio = vol / Math.max(1, capInteractions);
+        let emetSla = 95 - Math.max(0, (loadRatio - 0.85) * 48);
+        if(useLifo) emetSla += 4.5;
+        if(useCanned) emetSla += 3.0;
+        if(highSev) emetSla -= 6.5;
+        emetSla = Math.max(18.7, Math.min(98.5, emetSla));
+
+        let perisaiSla = useSegment
+            ? Math.max(91.0, 98.0 - Math.max(0, (loadRatio - 1.2) * 3.5))
+            : Math.max(68.5, emetSla + 8.0);
+
+        const recAgents = Math.ceil((vol * effAht) / (480 * 0.88));
+
+        document.getElementById('simCards').innerHTML = [
+            { label: 'Kapasitas Layan / Hari', value: capInteractions.toLocaleString('id-ID'), hint: 'AHT: ' + effAht.toFixed(1) + 'm · Backlog: ' + backlog, dot: backlog === 0 ? 'green' : 'amber' },
+            { label: 'Proyeksi Tiket N-FCR', value: estTickets + ' tiket', hint: highSev ? 'Critical/High (8j–12j)' : 'Medium Standar (24j)', dot: 'blue' },
+            { label: 'Proyeksi SLA E-Meterai', value: emetSla.toFixed(1) + '%', hint: emetSla >= 85 ? 'Terkendali (≥85%)' : 'Risiko Breach Tinggi', dot: emetSla >= 85 ? 'green' : (emetSla >= 70 ? 'amber' : 'red') },
+            { label: 'Proyeksi SLA Perisai', value: perisaiSla.toFixed(1) + '%', hint: useSegment ? 'VIP Terisolasi' : 'Tercampur (Ideal: ' + recAgents + ' agt)', dot: perisaiSla >= 90 ? 'green' : 'amber' }
+        ].map(c =>
+            '<div class="col-md-3 col-sm-6"><div class="card casn-kpi-card mb-3"><div class="card-body py-2 px-3">' +
+              '<div class="casn-kpi-label mb-1"><span class="kpi-dot ' + c.dot + '"></span>' + c.label + '</div>' +
+              '<div class="casn-kpi-val mb-1">' + c.value + '</div>' +
+              '<div class="casn-kpi-sub">' + c.hint + '</div>' +
+            '</div></div></div>'
+        ).join('');
+    }
+
+    function renderHistoricalTable(){
+        const histCanvas = document.getElementById('histChart');
+        if(!histCanvas) return;
+        const wrap = histCanvas.parentElement;
+        wrap.style.height = 'auto';
+
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const rowsData = [
+            { year: '2024', emet: [79.8,48.6,53.0,61.3,69.0,72.5,47.7,55.2,18.7,45.9,39.2,26.3], perisai: [95.0,95.2,94.8,92.2,93.4,83.6,68.5,88.6,86.2,92.2,96.1,95.4] },
+            { year: '2025', emet: [36.0,42.7,77.1,81.1,65.9,57.6,61.5,65.2,70.3,68.4,57.9,74.3], perisai: [97.9,97.8,99.3,98.4,99.0,97.8,95.5,98.3,97.4,96.6,97.5,98.1] },
+            { year: '2026', emet: [70.1,70.9,63.4,73.0,78.1,70.7,75.7,null,null,null,null,null], perisai: [97.6,98.2,98.1,99.0,97.9,99.4,98.3,null,null,null,null,null] }
+        ];
+
+        const makeRowHtml = (label, arr) =>
+            '<tr><td class="row-title">' + label + '</td>' +
+            arr.map(v => '<td class="num">' + (v !== null ? v.toFixed(1) + '%' : '—') + '</td>').join('') +
+            '</tr>';
+
+        wrap.innerHTML =
+            '<div class="table-responsive"><table class="report-tbl">' +
+            '<thead><tr><th class="text-start">Produk / Tahun</th>' + months.map(m => '<th class="text-end">' + m + '</th>').join('') + '</tr></thead>' +
+            '<tbody>' +
+            rowsData.map(r => makeRowHtml('E-Meterai ' + r.year, r.emet) + makeRowHtml('Perisai ' + r.year, r.perisai)).join('') +
+            '</tbody></table></div>';
+    }
+
+    function switchSection(target, title){
+        document.querySelectorAll('#sidenavAccordion .nav-link').forEach(link => {
+            link.classList.toggle('active', link.dataset.target === target);
+        });
+        document.querySelectorAll('.tab-section').forEach(sec => {
+            sec.classList.toggle('active', sec.id === 'sec-' + target);
+        });
+        document.getElementById('pageHeading').textContent = title;
+        document.getElementById('pageBreadcrumb').textContent = title;
+        document.getElementById('sharedDailyControls').style.display = (target === 'daily' || target === 'ticketing' || target === 'agent') ? '' : 'none';
+        if(target === 'agent') renderAgentProductivity();
+    }
+
+    document.querySelectorAll('#sidenavAccordion .nav-link[data-target]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchSection(link.dataset.target, link.dataset.title);
+        });
+    });
+
+    document.getElementById('fileInput').addEventListener('change', async (ev) => {
+        const file = ev.target.files[0];
+        if(!file) return;
+        const syncMode = (document.getElementById('uploadSyncMode') || {}).value || 'replace';
+        showStatus('info', 'Membaca file "' + file.name + '"...');
+        try{
+            const buf = await file.arrayBuffer();
+            const parsed = parseWorkbook(buf, file.name);
+            if(parsed.interactions.length === 0) throw new Error('Tidak ada baris interaksi valid yang ditemukan.');
+
+            if(syncMode === 'replace' || allInteractions.length === 0){
+                clearLocalAgentMap();
+                allInteractions = parsed.interactions;
+                ticketsMap = parsed.escalated;
+            } else {
+                const mergedInt = new Map(allInteractions.map(r => [r.id, r]));
+                parsed.interactions.forEach(r => mergedInt.set(r.id, r));
+                allInteractions = Array.from(mergedInt.values());
+                parsed.escalated.forEach((rec, id) => ticketsMap.set(id, rec));
+            }
+            saveLocalAgentMap(parsed.interactions);
+            populateSubcategoryProductOptions();
+
+            document.getElementById('dailyHourStart').value = '0';
+            document.getElementById('dailyHourEnd').value = '23';
+            renderDailyAndTicketingFromUploaded();
+            renderActual();
+
+            showStatus('info', 'Menyimpan ' + parsed.interactions.length.toLocaleString('id-ID') + ' baris ke Cloudflare D1 (' + syncMode + ')...');
+            try {
+                await syncToD1(parsed.interactions, syncMode);
+                document.getElementById('metaBadge').textContent =
+                    'D1 · ' + allInteractions.length.toLocaleString('id-ID') + ' interaksi (' + ticketsMap.size.toLocaleString('id-ID') + ' N-FCR)';
+                showStatus('success', 'Berhasil memuat & menyimpan ' + parsed.interactions.length.toLocaleString('id-ID') + ' interaksi ke Cloudflare D1.', 5000);
+            } catch (syncErr) {
+                document.getElementById('metaBadge').textContent =
+                    file.name + ' (Lokal) · ' + allInteractions.length + ' interaksi (' + ticketsMap.size + ' N-FCR)';
+                showStatus('warning', 'Data tampil di layar, namun gagal sync ke D1 (' + syncErr.message + ').');
+            }
+        }catch(e){
+            showStatus('danger', 'Gagal membaca file: ' + e.message);
+        }
+        ev.target.value = '';
+    });
+
+    ['dailyDateSelect', 'dailyHourStart', 'dailyHourEnd'].forEach(id => {
+        document.getElementById(id).addEventListener('change', () => {
+            if(allInteractions.length) renderDailyAndTicketingFromUploaded();
+            else renderAgentProductivity();
+        });
+    });
+
+    document.getElementById('slaViewToggle').addEventListener('click', () => {
+        slaViewMode = slaViewMode === 'exclude' ? 'include' : 'exclude';
+        document.getElementById('slaViewToggle').textContent = slaViewMode === 'include'
+            ? 'SLA: User (Incl. Pending)'
+            : 'SLA: Internal (Excl. Pending)';
+        if(ticketsMap.size > 0) renderActual();
+    });
+
+    document.getElementById('themeToggleBtn').addEventListener('click', () => {
+        isDark = !isDark;
+        const sidenav = document.getElementById('sidenavAccordion');
+        if(isDark){
+            document.documentElement.classList.add('dark-mode');
+            document.documentElement.setAttribute('data-bs-theme', 'dark');
+            sidenav.classList.remove('sb-sidenav-light');
+            sidenav.classList.add('sb-sidenav-dark');
+            document.getElementById('themeToggleBtn').textContent = 'Tema: Gelap';
+        } else {
+            document.documentElement.classList.remove('dark-mode');
+            document.documentElement.removeAttribute('data-bs-theme');
+            sidenav.classList.remove('sb-sidenav-dark');
+            sidenav.classList.add('sb-sidenav-light');
+            document.getElementById('themeToggleBtn').textContent = 'Tema: Terang';
+        }
+    });
+
+    document.getElementById('productFilter').addEventListener('change', (e) => { selectedProduct = e.target.value; renderActual(); });
+    document.getElementById('categoryFilter').addEventListener('change', (e) => { selectedCategory = e.target.value; renderActual(); });
+    document.getElementById('monthFilter').addEventListener('change', (e) => { selectedMonth = e.target.value; renderActual(); });
+
+    document.getElementById('ticketSearch').addEventListener('input', drawTicketTable);
+    document.getElementById('ticketStatusFilter').addEventListener('change', drawTicketTable);
+    document.getElementById('ticketPriorityFilter').addEventListener('change', drawTicketTable);
+
+    document.getElementById('exportCsvBtn').addEventListener('click', () => {
+        const list = getFilteredTickets();
+        if(!list.length) return;
+        const esc = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+        const header = ['Ticket ID','Produk','Subject','Kategori','Priority','Status','Durasi Internal (Jam)','Durasi User (Jam)','Hasil SLA'];
+        const lines = [header.join(',')];
+        list.forEach(c => {
+            const resLbl = c.sla.finished ? (c.sla.result === 'aman' ? 'Achieved' : 'Not Achieved') : c.sla.result;
+            lines.push([
+                c.rec.id, c.rec.sc, c.rec.sj, c.rec.dsc, c.rec.pr, c.rec.st,
+                c.sla.hoursExclude != null ? c.sla.hoursExclude.toFixed(2) : '',
+                c.sla.hoursInclude != null ? c.sla.hoursInclude.toFixed(2) : '',
+                resLbl
+            ].map(esc).join(','));
+        });
+        const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'evaluasi_sla_' + new Date().toISOString().slice(0,10) + '.csv';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+
+    ['inVolume','inAgents','inAht','inEscRate','chkSegment','chkCanned','chkLifo','chkSeverity'].forEach(id => {
+        document.getElementById(id).addEventListener('input', runSimulation);
+        document.getElementById(id).addEventListener('change', runSimulation);
+    });
+
+    document.getElementById('simResetBtn').addEventListener('click', () => {
+        document.getElementById('inVolume').value = 1800;
+        document.getElementById('inAgents').value = 12;
+        document.getElementById('inAht').value = 6.5;
+        document.getElementById('inEscRate').value = 18;
+        document.getElementById('chkSegment').checked = true;
+        document.getElementById('chkCanned').checked = true;
+        document.getElementById('chkLifo').checked = true;
+        document.getElementById('chkSeverity').checked = false;
+        runSimulation();
+    });
+
+    injectProStyles();
+    injectD1Controls();
+    ensureAgentNavigationAndSection();
+    setupSharedSubcategoryFilter();
+    initHourSelectors();
+    renderZeroReports();
+    runSimulation();
+    renderHistoricalTable();
+    loadFromD1();
+})();

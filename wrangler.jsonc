@@ -13,3 +13,11 @@
     }
   ]
 }
+{
+  "observability": {
+    "logs": {
+      "enabled": false,
+      "invocation_logs": true
+    }
+  }
+}

@@ -36,6 +36,7 @@
     let selectedProduct = 'ALL';
     let selectedCategory = 'ALL';
     let selectedMonth = 'ALL';
+    let selectedSharedProduct = 'ALL';
     let currentScopedRows = [];
     let isDark = true;
     let lastCapturedBlob = null;
@@ -259,11 +260,12 @@
                 border-color: var(--ops-border) !important;
                 color: var(--ops-text) !important;
             }
-            #casnScopeCaption {
-                font-size: 0.73rem !important;
-                color: var(--ops-muted) !important;
-                padding-left: 0.35rem;
-                border-left: 1px solid var(--ops-border);
+            .shared-filter-sep {
+                width: 1px;
+                height: 16px;
+                background: var(--ops-border);
+                margin: 0 2px;
+                flex-shrink: 0;
             }
             #dailySourceBadge {
                 white-space: nowrap !important;
@@ -395,6 +397,42 @@
             }
             .tbl-grp-border {
                 border-left: 1px solid var(--ops-border) !important;
+            }
+            .ops-split-col {
+                border-right: 1px solid var(--ops-border);
+            }
+            @media (max-width: 767.98px) {
+                .ops-split-col {
+                    border-right: none;
+                    border-bottom: 1px solid var(--ops-border);
+                }
+            }
+            .ops-subhdr {
+                font-size: 0.72rem;
+                font-weight: 600;
+                color: var(--ops-muted);
+                padding: 0.42rem 0.6rem;
+                background-color: var(--ops-surface-subtle);
+                border-bottom: 1px solid var(--ops-border);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .case-cell-wrap {
+                max-width: 270px;
+                white-space: normal !important;
+                line-height: 1.3;
+            }
+            .case-cell-title {
+                font-weight: 500;
+                color: var(--ops-text);
+                font-size: 0.75rem;
+            }
+            .case-cell-meta {
+                font-size: 0.69rem;
+                color: var(--ops-muted);
+                margin-top: 2px;
+                font-variant-numeric: tabular-nums;
             }
             .agent-toolbar-ctrl {
                 font-size: 0.74rem !important;
@@ -641,9 +679,9 @@
                           '<div id="agentCheckboxList" class="agent-multiselect-list"></div>' +
                         '</div>' +
                       '</div>' +
-                      '<select id="agentScopeSelect" class="form-select form-select-sm agent-toolbar-ctrl" style="width:auto;" title="Filter Produk">' +
+                      '<select id="agentScopeSelect" class="form-select form-select-sm agent-toolbar-ctrl" style="width:auto;" title="Filter Produk (Subcategory)">' +
                         '<option value="ALL">Semua Produk</option>' +
-                        '<option value="CASN">CASN (E-Meterai)</option>' +
+                        '<option value="CASN">CASN (Tag CASN)</option>' +
                       '</select>' +
                       '<button type="button" id="copyAgentReportBtn" class="btn btn-outline-primary btn-sm py-0 px-2" style="height:27px;font-size:0.74rem;">Copy Rekap</button>' +
                       '<button type="button" id="exportAgentCsvBtn" class="btn btn-outline-secondary btn-sm py-0 px-2" style="height:27px;font-size:0.74rem;">Export CSV</button>' +
@@ -698,15 +736,63 @@
                   '</div>' +
                   '<div class="col-lg-7">' +
                     '<div class="card">' +
-                      '<div class="card-header">Tren Output Harian per Agent (7 Hari Terakhir — Interaksi / Ticket)</div>' +
+                      '<div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-1">' +
+                        '<span>Kategori Top Pickup Agent — Interaksi &amp; Ticket (MTD)</span>' +
+                        '<span class="small text-muted fw-normal">Top 5 Peringkat</span>' +
+                      '</div>' +
                       '<div class="card-body p-0">' +
-                        '<div class="table-responsive">' +
-                          '<table class="report-tbl">' +
-                            '<thead id="agentTrendHead"></thead>' +
-                            '<tbody id="agentTrendBody"></tbody>' +
-                          '</table>' +
+                        '<div class="row g-0">' +
+                          '<div class="col-md-6 ops-split-col">' +
+                            '<div class="ops-subhdr"><span>Top Pickup Interaksi</span><span class="badge bg-info">MTD (Daily)</span></div>' +
+                            '<div class="table-responsive">' +
+                              '<table class="report-tbl">' +
+                                '<thead><tr>' +
+                                  '<th class="text-end" style="width:32px;">#</th>' +
+                                  '<th class="text-start">Nama Agent</th>' +
+                                  '<th class="text-end">Interaksi</th>' +
+                                  '<th class="text-end">Porsi</th>' +
+                                '</tr></thead>' +
+                                '<tbody id="agentTopPickupIntBody"></tbody>' +
+                              '</table>' +
+                            '</div>' +
+                          '</div>' +
+                          '<div class="col-md-6">' +
+                            '<div class="ops-subhdr"><span>Top Pembuat Ticket (N-FCR)</span><span class="badge bg-warning">MTD (Daily)</span></div>' +
+                            '<div class="table-responsive">' +
+                              '<table class="report-tbl">' +
+                                '<thead><tr>' +
+                                  '<th class="text-end" style="width:32px;">#</th>' +
+                                  '<th class="text-start">Nama Agent</th>' +
+                                  '<th class="text-end">Ticket</th>' +
+                                  '<th class="text-end">Rasio</th>' +
+                                '</tr></thead>' +
+                                '<tbody id="agentTopPickupTktBody"></tbody>' +
+                              '</table>' +
+                            '</div>' +
+                          '</div>' +
                         '</div>' +
                       '</div>' +
+                    '</div>' +
+                  '</div>' +
+                '</div>' +
+                '<div class="card mt-0 mb-3">' +
+                  '<div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">' +
+                    '<span>Dominasi Case / Kategori yang Dihandle per Agent (MTD)</span>' +
+                    '<span id="agentCaseScopeCaption" class="small text-muted fw-normal">Top 3 Kategori Case per Agent</span>' +
+                  '</div>' +
+                  '<div class="card-body p-0">' +
+                    '<div class="table-responsive">' +
+                      '<table class="report-tbl">' +
+                        '<thead><tr>' +
+                          '<th class="text-end" style="width:38px;">No</th>' +
+                          '<th class="text-start">Nama Agent</th>' +
+                          '<th class="text-end">MTD Int / Tkt</th>' +
+                          '<th class="text-start tbl-grp-border">Top 1 Case Dominan</th>' +
+                          '<th class="text-start tbl-grp-border">Top 2 Case</th>' +
+                          '<th class="text-start tbl-grp-border">Top 3 Case</th>' +
+                        '</tr></thead>' +
+                        '<tbody id="agentTopCasesBody"></tbody>' +
+                      '</table>' +
                     '</div>' +
                   '</div>' +
                 '</div>';
@@ -759,6 +845,14 @@
 
             document.getElementById('agentScopeSelect').addEventListener('change', (e) => {
                 agentProductScope = e.target.value;
+                const sharedSel = document.getElementById('sharedProductFilter');
+                if(sharedSel && Array.from(sharedSel.options).some(o => o.value === agentProductScope)){
+                    selectedSharedProduct = agentProductScope;
+                    sharedSel.value = agentProductScope;
+                    if(allInteractions.length) renderDailyAndTicketingFromUploaded();
+                    else renderAgentProductivity();
+                    return;
+                }
                 renderAgentProductivity();
             });
             document.getElementById('copyAgentReportBtn').addEventListener('click', copyAgentSummaryToClipboard);
@@ -826,7 +920,7 @@
         });
     }
 
-    function simplifyScopeControl(){
+    function setupSharedSubcategoryFilter(){
         const scopeSel = document.getElementById('dailyCasnScope');
         if(!scopeSel) return;
 
@@ -838,12 +932,75 @@
             prevEl.style.display = 'none';
         }
 
-        if(!document.getElementById('casnScopeCaption')){
-            const cap = document.createElement('span');
-            cap.id = 'casnScopeCaption';
-            cap.textContent = 'Scope: CASN (E-Meterai) & Semua Produk';
-            scopeSel.parentElement.insertBefore(cap, scopeSel);
+        if(!document.getElementById('sharedProductFilter')){
+            const sep = document.createElement('span');
+            sep.className = 'shared-filter-sep';
+
+            const lbl = document.createElement('label');
+            lbl.setAttribute('for', 'sharedProductFilter');
+            lbl.textContent = 'Produk:';
+
+            const sel = document.createElement('select');
+            sel.id = 'sharedProductFilter';
+            sel.className = 'form-select form-select-sm';
+            sel.style.width = 'auto';
+            sel.style.minWidth = '155px';
+            sel.title = 'Filter produk dari kolom raw subcategory';
+            sel.innerHTML = '<option value="ALL">Semua Produk</option>';
+
+            sel.addEventListener('change', (e) => {
+                selectedSharedProduct = e.target.value || 'ALL';
+                agentProductScope = selectedSharedProduct;
+                const agSel = document.getElementById('agentScopeSelect');
+                if(agSel) agSel.value = agentProductScope;
+
+                if(allInteractions.length) renderDailyAndTicketingFromUploaded();
+                else renderAgentProductivity();
+            });
+
+            scopeSel.parentElement.insertBefore(sep, scopeSel);
+            scopeSel.parentElement.insertBefore(lbl, scopeSel);
+            scopeSel.parentElement.insertBefore(sel, scopeSel);
         }
+    }
+
+    function populateSubcategoryProductOptions(){
+        setupSharedSubcategoryFilter();
+        const products = Array.from(
+            new Set(allInteractions.map(r => safeStr(r.sc || r.subCategory)).filter(Boolean))
+        ).sort((a, b) => a.localeCompare(b));
+
+        const sharedSel = document.getElementById('sharedProductFilter');
+        if(sharedSel){
+            sharedSel.innerHTML =
+                '<option value="ALL">Semua Produk</option>' +
+                products.map(p => '<option value="' + escapeHtml(p) + '">' + escapeHtml(p) + '</option>').join('');
+            if(selectedSharedProduct === 'ALL' || products.includes(selectedSharedProduct)){
+                sharedSel.value = selectedSharedProduct;
+            } else {
+                selectedSharedProduct = 'ALL';
+                sharedSel.value = 'ALL';
+            }
+        }
+
+        const agSel = document.getElementById('agentScopeSelect');
+        if(agSel){
+            agSel.innerHTML =
+                '<option value="ALL">Semua Produk</option>' +
+                '<option value="CASN">CASN (Tag CASN)</option>' +
+                products.map(p => '<option value="' + escapeHtml(p) + '">' + escapeHtml(p) + '</option>').join('');
+            if(['ALL', 'CASN'].concat(products).includes(agentProductScope)){
+                agSel.value = agentProductScope;
+            } else {
+                agentProductScope = 'ALL';
+                agSel.value = 'ALL';
+            }
+        }
+    }
+
+    function matchesSharedProduct(r){
+        if(selectedSharedProduct === 'ALL') return true;
+        return safeStr(r.sc || r.subCategory) === selectedSharedProduct;
     }
 
     function isCasnRecord(r){
@@ -874,13 +1031,27 @@
         return new Date(y, m - 1, d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
     }
 
+    function getTopCasesForAgent(agentObj, limit = 3){
+        if(!agentObj || !agentObj.casesMtd) return [];
+        return Array.from(agentObj.casesMtd.entries())
+            .map(([caseName, counts]) => ({
+                caseName,
+                int: counts.int,
+                tkt: counts.tkt,
+                pct: agentObj.mInt ? ((counts.int / agentObj.mInt) * 100).toFixed(1) + '%' : '0.0%'
+            }))
+            .sort((a, b) => (b.int - a.int) || (b.tkt - a.tkt) || a.caseName.localeCompare(b.caseName))
+            .slice(0, limit);
+    }
+
     function renderAgentProductivity(){
         ensureAgentNavigationAndSection();
         const kpiEl = document.getElementById('agentKpiStrip');
         const bodyEl = document.getElementById('agentProdBody');
         const chBodyEl = document.getElementById('agentChannelBody');
-        const trendHeadEl = document.getElementById('agentTrendHead');
-        const trendBodyEl = document.getElementById('agentTrendBody');
+        const topIntBodyEl = document.getElementById('agentTopPickupIntBody');
+        const topTktBodyEl = document.getElementById('agentTopPickupTktBody');
+        const topCasesBodyEl = document.getElementById('agentTopCasesBody');
         const noticeEl = document.getElementById('agentMissingColNotice');
         const capEl = document.getElementById('agentPeriodCaption');
         if(!kpiEl || !bodyEl) return;
@@ -907,8 +1078,9 @@
             ).join('');
             bodyEl.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">Belum ada data interaksi. Upload file Excel/CSV melalui Mode Admin.</td></tr>';
             chBodyEl.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">Belum ada data.</td></tr>';
-            trendHeadEl.innerHTML = '<tr><th class="text-start">Nama Agent</th></tr>';
-            trendBodyEl.innerHTML = '<tr><td class="text-center text-muted py-3">Belum ada data.</td></tr>';
+            topIntBodyEl.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">Belum ada data.</td></tr>';
+            topTktBodyEl.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">Belum ada data.</td></tr>';
+            topCasesBodyEl.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Belum ada data.</td></tr>';
             lastAgentSummaryRows = [];
             return;
         }
@@ -926,9 +1098,12 @@
         document.getElementById('thGrpMonthly').textContent = 'Per Bulan / MTD (' + monthlyLabel + ')';
         capEl.textContent = '· Jam Daily: ' + hStart + ':00–' + hEnd + ':59 WIB';
 
-        const scopedRecords = agentProductScope === 'CASN'
-            ? allInteractions.filter(r => isCasnRecord(r))
-            : allInteractions;
+        let scopedRecords = allInteractions;
+        if(agentProductScope === 'CASN'){
+            scopedRecords = allInteractions.filter(r => isCasnRecord(r));
+        } else if(agentProductScope !== 'ALL'){
+            scopedRecords = allInteractions.filter(r => safeStr(r.sc || r.subCategory) === agentProductScope);
+        }
 
         const hasAnyNamedAgent = scopedRecords.some(r => Boolean((r.agent || '').trim()));
         if(!hasAnyNamedAgent && scopedRecords.length > 0){
@@ -941,24 +1116,15 @@
             noticeEl.style.display = 'none';
         }
 
-        const last7Dates = [];
-        for(let offset = 6; offset >= 0; offset--){
-            const d = new Date(ay, am - 1, ad - offset);
-            last7Dates.push(formatYMDLocal(d));
-        }
-        const last7Set = new Set(last7Dates);
-
         const agentStats = new Map();
         const ensureAgent = (name) => {
             if(!agentStats.has(name)){
-                const dailyTrend = {};
-                last7Dates.forEach(dt => { dailyTrend[dt] = { int: 0, tkt: 0 }; });
                 agentStats.set(name, {
                     name,
                     dInt: 0, dFcr: 0, dTkt: 0,
                     mInt: 0, mFcr: 0, mTkt: 0,
                     chChat: 0, chWa: 0, chEmail: 0, chCall: 0,
-                    trend: dailyTrend
+                    casesMtd: new Map()
                 });
             }
             return agentStats.get(name);
@@ -973,9 +1139,8 @@
 
             const inMonth = dKey.startsWith(monthPrefix) && dKey <= activeDate;
             const inDaily = dKey === activeDate && hr >= hStart && hr <= hEnd;
-            const inTrend7 = last7Set.has(dKey);
 
-            if(!inMonth && !inDaily && !inTrend7) return;
+            if(!inMonth && !inDaily) return;
 
             const name = (r.agent || '').trim() || '(Tanpa Nama Agent)';
             const st = ensureAgent(name);
@@ -996,10 +1161,14 @@
                 else if(ch.includes('whatsapp') || ch === 'wa') st.chWa++;
                 else if(ch.includes('email')) st.chEmail++;
                 else if(ch.includes('call') || ch.includes('telp') || ch.includes('voice')) st.chCall++;
-            }
-            if(inTrend7){
-                st.trend[dKey].int++;
-                if(isTkt) st.trend[dKey].tkt++;
+
+                const caseLabel = (r.dsc || r.sc || '(Lainnya)').trim();
+                if(!st.casesMtd.has(caseLabel)){
+                    st.casesMtd.set(caseLabel, { int: 0, tkt: 0 });
+                }
+                const cObj = st.casesMtd.get(caseLabel);
+                cObj.int++;
+                if(isTkt) cObj.tkt++;
             }
         });
 
@@ -1079,8 +1248,9 @@
         if(!rows.length){
             bodyEl.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">Tidak ada data agent pada filter yang dipilih.</td></tr>';
             chBodyEl.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">Tidak ada data.</td></tr>';
-            trendHeadEl.innerHTML = '<tr><th class="text-start">Nama Agent</th></tr>';
-            trendBodyEl.innerHTML = '<tr><td class="text-center text-muted py-3">Tidak ada data.</td></tr>';
+            topIntBodyEl.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">Tidak ada data.</td></tr>';
+            topTktBodyEl.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">Tidak ada data.</td></tr>';
+            topCasesBodyEl.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">Tidak ada data.</td></tr>';
             return;
         }
 
@@ -1133,18 +1303,62 @@
             '<td class="num">' + tot.mTkt.toLocaleString('id-ID') + '</td>' +
         '</tr>';
 
-        trendHeadEl.innerHTML = '<tr><th class="text-start">Nama Agent</th>' +
-            last7Dates.map(dt => '<th class="text-end">' + formatShortIndoDate(dt) + '</th>').join('') +
+        const topIntAgents = [...rows]
+            .filter(a => a.mInt > 0)
+            .sort((a, b) => (b.mInt - a.mInt) || (b.dInt - a.dInt))
+            .slice(0, 5);
+        const intDenom = tot.mInt || 1;
+        topIntBodyEl.innerHTML = topIntAgents.map((a, idx) => {
+            const share = ((a.mInt / intDenom) * 100).toFixed(1) + '%';
+            return '<tr>' +
+                '<td class="num rank-num ' + (idx < 3 ? 'top5' : '') + '">' + (idx + 1) + '</td>' +
+                '<td class="row-title">' + escapeHtml(a.name) + '</td>' +
+                '<td class="num fw-semibold">' + a.mInt.toLocaleString('id-ID') + ' <span class="text-muted fw-normal">(' + a.dInt + ')</span></td>' +
+                '<td class="num">' + share + '</td>' +
             '</tr>';
+        }).join('') || '<tr><td colspan="4" class="text-center text-muted py-3">Belum ada interaksi MTD.</td></tr>';
 
-        trendBodyEl.innerHTML = rows.map(a =>
-            '<tr><td class="row-title">' + escapeHtml(a.name) + '</td>' +
-            last7Dates.map(dt => {
-                const cell = a.trend[dt] || { int: 0, tkt: 0 };
-                return '<td class="num">' + cell.int + ' <span class="text-muted">/ ' + cell.tkt + '</span></td>';
-            }).join('') +
-            '</tr>'
-        ).join('');
+        const topTktAgents = [...rows]
+            .filter(a => a.mTkt > 0)
+            .sort((a, b) => (b.mTkt - a.mTkt) || (b.dTkt - a.dTkt))
+            .slice(0, 5);
+        topTktBodyEl.innerHTML = topTktAgents.map((a, idx) => {
+            const ratio = a.mInt ? ((a.mTkt / a.mInt) * 100).toFixed(1) + '%' : '0.0%';
+            return '<tr>' +
+                '<td class="num rank-num ' + (idx < 3 ? 'top5' : '') + '">' + (idx + 1) + '</td>' +
+                '<td class="row-title">' + escapeHtml(a.name) + '</td>' +
+                '<td class="num fw-semibold">' + a.mTkt.toLocaleString('id-ID') + ' <span class="text-muted fw-normal">(' + a.dTkt + ')</span></td>' +
+                '<td class="num">' + ratio + '</td>' +
+            '</tr>';
+        }).join('') || '<tr><td colspan="4" class="text-center text-muted py-3">Belum ada ticket MTD.</td></tr>';
+
+        const caseCapEl = document.getElementById('agentCaseScopeCaption');
+        if(caseCapEl){
+            caseCapEl.textContent = isSubsetSelected
+                ? 'Menampilkan ' + rows.length + ' agent terpilih (Top 3 Case MTD)'
+                : 'Urutan pickup terbanyak · Top 3 Kategori Case MTD';
+        }
+
+        const renderCaseCell = (cObj) => {
+            if(!cObj) return '<td class="tbl-grp-border text-muted">—</td>';
+            return '<td class="tbl-grp-border case-cell-wrap">' +
+                '<div class="case-cell-title" title="' + escapeHtml(cObj.caseName) + '">' + escapeHtml(cObj.caseName) + '</div>' +
+                '<div class="case-cell-meta">' + cObj.int.toLocaleString('id-ID') + ' int (' + cObj.pct + ') · ' + cObj.tkt.toLocaleString('id-ID') + ' tkt</div>' +
+            '</td>';
+        };
+
+        const activeCaseRows = rows.filter(a => a.mInt > 0);
+        topCasesBodyEl.innerHTML = activeCaseRows.map((a, idx) => {
+            const top3 = getTopCasesForAgent(a, 3);
+            return '<tr>' +
+                '<td class="num rank-num ' + (idx < 5 ? 'top5' : '') + '">' + (idx + 1) + '</td>' +
+                '<td class="row-title">' + escapeHtml(a.name) + '</td>' +
+                '<td class="num fw-semibold">' + a.mInt.toLocaleString('id-ID') + ' <span class="text-muted fw-normal">/ ' + a.mTkt.toLocaleString('id-ID') + '</span></td>' +
+                renderCaseCell(top3[0]) +
+                renderCaseCell(top3[1]) +
+                renderCaseCell(top3[2]) +
+            '</tr>';
+        }).join('') || '<tr><td colspan="6" class="text-center text-muted py-3">Belum ada data kategori case pada periode MTD ini.</td></tr>';
     }
 
     async function copyAgentSummaryToClipboard(){
@@ -1152,17 +1366,23 @@
         const activeDate = document.getElementById('dailyDateSelect').value;
         const [ay, am, ad] = activeDate.split('-').map(Number);
         const indoDate = new Date(ay, am - 1, ad).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-        const scopeLbl = agentProductScope === 'CASN' ? 'CASN (E-Meterai)' : 'Semua Produk';
+        const scopeLbl = agentProductScope === 'ALL'
+            ? 'Semua Produk'
+            : (agentProductScope === 'CASN' ? 'CASN (Tag CASN)' : agentProductScope);
         const agentLbl = selectedAgentNames.size === 0
             ? 'Semua Agent'
             : Array.from(selectedAgentNames).join(', ');
         const lines = [
             `*Rekap Produktivitas Agent — ${indoDate}*`,
-            `Scope: ${scopeLbl} | Agent: ${agentLbl}`,
+            `Produk: ${scopeLbl} | Agent: ${agentLbl}`,
             ``
         ];
         lastAgentSummaryRows.forEach((a, i) => {
-            lines.push(`${i + 1}. *${a.name}* — Daily: ${a.dInt} int (${a.dTkt} tkt) | MTD: ${a.mInt} int (${a.mTkt} tkt)`);
+            const topCases = getTopCasesForAgent(a, 2)
+                .map(c => `${c.caseName} (${c.int})`)
+                .join(', ');
+            const caseSuffix = topCases ? ` | Top Case: ${topCases}` : '';
+            lines.push(`${i + 1}. *${a.name}* — Daily: ${a.dInt} int (${a.dTkt} tkt) | MTD: ${a.mInt} int (${a.mTkt} tkt)${caseSuffix}`);
         });
         const text = lines.join('\n');
         const btn = document.getElementById('copyAgentReportBtn');
@@ -1181,15 +1401,19 @@
         const header = [
             'No', 'Nama Agent',
             'Daily Interaksi', 'Daily FCR', 'Daily Ticket Dibuat',
-            'MTD Interaksi', 'MTD FCR', 'MTD Ticket Dibuat', 'Rasio Ticket MTD (%)'
+            'MTD Interaksi', 'MTD FCR', 'MTD Ticket Dibuat', 'Rasio Ticket MTD (%)',
+            'Top 1 Case MTD', 'Top 2 Case MTD', 'Top 3 Case MTD'
         ];
         const lines = [header.join(',')];
         lastAgentSummaryRows.forEach((a, i) => {
             const ratio = a.mInt ? ((a.mTkt / a.mInt) * 100).toFixed(2) : '0.00';
+            const top3 = getTopCasesForAgent(a, 3);
+            const fmtC = (c) => c ? `${c.caseName} (${c.int} int / ${c.tkt} tkt)` : '';
             lines.push([
                 i + 1, a.name,
                 a.dInt, a.dFcr, a.dTkt,
-                a.mInt, a.mFcr, a.mTkt, ratio
+                a.mInt, a.mFcr, a.mTkt, ratio,
+                fmtC(top3[0]), fmtC(top3[1]), fmtC(top3[2])
             ].map(esc).join(','));
         });
         const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
@@ -1256,11 +1480,6 @@
 
             const grid = document.createElement('div');
             grid.id = 'dailyNoChartGrid';
-
-            const kpiRow = document.createElement('div');
-            kpiRow.id = 'dailyKpiStrip';
-            kpiRow.className = 'row g-3 mb-2';
-            grid.appendChild(kpiRow);
 
             const makeRow = (cols) => {
                 const row = document.createElement('div');
@@ -1363,51 +1582,12 @@
         });
     }
 
-    function renderDailyKpiCards(sDailyCasn, sMtdCasn, sDailyAll, sMtdAll){
-        const el = document.getElementById('dailyKpiStrip');
-        if(!el) return;
-        const fcrRate = sDailyCasn.total ? ((sDailyCasn.fcr / sDailyCasn.total) * 100).toFixed(1) + '%' : '0.0%';
-        const nfcrRate = sDailyCasn.total ? ((sDailyCasn.nfcr / sDailyCasn.total) * 100).toFixed(1) + '%' : '0.0%';
-        const cards = [
-            {
-                dot: 'blue',
-                label: 'Interaksi CASN (Daily)',
-                val: sDailyCasn.total.toLocaleString('id-ID'),
-                sub: 'FCR ' + sDailyCasn.fcr.toLocaleString('id-ID') + ' (' + fcrRate + ') · N-FCR ' + sDailyCasn.nfcr.toLocaleString('id-ID') + ' (' + nfcrRate + ')'
-            },
-            {
-                dot: 'neutral',
-                label: 'Akumulasi CASN (MTD)',
-                val: sMtdCasn.total.toLocaleString('id-ID'),
-                sub: 'FCR ' + sMtdCasn.fcr.toLocaleString('id-ID') + ' · N-FCR ' + sMtdCasn.nfcr.toLocaleString('id-ID')
-            },
-            {
-                dot: 'green',
-                label: 'Semua Produk (Daily)',
-                val: sDailyAll.total.toLocaleString('id-ID'),
-                sub: 'FCR ' + sDailyAll.fcr.toLocaleString('id-ID') + ' · N-FCR ' + sDailyAll.nfcr.toLocaleString('id-ID')
-            },
-            {
-                dot: 'neutral',
-                label: 'Semua Produk (MTD)',
-                val: sMtdAll.total.toLocaleString('id-ID'),
-                sub: 'FCR ' + sMtdAll.fcr.toLocaleString('id-ID') + ' · N-FCR ' + sMtdAll.nfcr.toLocaleString('id-ID')
-            }
-        ];
-        el.innerHTML = cards.map(c =>
-            '<div class="col-xl-3 col-md-6">' +
-              '<div class="card casn-kpi-card">' +
-                '<div class="card-body py-2 px-3">' +
-                  '<div class="casn-kpi-label mb-1"><span class="kpi-dot ' + c.dot + '"></span>' + c.label + '</div>' +
-                  '<div class="casn-kpi-val mb-1">' + c.val + '</div>' +
-                  '<div class="casn-kpi-sub">' + c.sub + '</div>' +
-                '</div>' +
-              '</div>' +
-            '</div>'
-        ).join('');
+    function setCardHeaderTitle(tbodyId, title){
+        const hdr = document.getElementById(tbodyId)?.closest('.card')?.querySelector('.card-header');
+        if(hdr) hdr.textContent = title;
     }
 
-    function renderTicketingKpiCards(sDailyCasn, sMtdCasn, sMtdAll, activeCasnQueue, activeCasnPending){
+    function renderTicketingKpiCards(sDailyCasn, sMtdCasn, sMtdAll, activeCasnQueue, activeCasnPending, prodLabel = 'Semua Produk'){
         const el = document.getElementById('tktKpiStrip');
         if(!el) return;
         const queueDisplay = activeCasnQueue >= 1000
@@ -1418,19 +1598,19 @@
                 dot: 'blue',
                 label: 'Tiket CASN Created (MTD)',
                 val: sMtdCasn.created.toLocaleString('id-ID'),
-                sub: 'Daily: ' + sDailyCasn.created.toLocaleString('id-ID') + ' · Semua Produk MTD: ' + sMtdAll.created.toLocaleString('id-ID')
+                sub: 'Daily: ' + sDailyCasn.created.toLocaleString('id-ID') + ' · ' + prodLabel + ' MTD: ' + sMtdAll.created.toLocaleString('id-ID')
             },
             {
                 dot: 'green',
                 label: 'Tiket CASN Resolved (MTD)',
                 val: sMtdCasn.resolved.toLocaleString('id-ID'),
-                sub: 'Daily: ' + sDailyCasn.resolved.toLocaleString('id-ID') + ' · Semua Produk MTD: ' + sMtdAll.resolved.toLocaleString('id-ID')
+                sub: 'Daily: ' + sDailyCasn.resolved.toLocaleString('id-ID') + ' · ' + prodLabel + ' MTD: ' + sMtdAll.resolved.toLocaleString('id-ID')
             },
             {
                 dot: 'amber',
                 label: 'Tiket CASN Outstanding (MTD)',
                 val: sMtdCasn.outstanding.toLocaleString('id-ID'),
-                sub: 'Pending MTD: ' + sMtdCasn.pending.toLocaleString('id-ID') + ' · Semua Produk MTD: ' + sMtdAll.outstanding.toLocaleString('id-ID')
+                sub: 'Pending MTD: ' + sMtdCasn.pending.toLocaleString('id-ID') + ' · ' + prodLabel + ' MTD: ' + sMtdAll.outstanding.toLocaleString('id-ID')
             },
             {
                 dot: activeCasnQueue >= 1000 ? 'red' : 'neutral',
@@ -1591,6 +1771,9 @@
                 allInteractions = [];
                 ticketsMap = new Map();
                 clearLocalAgentMap();
+                selectedSharedProduct = 'ALL';
+                agentProductScope = 'ALL';
+                populateSubcategoryProductOptions();
                 document.getElementById('metaBadge').textContent = 'Cloudflare D1 · 0 interaksi';
                 document.getElementById('dailySourceBadge').textContent = 'Database Kosong (0)';
                 showStatus('warning', 'Data di Cloudflare D1 berhasil dikosongkan.', 4500);
@@ -1646,7 +1829,7 @@
         const cardHtml =
             '<div class="card" id="channelBreakdownCard">' +
               '<div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">' +
-                '<span>Distribusi Interaksi CASN & Waktu Dispatch per Channel</span>' +
+                '<span id="channelBreakdownTitle">Distribusi Interaksi CASN & Waktu Dispatch per Channel</span>' +
                 '<span class="small text-muted">Target Dispatch N-FCR Email & WhatsApp: ≤ 15 Menit</span>' +
               '</div>' +
               '<div class="card-body p-0">' +
@@ -1654,11 +1837,11 @@
                   '<table class="report-tbl">' +
                     '<thead><tr>' +
                       '<th class="text-start">Channel</th>' +
-                      '<th class="text-end">Daily CASN</th>' +
+                      '<th class="text-end" id="thChDaily">Daily CASN</th>' +
                       '<th class="text-end">Porsi</th>' +
                       '<th class="text-end">FCR</th>' +
                       '<th class="text-end">N-FCR</th>' +
-                      '<th class="text-end">MTD CASN</th>' +
+                      '<th class="text-end" id="thChMtd">MTD CASN</th>' +
                       '<th class="text-end">Avg Dispatch N-FCR</th>' +
                     '</tr></thead>' +
                     '<tbody id="channelBreakdownBody"></tbody>' +
@@ -1822,6 +2005,7 @@
         const selDateEl = document.getElementById('dailyDateSelect');
         const hStart = document.getElementById('dailyHourStart').value || '0';
         const hEnd = document.getElementById('dailyHourEnd').value || '23';
+        const prodTitle = selectedSharedProduct === 'ALL' ? 'All Produk (Semua Layanan)' : `Produk: ${selectedSharedProduct}`;
 
         if(!allInteractions.length){
             return [
@@ -1842,9 +2026,9 @@
                 `*Antrian Tiket Helpdesk SSCASN*`,
                 `• Total Antrian : 0`,
                 ``,
-                `*Ringkasan All Produk (Semua Layanan)*`,
-                `• All Interaksi Daily : 0 | MTD : 0`,
-                `• All Tiket Created MTD : 0 | Resolved MTD : 0 | Outstanding MTD : 0`
+                `*Ringkasan ${prodTitle}*`,
+                `• Interaksi Daily : 0 | MTD : 0`,
+                `• Tiket Created MTD : 0 | Resolved MTD : 0 | Outstanding MTD : 0`
             ].join('\n');
         }
 
@@ -1863,10 +2047,10 @@
             return { r, dKey, hour: d.getHours() };
         }).filter(Boolean);
 
-        const dailyAllInt = intMeta.filter(x => x.dKey === activeDate && x.hour >= hStartNum && x.hour <= hEndNum);
-        const dailyCasnInt = dailyAllInt.filter(x => isCasnRecord(x.r));
-        const mtdAllInt = intMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate);
-        const mtdCasnInt = mtdAllInt.filter(x => isCasnRecord(x.r));
+        const dailyAllInt = intMeta.filter(x => x.dKey === activeDate && x.hour >= hStartNum && x.hour <= hEndNum && matchesSharedProduct(x.r));
+        const dailyCasnInt = intMeta.filter(x => x.dKey === activeDate && x.hour >= hStartNum && x.hour <= hEndNum && isCasnRecord(x.r));
+        const mtdAllInt = intMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && matchesSharedProduct(x.r));
+        const mtdCasnInt = intMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && isCasnRecord(x.r));
 
         const sumInt = (list) => {
             let fcr = 0, nfcr = 0;
@@ -1902,10 +2086,10 @@
             return { r, dKey, hour: d.getHours() };
         }).filter(Boolean);
 
-        const dailyAllTkt = tktMeta.filter(x => x.dKey === activeDate && x.hour >= hStartNum && x.hour <= hEndNum);
-        const dailyCasnTkt = dailyAllTkt.filter(x => isCasnRecord(x.r));
-        const mtdAllTkt = tktMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate);
-        const mtdCasnTkt = mtdAllTkt.filter(x => isCasnRecord(x.r));
+        const dailyAllTkt = tktMeta.filter(x => x.dKey === activeDate && x.hour >= hStartNum && x.hour <= hEndNum && matchesSharedProduct(x.r));
+        const dailyCasnTkt = tktMeta.filter(x => x.dKey === activeDate && x.hour >= hStartNum && x.hour <= hEndNum && isCasnRecord(x.r));
+        const mtdAllTkt = tktMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && matchesSharedProduct(x.r));
+        const mtdCasnTkt = tktMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && isCasnRecord(x.r));
 
         const sumTkt = (list) => {
             let resolved = 0, outstanding = 0, pending = 0;
@@ -1949,10 +2133,10 @@
             `*Antrian Tiket Helpdesk SSCASN*`,
             `• Total Antrian : *${queueText}*`,
             ``,
-            `*Ringkasan All Produk (Semua Layanan)*`,
-            `• All Interaksi Daily : *${sDailyAllInt.total.toLocaleString('id-ID')}* (FCR: ${sDailyAllInt.fcr.toLocaleString('id-ID')} | N-FCR: ${sDailyAllInt.nfcr.toLocaleString('id-ID')})`,
-            `• All Interaksi MTD : *${sMtdAllInt.total.toLocaleString('id-ID')}* (FCR: ${sMtdAllInt.fcr.toLocaleString('id-ID')} | N-FCR: ${sMtdAllInt.nfcr.toLocaleString('id-ID')})`,
-            `• All Tiket MTD : Created *${sMtdAllTkt.created.toLocaleString('id-ID')}* | Resolved *${sMtdAllTkt.resolved.toLocaleString('id-ID')}* | Outstanding *${sMtdAllTkt.outstanding.toLocaleString('id-ID')}*`
+            `*Ringkasan ${prodTitle}*`,
+            `• Interaksi Daily : *${sDailyAllInt.total.toLocaleString('id-ID')}* (FCR: ${sDailyAllInt.fcr.toLocaleString('id-ID')} | N-FCR: ${sDailyAllInt.nfcr.toLocaleString('id-ID')})`,
+            `• Interaksi MTD : *${sMtdAllInt.total.toLocaleString('id-ID')}* (FCR: ${sMtdAllInt.fcr.toLocaleString('id-ID')} | N-FCR: ${sMtdAllInt.nfcr.toLocaleString('id-ID')})`,
+            `• Tiket MTD : Created *${sMtdAllTkt.created.toLocaleString('id-ID')}* | Resolved *${sMtdAllTkt.resolved.toLocaleString('id-ID')}* | Outstanding *${sMtdAllTkt.outstanding.toLocaleString('id-ID')}*`
         ].join('\n');
     }
 
@@ -2161,6 +2345,7 @@
             if(!data.ok || !Array.isArray(data.records) || data.records.length === 0){
                 allInteractions = [];
                 ticketsMap = new Map();
+                populateSubcategoryProductOptions();
                 document.getElementById('metaBadge').textContent = 'Cloudflare D1 · 0 interaksi';
                 document.getElementById('dailySourceBadge').textContent = 'Database Kosong (0)';
                 renderZeroReports();
@@ -2173,6 +2358,7 @@
             let skippedNotEscalated = 0;
             data.records.forEach(r => {
                 if(!r || !r.id) return;
+                r.sc = safeStr(r.sc || r.subCategory || '');
                 r.agent = safeStr(r.agent || r.created_by_name || r.agent_name || localAgentMap[r.id] || '').replace(/\s+/g, ' ');
                 if(!r.isEscalated) skippedNotEscalated++;
                 else escalatedOut.set(r.id, r);
@@ -2181,6 +2367,7 @@
 
             allInteractions = data.records;
             ticketsMap = escalatedOut;
+            populateSubcategoryProductOptions();
             document.getElementById('metaBadge').textContent =
                 'D1 · ' + allInteractions.length.toLocaleString('id-ID') + ' interaksi (' + ticketsMap.size.toLocaleString('id-ID') + ' N-FCR)';
             renderDailyAndTicketingFromUploaded();
@@ -2212,11 +2399,8 @@
     function renderZeroReports(){
         applyNoChartLayout();
 
-        const zeroStats = { total: 0, fcr: 0, nfcr: 0, info: 0, kel: 0, perm: 0 };
-        renderDailyKpiCards(zeroStats, zeroStats, zeroStats, zeroStats);
-
         const zeroTkt = { created: 0, resolved: 0, outstanding: 0, pending: 0 };
-        renderTicketingKpiCards(zeroTkt, zeroTkt, zeroTkt, 0, 0);
+        renderTicketingKpiCards(zeroTkt, zeroTkt, zeroTkt, 0, 0, 'Semua Produk');
 
         document.getElementById('dailyDateSelect').innerHTML = '<option value="EMPTY">Belum ada data</option>';
         document.getElementById('dailyHourStart').value = '0';
@@ -2242,6 +2426,8 @@
         document.getElementById('channelBreakdownBody').innerHTML =
             '<tr><td colspan="7" class="text-center text-muted py-3">Belum ada data interaksi. Upload file CSV/Excel melalui Mode Admin.</td></tr>';
 
+        setCardHeaderTitle('topDailyAllBody', 'Top 10 Interaksi — Semua Produk (Daily)');
+        setCardHeaderTitle('topMtdAllBody', 'Top 10 Interaksi — Semua Produk (Month to Date)');
         fillTopTable('topDailyCasnBody', [], 0, '0.00%');
         fillTopTable('topMtdCasnBody', [], 0, '0.00%');
         fillTopTable('topDailyAllBody', [], 0, '0.00%');
@@ -2261,6 +2447,8 @@
             '<td class="big-num">0</td><td class="big-num">0</td></tr>'
         ).join('');
 
+        setCardHeaderTitle('topDailyTktAllBody', 'Top 10 Tiket — Semua Produk (Daily)');
+        setCardHeaderTitle('topMtdTktAllBody', 'Top 10 Tiket — Semua Produk (Month to Date)');
         fillTopTable('topDailyTktCasnBody', [], 0, '0.00%');
         fillTopTable('topMtdTktCasnBody', [], 0, '0.00%');
         fillTopTable('topDailyTktAllBody', [], 0, '0.00%');
@@ -2299,6 +2487,8 @@
         const [ay, am, ad] = activeDate.split('-').map(Number);
         const activeDateLabel = new Date(ay, am - 1, ad).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
         const monthPrefix = activeDate.slice(0, 7);
+        const isAllProd = selectedSharedProduct === 'ALL';
+        const prodDisplayLabel = isAllProd ? 'Semua Produk' : selectedSharedProduct;
 
         document.getElementById('tblDateVal').textContent = activeDateLabel;
         document.getElementById('tblHourStart').textContent = hStart + ':00';
@@ -2330,10 +2520,10 @@
             return { r: r, dKey: dKey, hour: d.getHours() };
         }).filter(Boolean);
 
-        const dailyAllInt = intMeta.filter(x => x.dKey === activeDate && x.hour >= hStart && x.hour <= hEnd);
-        const dailyCasnInt = dailyAllInt.filter(x => isCasnRecord(x.r));
-        const mtdAllInt = intMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate);
-        const mtdCasnInt = mtdAllInt.filter(x => isCasnRecord(x.r));
+        const dailyAllInt = intMeta.filter(x => x.dKey === activeDate && x.hour >= hStart && x.hour <= hEnd && matchesSharedProduct(x.r));
+        const dailyCasnInt = intMeta.filter(x => x.dKey === activeDate && x.hour >= hStart && x.hour <= hEnd && isCasnRecord(x.r));
+        const mtdAllInt = intMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && matchesSharedProduct(x.r));
+        const mtdCasnInt = intMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && isCasnRecord(x.r));
 
         const summarizeInt = (list) => {
             let fcr = 0, nfcr = 0, info = 0, kel = 0, perm = 0;
@@ -2352,8 +2542,6 @@
         const sDailyAllInt = summarizeInt(dailyAllInt);
         const sMtdAllInt = summarizeInt(mtdAllInt);
 
-        renderDailyKpiCards(sDailyCasnInt, sMtdCasnInt, sDailyAllInt, sMtdAllInt);
-
         const intDenom = sDailyCasnInt.total || 1;
         document.getElementById('pctInfo').textContent = sDailyCasnInt.total ? ((sDailyCasnInt.info / intDenom) * 100).toFixed(2) + '%' : '0.00%';
         document.getElementById('pctKeluhan').textContent = sDailyCasnInt.total ? ((sDailyCasnInt.kel / intDenom) * 100).toFixed(2) + '%' : '0.00%';
@@ -2362,15 +2550,26 @@
         document.getElementById('dailySummaryBody').innerHTML = [
             { label: 'Daily Interaction CASN (E-Meterai)', ...sDailyCasnInt },
             { label: 'Month to Date CASN (E-Meterai)', ...sMtdCasnInt },
-            { label: 'Daily All Interaction (Semua Produk)', ...sDailyAllInt },
-            { label: 'MTD All Interaction (Semua Produk)', ...sMtdAllInt },
+            { label: isAllProd ? 'Daily All Interaction (Semua Produk)' : 'Daily Interaction — ' + selectedSharedProduct, ...sDailyAllInt },
+            { label: isAllProd ? 'MTD All Interaction (Semua Produk)' : 'MTD Interaction — ' + selectedSharedProduct, ...sMtdAllInt },
         ].map(r =>
-            '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.total + '</td><td class="big-num">' + r.fcr + '</td>' +
+            '<tr><td class="row-title">' + escapeHtml(r.label) + '</td><td class="big-num">' + r.total + '</td><td class="big-num">' + r.fcr + '</td>' +
             '<td class="big-num">' + r.nfcr + '</td><td class="big-num">' + r.info + '</td><td class="big-num">' + r.kel + '</td><td class="big-num">' + r.perm + '</td></tr>'
         ).join('');
 
+        const chDailyList = isAllProd ? dailyCasnInt : dailyAllInt;
+        const chMtdList = isAllProd ? mtdCasnInt : mtdAllInt;
+        const chTitleEl = document.getElementById('channelBreakdownTitle');
+        const thChDailyEl = document.getElementById('thChDaily');
+        const thChMtdEl = document.getElementById('thChMtd');
+        if(chTitleEl) chTitleEl.textContent = isAllProd
+            ? 'Distribusi Interaksi CASN & Waktu Dispatch per Channel'
+            : 'Distribusi Interaksi ' + selectedSharedProduct + ' & Waktu Dispatch per Channel';
+        if(thChDailyEl) thChDailyEl.textContent = isAllProd ? 'Daily CASN' : 'Daily';
+        if(thChMtdEl) thChMtdEl.textContent = isAllProd ? 'MTD CASN' : 'MTD';
+
         const chMap = new Map();
-        dailyCasnInt.forEach(x => {
+        chDailyList.forEach(x => {
             const ch = x.r.ch || '(Tanpa Channel)';
             if(!chMap.has(ch)) chMap.set(ch, { daily: 0, fcr: 0, nfcr: 0, mtd: 0, escHrs: [] });
             const g = chMap.get(ch);
@@ -2385,26 +2584,28 @@
                 g.fcr++;
             }
         });
-        mtdCasnInt.forEach(x => {
+        chMtdList.forEach(x => {
             const ch = x.r.ch || '(Tanpa Channel)';
             if(!chMap.has(ch)) chMap.set(ch, { daily: 0, fcr: 0, nfcr: 0, mtd: 0, escHrs: [] });
             chMap.get(ch).mtd++;
         });
-        const chTotalDaily = dailyCasnInt.length || 1;
+        const chTotalDaily = chDailyList.length || 1;
         document.getElementById('channelBreakdownBody').innerHTML = Array.from(chMap.entries())
             .sort((a, b) => b[1].daily - a[1].daily)
             .map(([ch, g]) => {
-                const pct = dailyCasnInt.length ? ((g.daily / chTotalDaily) * 100).toFixed(2) + '%' : '0.00%';
+                const pct = chDailyList.length ? ((g.daily / chTotalDaily) * 100).toFixed(2) + '%' : '0.00%';
                 let avgCell = '—';
                 if(g.escHrs.length){
                     const avgMins = (g.escHrs.reduce((s, h) => s + h, 0) / g.escHrs.length) * 60;
                     const badgeCls = avgMins > 15 ? 'bg-danger' : 'bg-success';
                     avgCell = '<span class="badge ' + badgeCls + '">' + avgMins.toFixed(1) + ' mnt</span>';
                 }
-                return '<tr><td class="row-title">' + ch + '</td><td class="num fw-semibold">' + g.daily + '</td><td class="num">' + pct + '</td>' +
+                return '<tr><td class="row-title">' + escapeHtml(ch) + '</td><td class="num fw-semibold">' + g.daily + '</td><td class="num">' + pct + '</td>' +
                     '<td class="num">' + g.fcr + '</td><td class="num">' + g.nfcr + '</td><td class="num">' + g.mtd + '</td><td class="num">' + avgCell + '</td></tr>';
-            }).join('') || '<tr><td colspan="7" class="text-center text-muted py-3">Tidak ada data channel CASN pada interval ini.</td></tr>';
+            }).join('') || '<tr><td colspan="7" class="text-center text-muted py-3">Tidak ada data channel pada interval ini.</td></tr>';
 
+        setCardHeaderTitle('topDailyAllBody', 'Top 10 Interaksi — ' + prodDisplayLabel + ' (Daily)');
+        setCardHeaderTitle('topMtdAllBody', 'Top 10 Interaksi — ' + prodDisplayLabel + ' (Month to Date)');
         buildTop10(dailyCasnInt, 'topDailyCasnBody');
         buildTop10(mtdCasnInt, 'topMtdCasnBody');
         buildTop10(dailyAllInt, 'topDailyAllBody');
@@ -2418,10 +2619,10 @@
             return { r: r, dKey: dKey, hour: d.getHours() };
         }).filter(Boolean);
 
-        const dailyAllTkt = tktMeta.filter(x => x.dKey === activeDate && x.hour >= hStart && x.hour <= hEnd);
-        const dailyCasnTkt = dailyAllTkt.filter(x => isCasnRecord(x.r));
-        const mtdAllTkt = tktMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate);
-        const mtdCasnTkt = mtdAllTkt.filter(x => isCasnRecord(x.r));
+        const dailyAllTkt = tktMeta.filter(x => x.dKey === activeDate && x.hour >= hStart && x.hour <= hEnd && matchesSharedProduct(x.r));
+        const dailyCasnTkt = tktMeta.filter(x => x.dKey === activeDate && x.hour >= hStart && x.hour <= hEnd && isCasnRecord(x.r));
+        const mtdAllTkt = tktMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && matchesSharedProduct(x.r));
+        const mtdCasnTkt = tktMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && isCasnRecord(x.r));
 
         const summarizeTkt = (list) => {
             let resolved = 0, outstanding = 0, pending = 0;
@@ -2445,22 +2646,24 @@
         const activeCasnQueueList = casnAllTickets.filter(r => !FINISHED_STATUSES.has((r.st || '').toLowerCase()));
         const activeCasnPendingCount = activeCasnQueueList.filter(r => (r.st || '').toLowerCase() === 'pending').length;
 
-        renderTicketingKpiCards(sDailyCasnTkt, sMtdCasnTkt, sMtdAllTkt, activeCasnQueueList.length, activeCasnPendingCount);
+        renderTicketingKpiCards(sDailyCasnTkt, sMtdCasnTkt, sMtdAllTkt, activeCasnQueueList.length, activeCasnPendingCount, prodDisplayLabel);
 
         document.getElementById('dailySourceBadge').textContent =
-            'CASN MTD: ' + sMtdCasnInt.total.toLocaleString('id-ID') + ' · Semua Produk MTD: ' + sMtdAllInt.total.toLocaleString('id-ID') +
+            'CASN MTD: ' + sMtdCasnInt.total.toLocaleString('id-ID') + ' · ' + prodDisplayLabel + ' MTD: ' + sMtdAllInt.total.toLocaleString('id-ID') +
             ' · Antrian CASN: ' + (activeCasnQueueList.length >= 1000 ? '1000+' : activeCasnQueueList.length.toLocaleString('id-ID'));
 
         document.getElementById('tktSummaryBody').innerHTML = [
             { label: 'Daily Ticket CASN (E-Meterai)', ...sDailyCasnTkt },
             { label: 'MTD Ticket CASN (E-Meterai)', ...sMtdCasnTkt },
-            { label: 'Daily All Ticket (Semua Produk)', ...sDailyAllTkt },
-            { label: 'MTD All Ticket (Semua Produk)', ...sMtdAllTkt },
+            { label: isAllProd ? 'Daily All Ticket (Semua Produk)' : 'Daily Ticket — ' + selectedSharedProduct, ...sDailyAllTkt },
+            { label: isAllProd ? 'MTD All Ticket (Semua Produk)' : 'MTD Ticket — ' + selectedSharedProduct, ...sMtdAllTkt },
         ].map(r =>
-            '<tr><td class="row-title">' + r.label + '</td><td class="big-num">' + r.created + '</td><td class="big-num">' + r.resolved + '</td>' +
+            '<tr><td class="row-title">' + escapeHtml(r.label) + '</td><td class="big-num">' + r.created + '</td><td class="big-num">' + r.resolved + '</td>' +
             '<td class="big-num">' + r.outstanding + '</td><td class="big-num">' + r.pending + '</td></tr>'
         ).join('');
 
+        setCardHeaderTitle('topDailyTktAllBody', 'Top 10 Tiket — ' + prodDisplayLabel + ' (Daily)');
+        setCardHeaderTitle('topMtdTktAllBody', 'Top 10 Tiket — ' + prodDisplayLabel + ' (Month to Date)');
         buildTop10(dailyCasnTkt, 'topDailyTktCasnBody');
         buildTop10(mtdCasnTkt, 'topMtdTktCasnBody');
         buildTop10(dailyAllTkt, 'topDailyTktAllBody');
@@ -2900,6 +3103,7 @@
                 parsed.escalated.forEach((rec, id) => ticketsMap.set(id, rec));
             }
             saveLocalAgentMap(parsed.interactions);
+            populateSubcategoryProductOptions();
 
             document.getElementById('dailyHourStart').value = '0';
             document.getElementById('dailyHourEnd').value = '23';
@@ -3007,7 +3211,7 @@
     injectProStyles();
     injectD1Controls();
     ensureAgentNavigationAndSection();
-    simplifyScopeControl();
+    setupSharedSubcategoryFilter();
     initHourSelectors();
     renderZeroReports();
     runSimulation();

@@ -9,6 +9,12 @@
     const ESCALATION_CHANNELS = new Set(['email', 'whatsapp']);
     const COMBINED_VALUE = 'COMBINED:E-Meterai|Perisai';
     const PIN_STORAGE_KEY = 'casn_admin_pin_session';
+    const AGENT_MAP_STORAGE_KEY = 'casn_agent_map_v1';
+    const AGENT_COL_CANDIDATES = [
+        'agent_name', 'agent', 'nama_agent', 'created_by', 'creator_name',
+        'pic', 'handled_by', 'operator', 'username', 'user_name', 'owner',
+        'assigned_to', 'first_response_by'
+    ];
 
     const DURATION_BUCKETS = [
         { label: '8 Jam', max: 8 },
@@ -34,6 +40,34 @@
     let lastCapturedBlob = null;
     let adminPin = sessionStorage.getItem(PIN_STORAGE_KEY) || '';
     let statusTimer = null;
+
+    let agentProductScope = 'ALL';
+    let agentWeekMode = 'wtd';
+    let agentSearchQuery = '';
+    let lastAgentSummaryRows = [];
+
+    function loadLocalAgentMap(){
+        try {
+            const raw = localStorage.getItem(AGENT_MAP_STORAGE_KEY);
+            return raw ? JSON.parse(raw) : {};
+        } catch (_) {
+            return {};
+        }
+    }
+
+    function saveLocalAgentMap(records){
+        try {
+            const existing = loadLocalAgentMap();
+            records.forEach(r => {
+                if(r && r.id && r.agent) existing[r.id] = r.agent;
+            });
+            localStorage.setItem(AGENT_MAP_STORAGE_KEY, JSON.stringify(existing));
+        } catch (_) {}
+    }
+
+    function clearLocalAgentMap(){
+        try { localStorage.removeItem(AGENT_MAP_STORAGE_KEY); } catch (_) {}
+    }
 
     function injectProStyles(){
         if(document.getElementById('casnProUiStyle')) return;
@@ -64,7 +98,6 @@
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
             }
 
-            /* Clean Flat Top Navbar */
             .sb-topnav {
                 position: sticky !important;
                 top: 0;
@@ -130,7 +163,6 @@
                 margin: 0 3px;
             }
 
-            /* Page Header & Metadata */
             #pageHeading {
                 font-size: 1.28rem !important;
                 font-weight: 600 !important;
@@ -152,7 +184,6 @@
                 border: 1px solid var(--ops-border) !important;
             }
 
-            /* Quiet Status Bar */
             #statusAlert {
                 font-size: 0.78rem !important;
                 padding: 0.45rem 0.8rem !important;
@@ -185,7 +216,6 @@
                 border: 1px solid #422226 !important;
             }
 
-            /* Filter Toolbar */
             #sharedDailyControls {
                 background-color: var(--ops-surface) !important;
                 border: 1px solid var(--ops-border) !important;
@@ -237,7 +267,6 @@
                 margin-left: auto;
             }
 
-            /* Clean Enterprise KPI Cards (No Rainbow Gradients or Thick Borders) */
             .casn-kpi-card {
                 background: var(--ops-surface) !important;
                 border: 1px solid var(--ops-border) !important;
@@ -278,7 +307,6 @@
                 font-variant-numeric: tabular-nums;
             }
 
-            /* Standard Cards */
             .card {
                 background-color: var(--ops-surface) !important;
                 border: 1px solid var(--ops-border) !important;
@@ -299,7 +327,6 @@
                 margin-bottom: 1rem !important;
             }
 
-            /* Crisp Operational Tables */
             .report-tbl,
             .sla-tbl {
                 width: 100% !important;
@@ -356,8 +383,22 @@
                 color: var(--ops-text);
                 font-weight: 700;
             }
+            .tbl-grp-border {
+                border-left: 1px solid var(--ops-border) !important;
+            }
+            .agent-toolbar-ctrl {
+                font-size: 0.74rem !important;
+                height: 27px !important;
+                padding: 0.18rem 0.5rem !important;
+                border-radius: 4px !important;
+                background-color: var(--ops-surface-subtle) !important;
+                border: 1px solid var(--ops-border) !important;
+                color: var(--ops-text) !important;
+            }
+            select.agent-toolbar-ctrl {
+                padding-right: 1.55rem !important;
+            }
 
-            /* Muted Status Badges (Not Loud Bootstrap Pills) */
             .badge {
                 border-radius: 4px !important;
                 font-weight: 500 !important;
@@ -390,7 +431,6 @@
                 border: 1px solid rgba(148, 163, 184, 0.24);
             }
 
-            /* Sidebar */
             #sidenavAccordion {
                 background-color: var(--ops-surface) !important;
                 border-right: 1px solid var(--ops-border) !important;
@@ -417,6 +457,139 @@
         styleEl.id = 'casnProUiStyle';
         styleEl.textContent = css;
         document.head.appendChild(styleEl);
+    }
+
+    function ensureAgentNavigationAndSection(){
+        const navWrap = document.querySelector('#sidenavAccordion .nav');
+        if(navWrap && !navWrap.querySelector('[data-target="agent"]')){
+            const refLink = navWrap.querySelector('[data-target="ticketing"]') || navWrap.querySelector('[data-target="daily"]');
+            const a = document.createElement('a');
+            a.className = 'nav-link';
+            a.href = '#';
+            a.dataset.target = 'agent';
+            a.dataset.title = 'Produktivitas Agent';
+            a.innerHTML = '<div class="sb-nav-link-icon"><i class="fas fa-user-check"></i></div>Produktivitas Agent';
+            a.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchSection('agent', 'Produktivitas Agent');
+            });
+            if(refLink && refLink.parentElement === navWrap){
+                refLink.insertAdjacentElement('afterend', a);
+            } else {
+                navWrap.appendChild(a);
+            }
+        }
+
+        if(!document.getElementById('sec-agent')){
+            const refSec = document.getElementById('sec-ticketing') || document.getElementById('sec-daily');
+            if(!refSec) return;
+            const sec = document.createElement('div');
+            sec.id = 'sec-agent';
+            sec.className = 'tab-section';
+            sec.innerHTML =
+                '<div id="agentMissingColNotice" class="alert alert-warning py-2 px-3 small mb-3" style="display:none;"></div>' +
+                '<div id="agentKpiStrip" class="row g-3 mb-2"></div>' +
+                '<div class="card mb-3">' +
+                  '<div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">' +
+                    '<div>' +
+                      '<span>Rekap Produktivitas Agent (Interaksi &amp; Ticket Dibuat)</span>' +
+                      '<span id="agentPeriodCaption" class="small text-muted fw-normal ms-2"></span>' +
+                    '</div>' +
+                    '<div class="d-flex align-items-center flex-wrap gap-2">' +
+                      '<select id="agentScopeSelect" class="form-select form-select-sm agent-toolbar-ctrl" style="width:auto;" title="Filter Produk">' +
+                        '<option value="ALL">Semua Produk</option>' +
+                        '<option value="CASN">CASN (E-Meterai)</option>' +
+                      '</select>' +
+                      '<select id="agentWeekModeSelect" class="form-select form-select-sm agent-toolbar-ctrl" style="width:auto;" title="Definisi Per Minggu">' +
+                        '<option value="wtd">Mingguan: Senin – Tgl Terpilih</option>' +
+                        '<option value="rolling7">Mingguan: 7 Hari Terakhir</option>' +
+                      '</select>' +
+                      '<input type="text" id="agentSearchInput" class="form-control form-control-sm agent-toolbar-ctrl" style="width:165px;" placeholder="Cari nama agent..." />' +
+                      '<button type="button" id="copyAgentReportBtn" class="btn btn-outline-primary btn-sm py-0 px-2" style="height:27px;font-size:0.74rem;">Copy Rekap</button>' +
+                      '<button type="button" id="exportAgentCsvBtn" class="btn btn-outline-secondary btn-sm py-0 px-2" style="height:27px;font-size:0.74rem;">Export CSV</button>' +
+                    '</div>' +
+                  '</div>' +
+                  '<div class="card-body p-0">' +
+                    '<div class="table-responsive">' +
+                      '<table class="report-tbl">' +
+                        '<thead>' +
+                          '<tr>' +
+                            '<th rowspan="2" class="text-end" style="width:38px;">No</th>' +
+                            '<th rowspan="2" class="text-start">Nama Agent</th>' +
+                            '<th colspan="3" class="text-center tbl-grp-border" id="thGrpDaily">Per Hari (Daily)</th>' +
+                            '<th colspan="2" class="text-center tbl-grp-border" id="thGrpWeekly">Per Minggu</th>' +
+                            '<th colspan="4" class="text-center tbl-grp-border" id="thGrpMonthly">Per Bulan / MTD</th>' +
+                          '</tr>' +
+                          '<tr>' +
+                            '<th class="text-end tbl-grp-border">Interaksi</th>' +
+                            '<th class="text-end">FCR</th>' +
+                            '<th class="text-end">Ticket</th>' +
+                            '<th class="text-end tbl-grp-border">Interaksi</th>' +
+                            '<th class="text-end">Ticket</th>' +
+                            '<th class="text-end tbl-grp-border">Interaksi</th>' +
+                            '<th class="text-end">FCR</th>' +
+                            '<th class="text-end">Ticket</th>' +
+                            '<th class="text-end">Rasio Ticket</th>' +
+                          '</tr>' +
+                        '</thead>' +
+                        '<tbody id="agentProdBody"></tbody>' +
+                      '</table>' +
+                    '</div>' +
+                  '</div>' +
+                '</div>' +
+                '<div class="row g-3">' +
+                  '<div class="col-lg-5">' +
+                    '<div class="card">' +
+                      '<div class="card-header">Distribusi Channel Agent (MTD)</div>' +
+                      '<div class="card-body p-0">' +
+                        '<div class="table-responsive">' +
+                          '<table class="report-tbl">' +
+                            '<thead><tr>' +
+                              '<th class="text-start">Nama Agent</th>' +
+                              '<th class="text-end">Chat</th>' +
+                              '<th class="text-end">WA</th>' +
+                              '<th class="text-end">Email</th>' +
+                              '<th class="text-end">Call</th>' +
+                              '<th class="text-end">MTD Int</th>' +
+                              '<th class="text-end">MTD Tkt</th>' +
+                            '</tr></thead>' +
+                            '<tbody id="agentChannelBody"></tbody>' +
+                          '</table>' +
+                        '</div>' +
+                      '</div>' +
+                    '</div>' +
+                  '</div>' +
+                  '<div class="col-lg-7">' +
+                    '<div class="card">' +
+                      '<div class="card-header">Tren Output Harian per Agent (7 Hari Terakhir — Interaksi / Ticket)</div>' +
+                      '<div class="card-body p-0">' +
+                        '<div class="table-responsive">' +
+                          '<table class="report-tbl">' +
+                            '<thead id="agentTrendHead"></thead>' +
+                            '<tbody id="agentTrendBody"></tbody>' +
+                          '</table>' +
+                        '</div>' +
+                      '</div>' +
+                    '</div>' +
+                  '</div>' +
+                '</div>';
+            refSec.insertAdjacentElement('afterend', sec);
+
+            document.getElementById('agentScopeSelect').addEventListener('change', (e) => {
+                agentProductScope = e.target.value;
+                renderAgentProductivity();
+            });
+            document.getElementById('agentWeekModeSelect').addEventListener('change', (e) => {
+                agentWeekMode = e.target.value;
+                renderAgentProductivity();
+            });
+            document.getElementById('agentSearchInput').addEventListener('input', (e) => {
+                agentSearchQuery = e.target.value;
+                renderAgentProductivity();
+            });
+            document.getElementById('copyAgentReportBtn').addEventListener('click', copyAgentSummaryToClipboard);
+            document.getElementById('exportAgentCsvBtn').addEventListener('click', exportAgentCsv);
+        }
     }
 
     function simplifyScopeControl(){
@@ -455,6 +628,342 @@
             return false;
         }
         return true;
+    }
+
+    function formatYMDLocal(d){
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+
+    function formatShortIndoDate(ymd){
+        if(!ymd || ymd === 'EMPTY') return '-';
+        const [y, m, d] = ymd.split('-').map(Number);
+        return new Date(y, m - 1, d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+    }
+
+    function renderAgentProductivity(){
+        ensureAgentNavigationAndSection();
+        const kpiEl = document.getElementById('agentKpiStrip');
+        const bodyEl = document.getElementById('agentProdBody');
+        const chBodyEl = document.getElementById('agentChannelBody');
+        const trendHeadEl = document.getElementById('agentTrendHead');
+        const trendBodyEl = document.getElementById('agentTrendBody');
+        const noticeEl = document.getElementById('agentMissingColNotice');
+        const capEl = document.getElementById('agentPeriodCaption');
+        if(!kpiEl || !bodyEl) return;
+
+        const selDateEl = document.getElementById('dailyDateSelect');
+        const activeDate = selDateEl ? selDateEl.value : 'EMPTY';
+
+        if(!allInteractions.length || !activeDate || activeDate === 'EMPTY'){
+            noticeEl.style.display = 'none';
+            capEl.textContent = '';
+            kpiEl.innerHTML = [
+                { dot: 'blue', label: 'Total Interaksi (Daily)', val: '0', sub: 'Mingguan: 0 · MTD: 0' },
+                { dot: 'amber', label: 'Total Ticket Dibuat (Daily)', val: '0', sub: 'Mingguan: 0 · MTD: 0' },
+                { dot: 'green', label: 'Rata-rata Interaksi / Agent', val: '0', sub: 'Daily: 0 · MTD: 0' },
+                { dot: 'neutral', label: 'Agent Aktif (MTD)', val: '0', sub: 'Rasio Ticket MTD: 0.0%' }
+            ].map(c =>
+                '<div class="col-xl-3 col-md-6"><div class="card casn-kpi-card"><div class="card-body py-2 px-3">' +
+                  '<div class="casn-kpi-label mb-1"><span class="kpi-dot ' + c.dot + '"></span>' + c.label + '</div>' +
+                  '<div class="casn-kpi-val mb-1">' + c.val + '</div>' +
+                  '<div class="casn-kpi-sub">' + c.sub + '</div>' +
+                '</div></div></div>'
+            ).join('');
+            bodyEl.innerHTML = '<tr><td colspan="11" class="text-center text-muted py-4">Belum ada data interaksi. Upload file Excel/CSV melalui Mode Admin.</td></tr>';
+            chBodyEl.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">Belum ada data.</td></tr>';
+            trendHeadEl.innerHTML = '<tr><th class="text-start">Nama Agent</th></tr>';
+            trendBodyEl.innerHTML = '<tr><td class="text-center text-muted py-3">Belum ada data.</td></tr>';
+            lastAgentSummaryRows = [];
+            return;
+        }
+
+        const hStart = parseInt(document.getElementById('dailyHourStart').value || '0', 10);
+        const hEnd = parseInt(document.getElementById('dailyHourEnd').value || '23', 10);
+        const [ay, am, ad] = activeDate.split('-').map(Number);
+        const activeObj = new Date(ay, am - 1, ad);
+        const monthPrefix = activeDate.slice(0, 7);
+
+        let weekStartObj;
+        if(agentWeekMode === 'rolling7'){
+            weekStartObj = new Date(ay, am - 1, ad - 6);
+        } else {
+            const diffToMon = (activeObj.getDay() + 6) % 7;
+            weekStartObj = new Date(ay, am - 1, ad - diffToMon);
+        }
+        const weekStartKey = formatYMDLocal(weekStartObj);
+
+        const dailyLabel = formatShortIndoDate(activeDate);
+        const weeklyLabel = formatShortIndoDate(weekStartKey) + ' – ' + dailyLabel;
+        const monthlyLabel = activeObj.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+
+        document.getElementById('thGrpDaily').textContent = 'Per Hari (' + dailyLabel + ')';
+        document.getElementById('thGrpWeekly').textContent = 'Per Minggu (' + weeklyLabel + ')';
+        document.getElementById('thGrpMonthly').textContent = 'Per Bulan / MTD (' + monthlyLabel + ')';
+        capEl.textContent = '· Jam Daily: ' + hStart + ':00–' + hEnd + ':59 WIB';
+
+        const scopedRecords = agentProductScope === 'CASN'
+            ? allInteractions.filter(r => isCasnRecord(r))
+            : allInteractions;
+
+        const hasAnyNamedAgent = scopedRecords.some(r => Boolean((r.agent || '').trim()));
+        if(!hasAnyNamedAgent && scopedRecords.length > 0){
+            noticeEl.style.display = 'block';
+            noticeEl.innerHTML =
+                '<strong>Kolom nama agent belum terdeteksi pada file data.</strong> ' +
+                'Sistem membaca kolom <code>agent_name</code>, <code>agent</code>, <code>nama_agent</code>, <code>created_by</code>, <code>pic</code>, atau <code>username</code>. ' +
+                'Seluruh interaksi saat ini dikelompokkan ke <em>(Tanpa Nama Agent)</em>.';
+        } else {
+            noticeEl.style.display = 'none';
+        }
+
+        const last7Dates = [];
+        for(let offset = 6; offset >= 0; offset--){
+            const d = new Date(ay, am - 1, ad - offset);
+            last7Dates.push(formatYMDLocal(d));
+        }
+        const last7Set = new Set(last7Dates);
+
+        const agentStats = new Map();
+        const ensureAgent = (name) => {
+            if(!agentStats.has(name)){
+                const dailyTrend = {};
+                last7Dates.forEach(dt => { dailyTrend[dt] = { int: 0, tkt: 0 }; });
+                agentStats.set(name, {
+                    name,
+                    dInt: 0, dFcr: 0, dTkt: 0,
+                    wInt: 0, wTkt: 0,
+                    mInt: 0, mFcr: 0, mTkt: 0,
+                    chChat: 0, chWa: 0, chEmail: 0, chCall: 0,
+                    trend: dailyTrend
+                });
+            }
+            return agentStats.get(name);
+        };
+
+        scopedRecords.forEach(r => {
+            const iso = r.doStart || r.doOpen;
+            if(!iso) return;
+            const d = new Date(iso);
+            const dKey = formatYMDLocal(d);
+            const hr = d.getHours();
+
+            const inMonth = dKey.startsWith(monthPrefix) && dKey <= activeDate;
+            const inWeek = dKey >= weekStartKey && dKey <= activeDate;
+            const inDaily = dKey === activeDate && hr >= hStart && hr <= hEnd;
+            const inTrend7 = last7Set.has(dKey);
+
+            if(!inMonth && !inWeek && !inDaily && !inTrend7) return;
+
+            const name = (r.agent || '').trim() || '(Tanpa Nama Agent)';
+            const st = ensureAgent(name);
+            const isTkt = Boolean(r.isEscalated);
+
+            if(inDaily){
+                st.dInt++;
+                if(isTkt) st.dTkt++;
+                else st.dFcr++;
+            }
+            if(inWeek){
+                st.wInt++;
+                if(isTkt) st.wTkt++;
+            }
+            if(inMonth){
+                st.mInt++;
+                if(isTkt) st.mTkt++;
+                else st.mFcr++;
+
+                const ch = (r.ch || '').toLowerCase();
+                if(ch.includes('chat')) st.chChat++;
+                else if(ch.includes('whatsapp') || ch === 'wa') st.chWa++;
+                else if(ch.includes('email')) st.chEmail++;
+                else if(ch.includes('call') || ch.includes('telp') || ch.includes('voice')) st.chCall++;
+            }
+            if(inTrend7){
+                st.trend[dKey].int++;
+                if(isTkt) st.trend[dKey].tkt++;
+            }
+        });
+
+        const q = agentSearchQuery.toLowerCase().trim();
+        const rows = Array.from(agentStats.values())
+            .filter(a => !q || a.name.toLowerCase().includes(q))
+            .sort((a, b) => (b.mInt - a.mInt) || (b.dInt - a.dInt) || a.name.localeCompare(b.name));
+
+        lastAgentSummaryRows = rows;
+
+        const tot = rows.reduce((acc, a) => {
+            acc.dInt += a.dInt; acc.dFcr += a.dFcr; acc.dTkt += a.dTkt;
+            acc.wInt += a.wInt; acc.wTkt += a.wTkt;
+            acc.mInt += a.mInt; acc.mFcr += a.mFcr; acc.mTkt += a.mTkt;
+            acc.chChat += a.chChat; acc.chWa += a.chWa; acc.chEmail += a.chEmail; acc.chCall += a.chCall;
+            return acc;
+        }, { dInt: 0, dFcr: 0, dTkt: 0, wInt: 0, wTkt: 0, mInt: 0, mFcr: 0, mTkt: 0, chChat: 0, chWa: 0, chEmail: 0, chCall: 0 });
+
+        const namedActiveDaily = rows.filter(a => a.dInt > 0).length || 1;
+        const namedActiveMtd = rows.filter(a => a.mInt > 0).length || 1;
+        const avgDailyInt = rows.length ? (tot.dInt / namedActiveDaily).toFixed(1) : '0.0';
+        const avgMtdInt = rows.length ? (tot.mInt / namedActiveMtd).toFixed(1) : '0.0';
+        const mtdTicketRatio = tot.mInt ? ((tot.mTkt / tot.mInt) * 100).toFixed(1) + '%' : '0.0%';
+
+        kpiEl.innerHTML = [
+            {
+                dot: 'blue',
+                label: 'Total Interaksi (Daily)',
+                val: tot.dInt.toLocaleString('id-ID'),
+                sub: 'Mingguan: ' + tot.wInt.toLocaleString('id-ID') + ' · MTD: ' + tot.mInt.toLocaleString('id-ID')
+            },
+            {
+                dot: 'amber',
+                label: 'Total Ticket Dibuat (Daily)',
+                val: tot.dTkt.toLocaleString('id-ID'),
+                sub: 'Mingguan: ' + tot.wTkt.toLocaleString('id-ID') + ' · MTD: ' + tot.mTkt.toLocaleString('id-ID')
+            },
+            {
+                dot: 'green',
+                label: 'Rata-rata Interaksi / Agent',
+                val: avgDailyInt,
+                sub: 'Daily (' + namedActiveDaily + ' aktif) · MTD: ' + avgMtdInt + '/agent'
+            },
+            {
+                dot: 'neutral',
+                label: 'Total Agent Terdata',
+                val: rows.length.toLocaleString('id-ID'),
+                sub: 'Rasio Ticket MTD: ' + mtdTicketRatio
+            }
+        ].map(c =>
+            '<div class="col-xl-3 col-md-6"><div class="card casn-kpi-card"><div class="card-body py-2 px-3">' +
+              '<div class="casn-kpi-label mb-1"><span class="kpi-dot ' + c.dot + '"></span>' + c.label + '</div>' +
+              '<div class="casn-kpi-val mb-1">' + c.val + '</div>' +
+              '<div class="casn-kpi-sub">' + c.sub + '</div>' +
+            '</div></div></div>'
+        ).join('');
+
+        if(!rows.length){
+            bodyEl.innerHTML = '<tr><td colspan="11" class="text-center text-muted py-4">Tidak ada data agent pada filter yang dipilih.</td></tr>';
+            chBodyEl.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">Tidak ada data.</td></tr>';
+            trendHeadEl.innerHTML = '<tr><th class="text-start">Nama Agent</th></tr>';
+            trendBodyEl.innerHTML = '<tr><td class="text-center text-muted py-3">Tidak ada data.</td></tr>';
+            return;
+        }
+
+        const totRatio = tot.mInt ? ((tot.mTkt / tot.mInt) * 100).toFixed(1) + '%' : '0.0%';
+        bodyEl.innerHTML = rows.map((a, idx) => {
+            const ratio = a.mInt ? ((a.mTkt / a.mInt) * 100).toFixed(1) + '%' : '0.0%';
+            return '<tr>' +
+                '<td class="num rank-num">' + (idx + 1) + '</td>' +
+                '<td class="row-title">' + a.name + '</td>' +
+                '<td class="num fw-semibold tbl-grp-border">' + a.dInt.toLocaleString('id-ID') + '</td>' +
+                '<td class="num">' + a.dFcr.toLocaleString('id-ID') + '</td>' +
+                '<td class="num fw-semibold">' + a.dTkt.toLocaleString('id-ID') + '</td>' +
+                '<td class="num fw-semibold tbl-grp-border">' + a.wInt.toLocaleString('id-ID') + '</td>' +
+                '<td class="num">' + a.wTkt.toLocaleString('id-ID') + '</td>' +
+                '<td class="num fw-semibold tbl-grp-border">' + a.mInt.toLocaleString('id-ID') + '</td>' +
+                '<td class="num">' + a.mFcr.toLocaleString('id-ID') + '</td>' +
+                '<td class="num fw-semibold">' + a.mTkt.toLocaleString('id-ID') + '</td>' +
+                '<td class="num">' + ratio + '</td>' +
+            '</tr>';
+        }).join('') +
+        '<tr class="total-row">' +
+            '<td colspan="2" class="text-center">Total Tim</td>' +
+            '<td class="num tbl-grp-border">' + tot.dInt.toLocaleString('id-ID') + '</td>' +
+            '<td class="num">' + tot.dFcr.toLocaleString('id-ID') + '</td>' +
+            '<td class="num">' + tot.dTkt.toLocaleString('id-ID') + '</td>' +
+            '<td class="num tbl-grp-border">' + tot.wInt.toLocaleString('id-ID') + '</td>' +
+            '<td class="num">' + tot.wTkt.toLocaleString('id-ID') + '</td>' +
+            '<td class="num tbl-grp-border">' + tot.mInt.toLocaleString('id-ID') + '</td>' +
+            '<td class="num">' + tot.mFcr.toLocaleString('id-ID') + '</td>' +
+            '<td class="num">' + tot.mTkt.toLocaleString('id-ID') + '</td>' +
+            '<td class="num">' + totRatio + '</td>' +
+        '</tr>';
+
+        chBodyEl.innerHTML = rows.map(a =>
+            '<tr>' +
+                '<td class="row-title">' + a.name + '</td>' +
+                '<td class="num">' + a.chChat.toLocaleString('id-ID') + '</td>' +
+                '<td class="num">' + a.chWa.toLocaleString('id-ID') + '</td>' +
+                '<td class="num">' + a.chEmail.toLocaleString('id-ID') + '</td>' +
+                '<td class="num">' + a.chCall.toLocaleString('id-ID') + '</td>' +
+                '<td class="num fw-semibold">' + a.mInt.toLocaleString('id-ID') + '</td>' +
+                '<td class="num fw-semibold">' + a.mTkt.toLocaleString('id-ID') + '</td>' +
+            '</tr>'
+        ).join('') +
+        '<tr class="total-row">' +
+            '<td class="text-center">Total</td>' +
+            '<td class="num">' + tot.chChat.toLocaleString('id-ID') + '</td>' +
+            '<td class="num">' + tot.chWa.toLocaleString('id-ID') + '</td>' +
+            '<td class="num">' + tot.chEmail.toLocaleString('id-ID') + '</td>' +
+            '<td class="num">' + tot.chCall.toLocaleString('id-ID') + '</td>' +
+            '<td class="num">' + tot.mInt.toLocaleString('id-ID') + '</td>' +
+            '<td class="num">' + tot.mTkt.toLocaleString('id-ID') + '</td>' +
+        '</tr>';
+
+        trendHeadEl.innerHTML = '<tr><th class="text-start">Nama Agent</th>' +
+            last7Dates.map(dt => '<th class="text-end">' + formatShortIndoDate(dt) + '</th>').join('') +
+            '</tr>';
+
+        trendBodyEl.innerHTML = rows.map(a =>
+            '<tr><td class="row-title">' + a.name + '</td>' +
+            last7Dates.map(dt => {
+                const cell = a.trend[dt] || { int: 0, tkt: 0 };
+                return '<td class="num">' + cell.int + ' <span class="text-muted">/ ' + cell.tkt + '</span></td>';
+            }).join('') +
+            '</tr>'
+        ).join('');
+    }
+
+    async function copyAgentSummaryToClipboard(){
+        if(!lastAgentSummaryRows.length) return;
+        const activeDate = document.getElementById('dailyDateSelect').value;
+        const [ay, am, ad] = activeDate.split('-').map(Number);
+        const indoDate = new Date(ay, am - 1, ad).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        const scopeLbl = agentProductScope === 'CASN' ? 'CASN (E-Meterai)' : 'Semua Produk';
+        const lines = [
+            `*Rekap Produktivitas Agent — ${indoDate}*`,
+            `Scope: ${scopeLbl}`,
+            ``
+        ];
+        lastAgentSummaryRows.forEach((a, i) => {
+            lines.push(`${i + 1}. *${a.name}* — Daily: ${a.dInt} int (${a.dTkt} tkt) | Minggu: ${a.wInt} int (${a.wTkt} tkt) | MTD: ${a.mInt} int (${a.mTkt} tkt)`);
+        });
+        const text = lines.join('\n');
+        const btn = document.getElementById('copyAgentReportBtn');
+        try {
+            await navigator.clipboard.writeText(text);
+            btn.textContent = 'Tersalin';
+            setTimeout(() => { btn.textContent = 'Copy Rekap'; }, 2000);
+        } catch (_) {
+            alert(text);
+        }
+    }
+
+    function exportAgentCsv(){
+        if(!lastAgentSummaryRows.length) return;
+        const esc = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+        const header = [
+            'No', 'Nama Agent',
+            'Daily Interaksi', 'Daily FCR', 'Daily Ticket Dibuat',
+            'Mingguan Interaksi', 'Mingguan Ticket Dibuat',
+            'MTD Interaksi', 'MTD FCR', 'MTD Ticket Dibuat', 'Rasio Ticket MTD (%)'
+        ];
+        const lines = [header.join(',')];
+        lastAgentSummaryRows.forEach((a, i) => {
+            const ratio = a.mInt ? ((a.mTkt / a.mInt) * 100).toFixed(2) : '0.00';
+            lines.push([
+                i + 1, a.name,
+                a.dInt, a.dFcr, a.dTkt,
+                a.wInt, a.wTkt,
+                a.mInt, a.mFcr, a.mTkt, ratio
+            ].map(esc).join(','));
+        });
+        const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'produktivitas_agent_' + new Date().toISOString().slice(0, 10) + '.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     }
 
     function splitStackedTopCard(dailyTbodyId, mtdTbodyId, dailyTitle, mtdTitle){
@@ -844,6 +1353,7 @@
                 if(!res.ok || !json.ok) throw new Error(json.reason || ('HTTP ' + res.status));
                 allInteractions = [];
                 ticketsMap = new Map();
+                clearLocalAgentMap();
                 document.getElementById('metaBadge').textContent = 'Cloudflare D1 · 0 interaksi';
                 document.getElementById('dailySourceBadge').textContent = 'Database Kosong (0)';
                 showStatus('warning', 'Data di Cloudflare D1 berhasil dikosongkan.', 4500);
@@ -1303,6 +1813,16 @@
         return -1;
     }
 
+    function extractAgentName(row, colIndex){
+        for(const cand of AGENT_COL_CANDIDATES){
+            if(colIndex[cand] !== undefined){
+                const val = safeStr(row[colIndex[cand]]);
+                if(val && val !== '-') return val;
+            }
+        }
+        return '';
+    }
+
     function parseWorkbook(fileBuffer, fileName){
         const isCsv = /\.csv$/i.test(fileName || '');
         const wb = isCsv
@@ -1340,9 +1860,11 @@
             const dscVal = safeStr(col(row, 'detailsubcategory'));
             const stVal = safeStr(col(row, 'ticket_status_name'));
             const chVal = safeStr(col(row, 'channel_name'));
+            const agentVal = extractAgentName(row, colIndex);
 
             const rec = {
                 id: id,
+                agent: agentVal,
                 sj: safeStr(col(row, 'subject')),
                 sc: scVal,
                 mc: safeStr(col(row, 'maincategory')),
@@ -1406,10 +1928,12 @@
                 return;
             }
 
+            const localAgentMap = loadLocalAgentMap();
             const escalatedOut = new Map();
             let skippedNotEscalated = 0;
             data.records.forEach(r => {
                 if(!r || !r.id) return;
+                r.agent = safeStr(r.agent || r.agent_name || r.created_by || r.pic || localAgentMap[r.id] || '');
                 if(!r.isEscalated) skippedNotEscalated++;
                 else escalatedOut.set(r.id, r);
             });
@@ -1501,6 +2025,8 @@
         fillTopTable('topMtdTktCasnBody', [], 0, '0.00%');
         fillTopTable('topDailyTktAllBody', [], 0, '0.00%');
         fillTopTable('topMtdTktAllBody', [], 0, '0.00%');
+
+        renderAgentProductivity();
     }
 
     function renderDailyAndTicketingFromUploaded(){
@@ -1699,6 +2225,8 @@
         buildTop10(mtdCasnTkt, 'topMtdTktCasnBody');
         buildTop10(dailyAllTkt, 'topDailyTktAllBody');
         buildTop10(mtdAllTkt, 'topMtdTktAllBody');
+
+        renderAgentProductivity();
     }
 
     function getPendingCutoff(rec){
@@ -1987,7 +2515,7 @@
             if(st === 'not_achieved' && !(c.sla.finished && c.sla.result === 'breach')) return false;
             if(st === 'outstanding' && c.sla.finished) return false;
             if(pr !== 'ALL' && c.rec.pr !== pr) return false;
-            if(q && !(c.rec.id + ' ' + c.rec.sj + ' ' + c.rec.dsc + ' ' + c.rec.sc).toLowerCase().includes(q)) return false;
+            if(q && !(c.rec.id + ' ' + c.rec.sj + ' ' + c.rec.dsc + ' ' + c.rec.sc + ' ' + (c.rec.agent || '')).toLowerCase().includes(q)) return false;
             return true;
         });
     }
@@ -2100,7 +2628,8 @@
         });
         document.getElementById('pageHeading').textContent = title;
         document.getElementById('pageBreadcrumb').textContent = title;
-        document.getElementById('sharedDailyControls').style.display = (target === 'daily' || target === 'ticketing') ? '' : 'none';
+        document.getElementById('sharedDailyControls').style.display = (target === 'daily' || target === 'ticketing' || target === 'agent') ? '' : 'none';
+        if(target === 'agent') renderAgentProductivity();
     }
 
     document.querySelectorAll('#sidenavAccordion .nav-link[data-target]').forEach(link => {
@@ -2121,6 +2650,7 @@
             if(parsed.interactions.length === 0) throw new Error('Tidak ada baris interaksi valid yang ditemukan.');
 
             if(syncMode === 'replace' || allInteractions.length === 0){
+                clearLocalAgentMap();
                 allInteractions = parsed.interactions;
                 ticketsMap = parsed.escalated;
             } else {
@@ -2129,6 +2659,7 @@
                 allInteractions = Array.from(mergedInt.values());
                 parsed.escalated.forEach((rec, id) => ticketsMap.set(id, rec));
             }
+            saveLocalAgentMap(parsed.interactions);
 
             document.getElementById('dailyHourStart').value = '0';
             document.getElementById('dailyHourEnd').value = '23';
@@ -2155,6 +2686,7 @@
     ['dailyDateSelect', 'dailyHourStart', 'dailyHourEnd'].forEach(id => {
         document.getElementById(id).addEventListener('change', () => {
             if(allInteractions.length) renderDailyAndTicketingFromUploaded();
+            else renderAgentProductivity();
         });
     });
 
@@ -2234,6 +2766,7 @@
 
     injectProStyles();
     injectD1Controls();
+    ensureAgentNavigationAndSection();
     simplifyScopeControl();
     initHourSelectors();
     renderZeroReports();

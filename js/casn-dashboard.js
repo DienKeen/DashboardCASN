@@ -43,8 +43,7 @@
     let statusTimer = null;
 
     let agentProductScope = 'ALL';
-    let agentWeekMode = 'wtd';
-    let agentSearchQuery = '';
+    let selectedAgentName = 'ALL';
     let lastAgentSummaryRows = [];
 
     function loadLocalAgentMap(){
@@ -497,15 +496,13 @@
                       '<span id="agentPeriodCaption" class="small text-muted fw-normal ms-2"></span>' +
                     '</div>' +
                     '<div class="d-flex align-items-center flex-wrap gap-2">' +
+                      '<select id="agentNameFilterSelect" class="form-select form-select-sm agent-toolbar-ctrl" style="width:auto;min-width:175px;" title="Filter Nama Agent">' +
+                        '<option value="ALL">Semua Agent</option>' +
+                      '</select>' +
                       '<select id="agentScopeSelect" class="form-select form-select-sm agent-toolbar-ctrl" style="width:auto;" title="Filter Produk">' +
                         '<option value="ALL">Semua Produk</option>' +
                         '<option value="CASN">CASN (E-Meterai)</option>' +
                       '</select>' +
-                      '<select id="agentWeekModeSelect" class="form-select form-select-sm agent-toolbar-ctrl" style="width:auto;" title="Definisi Per Minggu">' +
-                        '<option value="wtd">Mingguan: Senin – Tgl Terpilih</option>' +
-                        '<option value="rolling7">Mingguan: 7 Hari Terakhir</option>' +
-                      '</select>' +
-                      '<input type="text" id="agentSearchInput" class="form-control form-control-sm agent-toolbar-ctrl" style="width:165px;" placeholder="Cari nama agent..." />' +
                       '<button type="button" id="copyAgentReportBtn" class="btn btn-outline-primary btn-sm py-0 px-2" style="height:27px;font-size:0.74rem;">Copy Rekap</button>' +
                       '<button type="button" id="exportAgentCsvBtn" class="btn btn-outline-secondary btn-sm py-0 px-2" style="height:27px;font-size:0.74rem;">Export CSV</button>' +
                     '</div>' +
@@ -518,14 +515,11 @@
                             '<th rowspan="2" class="text-end" style="width:38px;">No</th>' +
                             '<th rowspan="2" class="text-start">Nama Agent</th>' +
                             '<th colspan="3" class="text-center tbl-grp-border" id="thGrpDaily">Per Hari (Daily)</th>' +
-                            '<th colspan="2" class="text-center tbl-grp-border" id="thGrpWeekly">Per Minggu</th>' +
                             '<th colspan="4" class="text-center tbl-grp-border" id="thGrpMonthly">Per Bulan / MTD</th>' +
                           '</tr>' +
                           '<tr>' +
                             '<th class="text-end tbl-grp-border">Interaksi</th>' +
                             '<th class="text-end">FCR</th>' +
-                            '<th class="text-end">Ticket</th>' +
-                            '<th class="text-end tbl-grp-border">Interaksi</th>' +
                             '<th class="text-end">Ticket</th>' +
                             '<th class="text-end tbl-grp-border">Interaksi</th>' +
                             '<th class="text-end">FCR</th>' +
@@ -576,16 +570,12 @@
                 '</div>';
             refSec.insertAdjacentElement('afterend', sec);
 
+            document.getElementById('agentNameFilterSelect').addEventListener('change', (e) => {
+                selectedAgentName = e.target.value;
+                renderAgentProductivity();
+            });
             document.getElementById('agentScopeSelect').addEventListener('change', (e) => {
                 agentProductScope = e.target.value;
-                renderAgentProductivity();
-            });
-            document.getElementById('agentWeekModeSelect').addEventListener('change', (e) => {
-                agentWeekMode = e.target.value;
-                renderAgentProductivity();
-            });
-            document.getElementById('agentSearchInput').addEventListener('input', (e) => {
-                agentSearchQuery = e.target.value;
                 renderAgentProductivity();
             });
             document.getElementById('copyAgentReportBtn').addEventListener('click', copyAgentSummaryToClipboard);
@@ -650,6 +640,7 @@
         const trendBodyEl = document.getElementById('agentTrendBody');
         const noticeEl = document.getElementById('agentMissingColNotice');
         const capEl = document.getElementById('agentPeriodCaption');
+        const nameFilterEl = document.getElementById('agentNameFilterSelect');
         if(!kpiEl || !bodyEl) return;
 
         const selDateEl = document.getElementById('dailyDateSelect');
@@ -658,11 +649,12 @@
         if(!allInteractions.length || !activeDate || activeDate === 'EMPTY'){
             noticeEl.style.display = 'none';
             capEl.textContent = '';
+            if(nameFilterEl) nameFilterEl.innerHTML = '<option value="ALL">Semua Agent</option>';
             kpiEl.innerHTML = [
-                { dot: 'blue', label: 'Total Interaksi (Daily)', val: '0', sub: 'Mingguan: 0 · MTD: 0' },
-                { dot: 'amber', label: 'Total Ticket Dibuat (Daily)', val: '0', sub: 'Mingguan: 0 · MTD: 0' },
+                { dot: 'blue', label: 'Total Interaksi (Daily)', val: '0', sub: 'MTD: 0' },
+                { dot: 'amber', label: 'Total Ticket Dibuat (Daily)', val: '0', sub: 'MTD: 0' },
                 { dot: 'green', label: 'Rata-rata Interaksi / Agent', val: '0', sub: 'Daily: 0 · MTD: 0' },
-                { dot: 'neutral', label: 'Agent Aktif (MTD)', val: '0', sub: 'Rasio Ticket MTD: 0.0%' }
+                { dot: 'neutral', label: 'Total Agent Terdata', val: '0', sub: 'Rasio Ticket MTD: 0.0%' }
             ].map(c =>
                 '<div class="col-xl-3 col-md-6"><div class="card casn-kpi-card"><div class="card-body py-2 px-3">' +
                   '<div class="casn-kpi-label mb-1"><span class="kpi-dot ' + c.dot + '"></span>' + c.label + '</div>' +
@@ -670,7 +662,7 @@
                   '<div class="casn-kpi-sub">' + c.sub + '</div>' +
                 '</div></div></div>'
             ).join('');
-            bodyEl.innerHTML = '<tr><td colspan="11" class="text-center text-muted py-4">Belum ada data interaksi. Upload file Excel/CSV melalui Mode Admin.</td></tr>';
+            bodyEl.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">Belum ada data interaksi. Upload file Excel/CSV melalui Mode Admin.</td></tr>';
             chBodyEl.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">Belum ada data.</td></tr>';
             trendHeadEl.innerHTML = '<tr><th class="text-start">Nama Agent</th></tr>';
             trendBodyEl.innerHTML = '<tr><td class="text-center text-muted py-3">Belum ada data.</td></tr>';
@@ -684,21 +676,10 @@
         const activeObj = new Date(ay, am - 1, ad);
         const monthPrefix = activeDate.slice(0, 7);
 
-        let weekStartObj;
-        if(agentWeekMode === 'rolling7'){
-            weekStartObj = new Date(ay, am - 1, ad - 6);
-        } else {
-            const diffToMon = (activeObj.getDay() + 6) % 7;
-            weekStartObj = new Date(ay, am - 1, ad - diffToMon);
-        }
-        const weekStartKey = formatYMDLocal(weekStartObj);
-
         const dailyLabel = formatShortIndoDate(activeDate);
-        const weeklyLabel = formatShortIndoDate(weekStartKey) + ' – ' + dailyLabel;
         const monthlyLabel = activeObj.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 
         document.getElementById('thGrpDaily').textContent = 'Per Hari (' + dailyLabel + ')';
-        document.getElementById('thGrpWeekly').textContent = 'Per Minggu (' + weeklyLabel + ')';
         document.getElementById('thGrpMonthly').textContent = 'Per Bulan / MTD (' + monthlyLabel + ')';
         capEl.textContent = '· Jam Daily: ' + hStart + ':00–' + hEnd + ':59 WIB';
 
@@ -732,7 +713,6 @@
                 agentStats.set(name, {
                     name,
                     dInt: 0, dFcr: 0, dTkt: 0,
-                    wInt: 0, wTkt: 0,
                     mInt: 0, mFcr: 0, mTkt: 0,
                     chChat: 0, chWa: 0, chEmail: 0, chCall: 0,
                     trend: dailyTrend
@@ -749,11 +729,10 @@
             const hr = d.getHours();
 
             const inMonth = dKey.startsWith(monthPrefix) && dKey <= activeDate;
-            const inWeek = dKey >= weekStartKey && dKey <= activeDate;
             const inDaily = dKey === activeDate && hr >= hStart && hr <= hEnd;
             const inTrend7 = last7Set.has(dKey);
 
-            if(!inMonth && !inWeek && !inDaily && !inTrend7) return;
+            if(!inMonth && !inDaily && !inTrend7) return;
 
             const name = (r.agent || '').trim() || '(Tanpa Nama Agent)';
             const st = ensureAgent(name);
@@ -763,10 +742,6 @@
                 st.dInt++;
                 if(isTkt) st.dTkt++;
                 else st.dFcr++;
-            }
-            if(inWeek){
-                st.wInt++;
-                if(isTkt) st.wTkt++;
             }
             if(inMonth){
                 st.mInt++;
@@ -785,51 +760,68 @@
             }
         });
 
-        const q = agentSearchQuery.toLowerCase().trim();
-        const rows = Array.from(agentStats.values())
-            .filter(a => !q || a.name.toLowerCase().includes(q))
+        const allAgentsSorted = Array.from(agentStats.values())
             .sort((a, b) => (b.mInt - a.mInt) || (b.dInt - a.dInt) || a.name.localeCompare(b.name));
+
+        if(nameFilterEl){
+            const availableNames = allAgentsSorted.map(a => a.name).sort((a, b) => a.localeCompare(b));
+            nameFilterEl.innerHTML =
+                '<option value="ALL">Semua Agent (' + availableNames.length + ')</option>' +
+                availableNames.map(nm => '<option value="' + nm.replace(/"/g, '&quot;') + '">' + nm + '</option>').join('');
+            if(selectedAgentName === 'ALL' || availableNames.includes(selectedAgentName)){
+                nameFilterEl.value = selectedAgentName;
+            } else {
+                selectedAgentName = 'ALL';
+                nameFilterEl.value = 'ALL';
+            }
+        }
+
+        const rows = selectedAgentName === 'ALL'
+            ? allAgentsSorted
+            : allAgentsSorted.filter(a => a.name === selectedAgentName);
 
         lastAgentSummaryRows = rows;
 
         const tot = rows.reduce((acc, a) => {
             acc.dInt += a.dInt; acc.dFcr += a.dFcr; acc.dTkt += a.dTkt;
-            acc.wInt += a.wInt; acc.wTkt += a.wTkt;
             acc.mInt += a.mInt; acc.mFcr += a.mFcr; acc.mTkt += a.mTkt;
             acc.chChat += a.chChat; acc.chWa += a.chWa; acc.chEmail += a.chEmail; acc.chCall += a.chCall;
             return acc;
-        }, { dInt: 0, dFcr: 0, dTkt: 0, wInt: 0, wTkt: 0, mInt: 0, mFcr: 0, mTkt: 0, chChat: 0, chWa: 0, chEmail: 0, chCall: 0 });
+        }, { dInt: 0, dFcr: 0, dTkt: 0, mInt: 0, mFcr: 0, mTkt: 0, chChat: 0, chWa: 0, chEmail: 0, chCall: 0 });
 
         const namedActiveDaily = rows.filter(a => a.dInt > 0).length || 1;
         const namedActiveMtd = rows.filter(a => a.mInt > 0).length || 1;
         const avgDailyInt = rows.length ? (tot.dInt / namedActiveDaily).toFixed(1) : '0.0';
         const avgMtdInt = rows.length ? (tot.mInt / namedActiveMtd).toFixed(1) : '0.0';
         const mtdTicketRatio = tot.mInt ? ((tot.mTkt / tot.mInt) * 100).toFixed(1) + '%' : '0.0%';
+        const mtdFcrRate = tot.mInt ? ((tot.mFcr / tot.mInt) * 100).toFixed(1) + '%' : '0.0%';
 
         kpiEl.innerHTML = [
             {
                 dot: 'blue',
                 label: 'Total Interaksi (Daily)',
                 val: tot.dInt.toLocaleString('id-ID'),
-                sub: 'Mingguan: ' + tot.wInt.toLocaleString('id-ID') + ' · MTD: ' + tot.mInt.toLocaleString('id-ID')
+                sub: 'FCR: ' + tot.dFcr.toLocaleString('id-ID') + ' · MTD: ' + tot.mInt.toLocaleString('id-ID')
             },
             {
                 dot: 'amber',
                 label: 'Total Ticket Dibuat (Daily)',
                 val: tot.dTkt.toLocaleString('id-ID'),
-                sub: 'Mingguan: ' + tot.wTkt.toLocaleString('id-ID') + ' · MTD: ' + tot.mTkt.toLocaleString('id-ID')
+                sub: 'MTD: ' + tot.mTkt.toLocaleString('id-ID') + ' · Rasio MTD: ' + mtdTicketRatio
             },
             {
                 dot: 'green',
-                label: 'Rata-rata Interaksi / Agent',
-                val: avgDailyInt,
-                sub: 'Daily (' + namedActiveDaily + ' aktif) · MTD: ' + avgMtdInt + '/agent'
+                label: selectedAgentName === 'ALL' ? 'Rata-rata Interaksi / Agent' : 'FCR Rate MTD',
+                val: selectedAgentName === 'ALL' ? avgDailyInt : mtdFcrRate,
+                sub: selectedAgentName === 'ALL'
+                    ? 'Daily (' + namedActiveDaily + ' aktif) · MTD: ' + avgMtdInt + '/agent'
+                    : 'FCR MTD: ' + tot.mFcr.toLocaleString('id-ID') + ' dari ' + tot.mInt.toLocaleString('id-ID') + ' int'
             },
             {
                 dot: 'neutral',
-                label: 'Total Agent Terdata',
-                val: rows.length.toLocaleString('id-ID'),
-                sub: 'Rasio Ticket MTD: ' + mtdTicketRatio
+                label: selectedAgentName === 'ALL' ? 'Total Agent Terdata' : 'Agent Dipilih',
+                val: selectedAgentName === 'ALL' ? rows.length.toLocaleString('id-ID') : '1',
+                sub: selectedAgentName === 'ALL' ? 'Aktif MTD: ' + rows.filter(a => a.mInt > 0).length + ' agent' : selectedAgentName
             }
         ].map(c =>
             '<div class="col-xl-3 col-md-6"><div class="card casn-kpi-card"><div class="card-body py-2 px-3">' +
@@ -840,7 +832,7 @@
         ).join('');
 
         if(!rows.length){
-            bodyEl.innerHTML = '<tr><td colspan="11" class="text-center text-muted py-4">Tidak ada data agent pada filter yang dipilih.</td></tr>';
+            bodyEl.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">Tidak ada data agent pada filter yang dipilih.</td></tr>';
             chBodyEl.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">Tidak ada data.</td></tr>';
             trendHeadEl.innerHTML = '<tr><th class="text-start">Nama Agent</th></tr>';
             trendBodyEl.innerHTML = '<tr><td class="text-center text-muted py-3">Tidak ada data.</td></tr>';
@@ -856,8 +848,6 @@
                 '<td class="num fw-semibold tbl-grp-border">' + a.dInt.toLocaleString('id-ID') + '</td>' +
                 '<td class="num">' + a.dFcr.toLocaleString('id-ID') + '</td>' +
                 '<td class="num fw-semibold">' + a.dTkt.toLocaleString('id-ID') + '</td>' +
-                '<td class="num fw-semibold tbl-grp-border">' + a.wInt.toLocaleString('id-ID') + '</td>' +
-                '<td class="num">' + a.wTkt.toLocaleString('id-ID') + '</td>' +
                 '<td class="num fw-semibold tbl-grp-border">' + a.mInt.toLocaleString('id-ID') + '</td>' +
                 '<td class="num">' + a.mFcr.toLocaleString('id-ID') + '</td>' +
                 '<td class="num fw-semibold">' + a.mTkt.toLocaleString('id-ID') + '</td>' +
@@ -865,12 +855,10 @@
             '</tr>';
         }).join('') +
         '<tr class="total-row">' +
-            '<td colspan="2" class="text-center">Total Tim</td>' +
+            '<td colspan="2" class="text-center">' + (selectedAgentName === 'ALL' ? 'Total Tim' : 'Total') + '</td>' +
             '<td class="num tbl-grp-border">' + tot.dInt.toLocaleString('id-ID') + '</td>' +
             '<td class="num">' + tot.dFcr.toLocaleString('id-ID') + '</td>' +
             '<td class="num">' + tot.dTkt.toLocaleString('id-ID') + '</td>' +
-            '<td class="num tbl-grp-border">' + tot.wInt.toLocaleString('id-ID') + '</td>' +
-            '<td class="num">' + tot.wTkt.toLocaleString('id-ID') + '</td>' +
             '<td class="num tbl-grp-border">' + tot.mInt.toLocaleString('id-ID') + '</td>' +
             '<td class="num">' + tot.mFcr.toLocaleString('id-ID') + '</td>' +
             '<td class="num">' + tot.mTkt.toLocaleString('id-ID') + '</td>' +
@@ -918,13 +906,14 @@
         const [ay, am, ad] = activeDate.split('-').map(Number);
         const indoDate = new Date(ay, am - 1, ad).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
         const scopeLbl = agentProductScope === 'CASN' ? 'CASN (E-Meterai)' : 'Semua Produk';
+        const agentLbl = selectedAgentName === 'ALL' ? 'Semua Agent' : selectedAgentName;
         const lines = [
             `*Rekap Produktivitas Agent — ${indoDate}*`,
-            `Scope: ${scopeLbl}`,
+            `Scope: ${scopeLbl} | Filter: ${agentLbl}`,
             ``
         ];
         lastAgentSummaryRows.forEach((a, i) => {
-            lines.push(`${i + 1}. *${a.name}* — Daily: ${a.dInt} int (${a.dTkt} tkt) | Minggu: ${a.wInt} int (${a.wTkt} tkt) | MTD: ${a.mInt} int (${a.mTkt} tkt)`);
+            lines.push(`${i + 1}. *${a.name}* — Daily: ${a.dInt} int (${a.dTkt} tkt) | MTD: ${a.mInt} int (${a.mTkt} tkt)`);
         });
         const text = lines.join('\n');
         const btn = document.getElementById('copyAgentReportBtn');
@@ -943,7 +932,6 @@
         const header = [
             'No', 'Nama Agent',
             'Daily Interaksi', 'Daily FCR', 'Daily Ticket Dibuat',
-            'Mingguan Interaksi', 'Mingguan Ticket Dibuat',
             'MTD Interaksi', 'MTD FCR', 'MTD Ticket Dibuat', 'Rasio Ticket MTD (%)'
         ];
         const lines = [header.join(',')];
@@ -952,7 +940,6 @@
             lines.push([
                 i + 1, a.name,
                 a.dInt, a.dFcr, a.dTkt,
-                a.wInt, a.wTkt,
                 a.mInt, a.mFcr, a.mTkt, ratio
             ].map(esc).join(','));
         });

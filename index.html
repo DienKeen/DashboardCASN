@@ -647,5 +647,80 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
         <script src="js/scripts.js"></script>
         <script src="js/casn-dashboard.js"></script>
+        <script>
+(function () {
+  // 1. Inject tema iOS Dark Mode & Floating Toast
+  if (!document.getElementById('iosModalStyles')) {
+    var style = document.createElement('style');
+    style.id = 'iosModalStyles';
+    style.textContent = [
+      '#copySummaryModal .modal-dialog { max-width: 94vw; width: 1320px; margin: 1.25rem auto; }',
+      '#copySummaryModal .modal-content, .ios-modal-content { background: #0b0b0d !important; color: #f5f5f7 !important; border: 1px solid rgba(255,255,255,0.12) !important; border-radius: 20px !important; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif; box-shadow: 0 24px 60px rgba(0,0,0,0.78); }',
+      '#copySummaryModal .modal-header, .ios-modal-header { background: rgba(28,28,30,0.9) !important; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.09) !important; padding: 14px 20px !important; display: flex; align-items: center; justify-content: space-between; }',
+      '.ios-btn-close { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.12); border: none; color: #ebebf5; font-size: 0.85rem; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all .18s ease; }',
+      '.ios-btn-close:hover { background: rgba(255,255,255,0.22); color: #fff; }',
+      '#copySummaryModal .modal-body, .ios-modal-body { padding: 16px 20px !important; background: #000000 !important; height: calc(88vh - 60px); min-height: 500px; overflow: hidden; }',
+      '.ios-split-card { background: #1c1c1e; border: 1px solid rgba(255,255,255,0.09); border-radius: 16px; display: flex; flex-direction: column; height: 100%; min-height: 0; overflow: hidden; }',
+      '.ios-split-card-header { padding: 12px 16px; background: rgba(44,44,46,0.55); border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-shrink: 0; }',
+      '.ios-split-card-title { font-size: 0.86rem; font-weight: 600; color: #f5f5f7; letter-spacing: -0.01em; }',
+      '.ios-pill-btn { border-radius: 999px !important; font-size: 0.78rem !important; font-weight: 600 !important; padding: 6px 14px !important; border: none !important; cursor: pointer; transition: all .18s ease; display: inline-flex; align-items: center; gap: 5px; }',
+      '.ios-pill-btn:active { transform: scale(0.95); }',
+      '.ios-pill-primary { background: #0a84ff !important; color: #ffffff !important; }',
+      '.ios-pill-primary:hover { background: #409cff !important; }',
+      '.ios-pill-secondary { background: rgba(255,255,255,0.12) !important; color: #f5f5f7 !important; }',
+      '.ios-pill-secondary:hover { background: rgba(255,255,255,0.2) !important; color: #fff !important; }',
+      '.ios-pill-success { background: #30d158 !important; color: #000000 !important; }',
+      '#modalSummaryTextarea, .ios-report-textarea { flex: 1 1 auto !important; width: 100% !important; height: 100% !important; min-height: 380px !important; background: #141416 !important; color: #e5e5ea !important; border: none !important; padding: 14px 16px !important; font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace !important; font-size: 0.8rem !important; line-height: 1.6 !important; resize: none !important; outline: none !important; overflow-y: auto !important; }',
+      '#modalImgPreviewWrap, .ios-preview-viewport { flex: 1 1 auto !important; height: 100% !important; min-height: 380px !important; background: #121214 !important; padding: 14px !important; overflow-y: auto !important; display: flex !important; justify-content: center !important; align-items: flex-start !important; }',
+      '#modalImgPreviewWrap img, .ios-preview-viewport img { max-width: 100%; height: auto; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 8px 24px rgba(0,0,0,0.55); }',
+      '#modalSummaryTextarea::-webkit-scrollbar, #modalImgPreviewWrap::-webkit-scrollbar { width: 6px; }',
+      '#modalSummaryTextarea::-webkit-scrollbar-thumb, #modalImgPreviewWrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.22); border-radius: 999px; }',
+      '.ios-floating-toast { position: fixed; top: 18px; left: 50%; transform: translateX(-50%) translateY(-24px); background: rgba(36,36,38,0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(48,209,88,0.5); color: #fff; padding: 9px 18px; border-radius: 999px; font-size: 0.82rem; font-weight: 500; z-index: 2050; opacity: 0; pointer-events: none; box-shadow: 0 12px 32px rgba(0,0,0,0.6); transition: all .28s cubic-bezier(0.16,1,0.3,1); }',
+      '.ios-floating-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }',
+      '@media (max-width: 991.98px) { #copySummaryModal .modal-body, .ios-modal-body { height: auto; max-height: 85vh; overflow-y: auto; } .ios-split-card { height: auto; margin-bottom: 12px; } #modalSummaryTextarea, .ios-report-textarea { min-height: 260px !important; } }'
+    ].join('\n');
+    document.head.appendChild(style);
+  }
+
+  // 2. Global Floating Toast ala iOS
+  var toastTimer = null;
+  window.showIosFloatingToast = function (message) {
+    var toast = document.getElementById('iosFloatingToast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'iosFloatingToast';
+      toast.className = 'ios-floating-toast';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = '\u2713  ' + message;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      toast.classList.remove('show');
+    }, 2800);
+  };
+
+  // 3. Kunci scroll textarea selalu di baris pertama (paling atas)
+  function lockTextareaTop() {
+    var ta = document.getElementById('modalSummaryTextarea');
+    if (ta) ta.scrollTop = 0;
+  }
+
+  document.addEventListener('shown.bs.modal', function (e) {
+    if (e.target && e.target.id === 'copySummaryModal') {
+      lockTextareaTop();
+      setTimeout(lockTextareaTop, 120);
+      setTimeout(lockTextareaTop, 300);
+    }
+  });
+
+  document.addEventListener('click', function (e) {
+    if (e.target && (e.target.id === 'modalCopyTextBtn' || e.target.id === 'copyDashboardBtn')) {
+      setTimeout(lockTextareaTop, 30);
+      setTimeout(lockTextareaTop, 200);
+    }
+  });
+})();
+</script>
     </body>
 </html>

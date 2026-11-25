@@ -229,7 +229,8 @@
                 border: 1px solid #422226 !important;
             }
 
-            #sharedDailyControls {
+            #sharedDailyControls,
+            #slaPageControls {
                 background-color: var(--ops-surface) !important;
                 border: 1px solid var(--ops-border) !important;
                 border-radius: 6px !important;
@@ -237,7 +238,8 @@
                 box-shadow: none !important;
                 overflow: visible !important;
             }
-            #sharedDailyControls .card-body {
+            #sharedDailyControls .card-body,
+            #slaPageControls .card-body {
                 display: flex !important;
                 flex-wrap: wrap !important;
                 align-items: center !important;
@@ -248,13 +250,16 @@
             }
             #sharedDailyControls label,
             #sharedDailyControls .fw-bold,
-            #sharedDailyControls > .card-body > span {
+            #sharedDailyControls > .card-body > span,
+            #slaPageControls label {
                 font-size: 0.74rem !important;
                 font-weight: 500 !important;
                 color: var(--ops-muted);
                 white-space: nowrap !important;
+                margin: 0 !important;
             }
-            #sharedDailyControls .form-select {
+            #sharedDailyControls .form-select,
+            #slaPageControls .form-select {
                 font-size: 0.76rem !important;
                 padding: 0.2rem 1.6rem 0.2rem 0.5rem !important;
                 height: 28px !important;
@@ -270,7 +275,8 @@
                 margin: 0 2px;
                 flex-shrink: 0;
             }
-            #dailySourceBadge {
+            #dailySourceBadge,
+            #slaModePill {
                 white-space: nowrap !important;
                 font-size: 0.72rem !important;
                 font-weight: 500 !important;
@@ -635,6 +641,56 @@
         document.head.appendChild(styleEl);
     }
 
+    function relocateSlaFiltersToPage(){
+        const sidebarBox = document.getElementById('sidebarSlaFilters');
+        const actualDash = document.getElementById('actualDashboard');
+        const prodSel = document.getElementById('productFilter');
+        const catSel = document.getElementById('categoryFilter');
+        const monthSel = document.getElementById('monthFilter');
+
+        if(actualDash && prodSel && catSel && monthSel && !document.getElementById('slaPageControls')){
+            const bar = document.createElement('div');
+            bar.id = 'slaPageControls';
+            bar.className = 'card mb-3';
+            bar.innerHTML =
+                '<div class="card-body">' +
+                  '<label for="productFilter">Produk:</label>' +
+                  '<span id="slotSlaProd"></span>' +
+                  '<span class="shared-filter-sep"></span>' +
+                  '<label for="categoryFilter">Kategori:</label>' +
+                  '<span id="slotSlaCat"></span>' +
+                  '<span class="shared-filter-sep"></span>' +
+                  '<label for="monthFilter">Bulan:</label>' +
+                  '<span id="slotSlaMonth"></span>' +
+                  '<button type="button" id="resetSlaFiltersBtn" class="btn btn-outline-secondary btn-sm py-0 px-2" style="height:28px;font-size:0.74rem;display:none;">Reset Filter</button>' +
+                  '<span id="slaModePill">SLA: Internal (Excl. Pending)</span>' +
+                '</div>';
+
+            actualDash.insertBefore(bar, actualDash.firstChild);
+
+            [prodSel, catSel, monthSel].forEach(sel => {
+                sel.className = 'form-select form-select-sm';
+                sel.style.width = 'auto';
+                sel.style.maxWidth = '230px';
+            });
+
+            document.getElementById('slotSlaProd').appendChild(prodSel);
+            document.getElementById('slotSlaCat').appendChild(catSel);
+            document.getElementById('slotSlaMonth').appendChild(monthSel);
+
+            document.getElementById('resetSlaFiltersBtn').addEventListener('click', () => {
+                selectedProduct = 'ALL';
+                selectedCategory = 'ALL';
+                selectedMonth = 'ALL';
+                renderActual();
+            });
+        }
+
+        if(sidebarBox){
+            sidebarBox.remove();
+        }
+    }
+
     function ensureAgentNavigationAndSection(){
         const navWrap = document.querySelector('#sidenavAccordion .nav');
         if(navWrap && !navWrap.querySelector('[data-target="agent"]')){
@@ -933,6 +989,15 @@
         const prevEl = scopeSel.previousElementSibling;
         if(prevEl && (prevEl.tagName === 'LABEL' || prevEl.tagName === 'SPAN') && !prevEl.querySelector('select')){
             prevEl.style.display = 'none';
+        }
+
+        const cardBody = scopeSel.parentElement;
+        if(cardBody){
+            Array.from(cardBody.childNodes).forEach(node => {
+                if(node.nodeType === Node.TEXT_NODE && /scope\s*produk/i.test(node.textContent || '')){
+                    node.remove();
+                }
+            });
         }
 
         if(!document.getElementById('sharedProductFilterWrap')){
@@ -2925,9 +2990,16 @@
             months.map(m => '<option value="' + m + '">' + monthLabel(m) + '</option>').join('');
         if(selectedMonth === 'ALL' || months.includes(selectedMonth)) document.getElementById('monthFilter').value = selectedMonth;
         else selectedMonth = 'ALL';
+
+        const resetBtn = document.getElementById('resetSlaFiltersBtn');
+        if(resetBtn){
+            const hasActive = selectedProduct !== 'ALL' || selectedCategory !== 'ALL' || selectedMonth !== 'ALL';
+            resetBtn.style.display = hasActive ? '' : 'none';
+        }
     }
 
     function renderActual(){
+        relocateSlaFiltersToPage();
         ensureAtRiskRadarCard();
         applyNoChartLayout();
         if(ticketsMap.size === 0){
@@ -2937,10 +3009,16 @@
         }
         document.getElementById('emptyState').style.display = 'none';
         document.getElementById('actualDashboard').style.display = '';
-        document.getElementById('sidebarSlaFilters').style.display = '';
-        document.getElementById('modeSubtitle').textContent = slaViewMode === 'include'
+        const modeTxt = slaViewMode === 'include'
             ? 'Mode Aktif: User (Include Pending — Waktu Kalender Penuh)'
             : 'Mode Aktif: Internal (Exclude Pending — Performa Solver)';
+        document.getElementById('modeSubtitle').textContent = modeTxt;
+        const modePill = document.getElementById('slaModePill');
+        if(modePill){
+            modePill.textContent = slaViewMode === 'include'
+                ? 'SLA: User (Incl. Pending)'
+                : 'SLA: Internal (Excl. Pending)';
+        }
 
         const now = Date.now();
         const allComputed = Array.from(ticketsMap.values()).map(rec => ({ rec, sla: computeSla(rec, now) }));
@@ -3332,6 +3410,7 @@
 
     injectProStyles();
     injectD1Controls();
+    relocateSlaFiltersToPage();
     ensureAgentNavigationAndSection();
     setupSharedSubcategoryFilter();
     initHourSelectors();

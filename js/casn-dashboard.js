@@ -2602,8 +2602,55 @@
             document.head.appendChild(s);
         });
     }
+function injectIosModalStyles(){
+    if(document.getElementById('iosModalStyles')) return;
+    const style = document.createElement('style');
+    style.id = 'iosModalStyles';
+    style.textContent = [
+        '.ios-modal-content { background:#0b0b0d; color:#f5f5f7; border:1px solid rgba(255,255,255,0.12); border-radius:20px; overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",sans-serif; box-shadow:0 24px 60px rgba(0,0,0,0.75); }',
+        '.ios-modal-header { background:rgba(28,28,30,0.88); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-bottom:1px solid rgba(255,255,255,0.09); padding:14px 20px; display:flex; align-items:center; justify-content:space-between; }',
+        '.ios-btn-close { width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,0.12); border:none; color:#ebebf5; font-size:0.85rem; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; transition:all .18s ease; }',
+        '.ios-btn-close:hover { background:rgba(255,255,255,0.22); color:#fff; }',
+        '.ios-modal-body { padding:16px 20px; background:#000000; height:calc(88vh - 60px); min-height:500px; overflow:hidden; }',
+        '.ios-split-card { background:#1c1c1e; border:1px solid rgba(255,255,255,0.09); border-radius:16px; display:flex; flex-direction:column; height:100%; min-height:0; overflow:hidden; }',
+        '.ios-split-card-header { padding:12px 16px; background:rgba(44,44,46,0.5); border-bottom:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:space-between; gap:10px; flex-shrink:0; }',
+        '.ios-split-card-title { font-size:0.86rem; font-weight:600; color:#f5f5f7; letter-spacing:-0.01em; }',
+        '.ios-pill-btn { border-radius:999px; font-size:0.78rem; font-weight:600; padding:6px 14px; border:none; cursor:pointer; transition:all .18s ease; display:inline-flex; align-items:center; gap:5px; }',
+        '.ios-pill-btn:active { transform:scale(0.95); }',
+        '.ios-pill-primary { background:#0a84ff; color:#ffffff; }',
+        '.ios-pill-primary:hover { background:#409cff; }',
+        '.ios-pill-secondary { background:rgba(255,255,255,0.12); color:#f5f5f7; }',
+        '.ios-pill-secondary:hover { background:rgba(255,255,255,0.2); color:#fff; }',
+        '.ios-pill-success { background:#30d158 !important; color:#000000 !important; }',
+        '.ios-report-textarea { flex:1 1 auto; width:100%; height:100%; min-height:380px; background:#141416; color:#e5e5ea; border:none; padding:14px 16px; font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace; font-size:0.8rem; line-height:1.6; resize:none; outline:none; overflow-y:auto; }',
+        '.ios-preview-viewport { flex:1 1 auto; height:100%; min-height:380px; background:#121214; padding:14px; overflow-y:auto; display:flex; justify-content:center; align-items:flex-start; }',
+        '.ios-preview-viewport img { max-width:100%; height:auto; border-radius:12px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 8px 24px rgba(0,0,0,0.55); }',
+        '.ios-report-textarea::-webkit-scrollbar, .ios-preview-viewport::-webkit-scrollbar { width:6px; }',
+        '.ios-report-textarea::-webkit-scrollbar-thumb, .ios-preview-viewport::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.22); border-radius:999px; }',
+        '.ios-floating-toast { position:fixed; top:18px; left:50%; transform:translateX(-50%) translateY(-24px); background:rgba(36,36,38,0.94); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid rgba(48,209,88,0.45); color:#fff; padding:9px 18px; border-radius:999px; font-size:0.82rem; font-weight:500; z-index:2000; opacity:0; pointer-events:none; box-shadow:0 12px 32px rgba(0,0,0,0.6); transition:all .28s cubic-bezier(0.16,1,0.3,1); }',
+        '.ios-floating-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }'
+    ].join('\n');
+    document.head.appendChild(style);
+}
 
+let iosToastTimer = null;
+function showIosFloatingToast(message){
+    let toast = document.getElementById('iosFloatingToast');
+    if(!toast){
+        toast = document.createElement('div');
+        toast.id = 'iosFloatingToast';
+        toast.className = 'ios-floating-toast';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = '✓  ' + message;
+    toast.classList.add('show');
+    clearTimeout(iosToastTimer);
+    iosToastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+}
     function ensureCopyModal(){
+        function ensureCopyModal(){
+        injectIosModalStyles();
+        if(document.getElementById('copySummaryModal')) return;
         if(document.getElementById('copySummaryModal')) return;
         const modalHtml =
             '<div class="modal fade" id="copySummaryModal" tabindex="-1" aria-hidden="true">' +

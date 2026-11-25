@@ -2607,6 +2607,7 @@ function injectIosModalStyles(){
     const style = document.createElement('style');
     style.id = 'iosModalStyles';
     style.textContent = [
+        '@media (max-width: 991.98px) { .ios-modal-body { height:auto; max-height:85vh; overflow-y:auto; } .ios-split-card { height:auto; margin-bottom:12px; } .ios-report-textarea { min-height:260px; } }'
         '.ios-modal-content { background:#0b0b0d; color:#f5f5f7; border:1px solid rgba(255,255,255,0.12); border-radius:20px; overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",sans-serif; box-shadow:0 24px 60px rgba(0,0,0,0.75); }',
         '.ios-modal-header { background:rgba(28,28,30,0.88); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-bottom:1px solid rgba(255,255,255,0.09); padding:14px 20px; display:flex; align-items:center; justify-content:space-between; }',
         '.ios-btn-close { width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,0.12); border:none; color:#ebebf5; font-size:0.85rem; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; transition:all .18s ease; }',

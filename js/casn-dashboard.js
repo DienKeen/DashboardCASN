@@ -2687,145 +2687,250 @@
         });
     }
 
-    function buildDashboardSummaryText(){
+    function buildDashboardSummaryText() {
     const selDateEl = document.getElementById('dailyDateSelect');
     const hStart = document.getElementById('dailyHourStart').value || '0';
     const hEnd = document.getElementById('dailyHourEnd').value || '23';
-    const prodListText = selectedSharedProducts.size === 0
-        ? 'Semua Layanan'
-        : Array.from(selectedSharedProducts).join(', ');
 
-    if(!allInteractions.length){
+    if (!allInteractions.length) {
         return [
-            `*Daily Report Helpdesk SSCASN — -*`,
+            `*Report Daily Helpdesk CASN — -*`,
             `Interval: ${hStart}:00 - ${hEnd}:59 WIB`,
             ``,
-            `*1. Interaksi CASN*`,
-            `• Daily: *0* (FCR: 0 | N-FCR: 0 | FCR Rate: 0.00%)`,
-            `• MTD: *0* (FCR: 0 | N-FCR: 0)`,
-            `• Top Case: -`,
+            `*Total interaksi Voice*`,
+            `- Answered: *0*`,
+            `- Abandon: *0*`,
             ``,
-            `*2. Tiket & Antrian CASN*`,
-            `• Created: MTD *0* (Daily: 0)`,
-            `• Resolved: MTD *0* (Daily: 0)`,
-            `• Outstanding: MTD *0* (Daily: 0) | Pending: *0*`,
-            `• Antrian Aktif SSCASN: *0 tiket* (Pending: 0)`,
+            `*Total interaksi CASN nonvoice terpickup*`,
+            `- Email: *0*`,
+            `- WhatsApp: *0*`,
             ``,
-            `*3. Ringkasan Semua Produk*`,
-            `_(${prodListText})_`,
-            `• Interaksi: Daily *0* (FCR: 0 | N-FCR: 0) | MTD *0*`,
-            `• Tiket MTD: Created *0* | Resolved *0* | Outstanding *0*`
+            `*Top Case Interaksi CASN*`,
+            `1. -`,
+            ``,
+            `*Total Ticket CASN*`,
+            `- Created: *0*`,
+            `- Resolved: *0*`,
+            `- Pending: *0*`,
+            `- Outstanding: *0*`,
+            `  • Ontrack: *0*`,
+            `  • Warning 90% SLA: *0*`,
+            `  • Breach: *0*`,
+            ``,
+            `*Akumulasi Semua Interaksi (CASN + Reguler)*`,
+            `- Daily: *0* (CASN: 0 | Reguler: 0) — FCR: 0 | N-FCR: 0`,
+            `- MTD: *0* (CASN: 0 | Reguler: 0) — FCR: 0 | N-FCR: 0`,
+            ``,
+            `*Akumulasi Semua Ticket (CASN + Reguler)*`,
+            `- Daily: Created *0* | Resolved *0* | Pending *0* | Outstanding *0* (CASN: 0 | Reguler: 0)`,
+            `- MTD: Created *0* | Resolved *0* | Pending *0* | Outstanding *0* (CASN: 0 | Reguler: 0)`
         ].join('\n');
     }
 
     const activeDate = selDateEl.value;
     const [ay, am, ad] = activeDate.split('-').map(Number);
-    const indoDateLabel = new Date(ay, am - 1, ad).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    const indoDateLabel = new Date(ay, am - 1, ad).toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
     const monthPrefix = activeDate.slice(0, 7);
     const hStartNum = parseInt(hStart, 10);
     const hEndNum = parseInt(hEnd, 10);
 
-    const intMeta = allInteractions.map(r => {
-        const iso = r.doStart || r.doOpen;
-        if(!iso) return null;
+    const toLocalDateInfo = (iso) => {
+        if (!iso) return null;
         const d = new Date(iso);
-        const dKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-        return { r, dKey, hour: d.getHours() };
-    }).filter(Boolean);
-
-    const dailyAllInt = intMeta.filter(x => x.dKey === activeDate && x.hour >= hStartNum && x.hour <= hEndNum && matchesSharedProduct(x.r));
-    const dailyCasnInt = intMeta.filter(x => x.dKey === activeDate && x.hour >= hStartNum && x.hour <= hEndNum && isCasnRecord(x.r));
-    const mtdAllInt = intMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && matchesSharedProduct(x.r));
-    const mtdCasnInt = intMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && isCasnRecord(x.r));
-
-    const sumInt = (list) => {
-        let fcr = 0, nfcr = 0;
-        list.forEach(x => { if(x.r.isEscalated) nfcr++; else fcr++; });
-        return { total: list.length, fcr, nfcr };
+        if (isNaN(d.getTime())) return null;
+        const dKey = d.getFullYear() + '-' +
+            String(d.getMonth() + 1).padStart(2, '0') + '-' +
+            String(d.getDate()).padStart(2, '0');
+        return { d, dKey, hour: d.getHours() };
     };
 
-    const sDailyCasnInt = sumInt(dailyCasnInt);
-    const sMtdCasnInt = sumInt(mtdCasnInt);
-    const sDailyAllInt = sumInt(dailyAllInt);
-    const sMtdAllInt = sumInt(mtdAllInt);
-    const fcrRateDaily = sDailyCasnInt.total ? ((sDailyCasnInt.fcr / sDailyCasnInt.total) * 100).toFixed(2) + '%' : '0.00%';
+    // 1. Filter Interaksi (Daily & MTD)
+    const intMeta = allInteractions.map(r => {
+        const info = toLocalDateInfo(r.doStart || r.doOpen);
+        return info ? { r, dKey: info.dKey, hour: info.hour, isCasn: isCasnRecord(r) } : null;
+    }).filter(Boolean);
 
-    const counts = new Map();
-    dailyCasnInt.forEach(x => {
-        const k = x.r.dsc || x.r.sc || '(Lainnya)';
-        counts.set(k, (counts.get(k) || 0) + 1);
+    const dailyAllInt = intMeta.filter(x => x.dKey === activeDate && x.hour >= hStartNum && x.hour <= hEndNum);
+    const mtdAllInt = intMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate);
+    const dailyCasnInt = dailyAllInt.filter(x => x.isCasn);
+
+    // Voice & Nonvoice CASN (Daily)
+    let voiceAnswered = 0;
+    let voiceAbandon = 0;
+    let nonVoiceEmail = 0;
+    let nonVoiceWa = 0;
+
+    dailyCasnInt.forEach(({ r }) => {
+        const ch = (r.ch || '').toLowerCase();
+        const st = (r.st || '').toLowerCase();
+        if (ch.includes('voice') || ch.includes('call') || ch.includes('telp')) {
+            if (st.includes('abandon') || st.includes('missed')) voiceAbandon++;
+            else voiceAnswered++;
+        } else if (ch.includes('email')) {
+            nonVoiceEmail++;
+        } else if (ch.includes('whatsapp') || ch === 'wa') {
+            nonVoiceWa++;
+        }
     });
-    const topSorted = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 3);
-    const topCaseLines = topSorted.length === 0
-        ? [`• Top Case: Tidak ada data CASN pada interval ini`]
-        : topSorted.length === 1
-            ? [`• Top Case: ${topSorted[0][0]} (${topSorted[0][1].toLocaleString('id-ID')} | 100.00%)`]
-            : [
-                `• Top Case CASN:`,
-                ...topSorted.map((it, idx) => {
-                    const pct = dailyCasnInt.length ? ((it[1] / dailyCasnInt.length) * 100).toFixed(2) + '%' : '0.00%';
-                    return `  ${idx + 1}. ${it[0]} (${it[1].toLocaleString('id-ID')} | ${pct})`;
-                })
-            ];
+
+    // Helper Akumulasi Interaksi (CASN vs Reguler)
+    const summarizeAllInt = (list) => {
+        let casn = 0, reguler = 0, fcr = 0, nfcr = 0;
+        list.forEach(({ r, isCasn }) => {
+            if (isCasn) casn++; else reguler++;
+            if (r.isEscalated) nfcr++; else fcr++;
+        });
+        return { total: list.length, casn, reguler, fcr, nfcr };
+    };
+
+    const accDailyInt = summarizeAllInt(dailyAllInt);
+    const accMtdInt = summarizeAllInt(mtdAllInt);
+
+    // 2. Top Case Interaksi CASN (Top 5)
+    const caseCounts = new Map();
+    dailyCasnInt.forEach(({ r }) => {
+        const label = r.dsc || r.sc || '(Lainnya)';
+        caseCounts.set(label, (caseCounts.get(label) || 0) + 1);
+    });
+    const topCases = Array.from(caseCounts.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+
+    const topCaseLines = topCases.length === 0
+        ? [`1. Tidak ada interaksi CASN pada interval ini`]
+        : topCases.map(([name, cnt], idx) => {
+            const pct = dailyCasnInt.length ? ((cnt / dailyCasnInt.length) * 100).toFixed(2) + '%' : '0.00%';
+            return `${idx + 1}. ${name} (${cnt.toLocaleString('id-ID')} | ${pct})`;
+        });
+
+    // 3. Tiket CASN & Akumulasi Semua Tiket (CASN + Reguler)
+    const FALLBACK_SLA_HOURS = {
+        CRITICAL: 4,
+        URGENT: 4,
+        HIGH: 8,
+        MEDIUM: 24,
+        NORMAL: 24,
+        LOW: 48
+    };
+    const nowRef = new Date();
+
+    const getSlaCategory = (r) => {
+        const rawSla = (r.slaStatus || r.sla || '').toLowerCase();
+        if (rawSla.includes('breach') || rawSla.includes('overdue')) return 'breach';
+        if (rawSla.includes('warning') || rawSla.includes('90')) return 'warning';
+        if (rawSla.includes('ontrack') || rawSla.includes('on track')) return 'ontrack';
+
+        const openDate = new Date(r.doOpen || r.doStart);
+        if (isNaN(openDate.getTime())) return 'ontrack';
+
+        const prUpper = (r.pr || 'MEDIUM').toUpperCase();
+        const targetHours = (typeof SLA_TARGET !== 'undefined' && SLA_TARGET[prUpper])
+            ? SLA_TARGET[prUpper]
+            : (FALLBACK_SLA_HOURS[prUpper] || 24);
+        const elapsedHours = Math.max(0, (nowRef - openDate) / 3600000);
+        const ratio = elapsedHours / targetHours;
+
+        if (ratio > 1) return 'breach';
+        if (ratio >= 0.9) return 'warning';
+        return 'ontrack';
+    };
 
     const tktMeta = Array.from(ticketsMap.values()).map(r => {
-        const iso = r.doOpen || r.doStart;
-        if(!iso) return null;
-        const d = new Date(iso);
-        const dKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-        return { r, dKey, hour: d.getHours() };
+        const info = toLocalDateInfo(r.doOpen || r.doStart);
+        return info ? { r, dKey: info.dKey, hour: info.hour, isCasn: isCasnRecord(r) } : null;
     }).filter(Boolean);
 
-    const dailyCasnTkt = tktMeta.filter(x => x.dKey === activeDate && x.hour >= hStartNum && x.hour <= hEndNum && isCasnRecord(x.r));
-    const mtdAllTkt = tktMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && matchesSharedProduct(x.r));
-    const mtdCasnTkt = tktMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate && isCasnRecord(x.r));
+    const dailyAllTkt = tktMeta.filter(x => x.dKey === activeDate && x.hour >= hStartNum && x.hour <= hEndNum);
+    const mtdAllTkt = tktMeta.filter(x => x.dKey.startsWith(monthPrefix) && x.dKey <= activeDate);
+    const dailyCasnTkt = dailyAllTkt.filter(x => x.isCasn);
 
-    const sumTkt = (list) => {
-        let resolved = 0, outstanding = 0, pending = 0;
-        list.forEach(x => {
-            const st = (x.r.st || '').toLowerCase();
-            if(FINISHED_STATUSES.has(st)) resolved++;
-            else {
+    // Rincian Tiket CASN Daily
+    let casnCreated = dailyCasnTkt.length;
+    let casnResolved = 0;
+    let casnPending = 0;
+    let casnOutstanding = 0;
+    let slaOntrack = 0;
+    let slaWarning = 0;
+    let slaBreach = 0;
+
+    dailyCasnTkt.forEach(({ r }) => {
+        const st = (r.st || '').toLowerCase();
+        if (FINISHED_STATUSES.has(st)) {
+            casnResolved++;
+        } else {
+            casnOutstanding++;
+            if (st === 'pending') casnPending++;
+
+            const slaCat = getSlaCategory(r);
+            if (slaCat === 'breach') slaBreach++;
+            else if (slaCat === 'warning') slaWarning++;
+            else slaOntrack++;
+        }
+    });
+
+    // Helper Akumulasi Semua Tiket (CASN + Reguler)
+    const summarizeAllTkt = (list) => {
+        let resolved = 0, pending = 0, outstanding = 0, outCasn = 0, outReguler = 0;
+        list.forEach(({ r, isCasn }) => {
+            const st = (r.st || '').toLowerCase();
+            if (FINISHED_STATUSES.has(st)) {
+                resolved++;
+            } else {
                 outstanding++;
-                if(st === 'pending') pending++;
+                if (isCasn) outCasn++; else outReguler++;
+                if (st === 'pending') pending++;
             }
         });
-        return { created: list.length, resolved, outstanding, pending };
+        return {
+            created: list.length,
+            resolved,
+            pending,
+            outstanding,
+            outCasn,
+            outReguler
+        };
     };
 
-    const sDailyCasnTkt = sumTkt(dailyCasnTkt);
-    const sMtdCasnTkt = sumTkt(mtdCasnTkt);
-    const sMtdAllTkt = sumTkt(mtdAllTkt);
-
-    const casnTicketsAll = Array.from(ticketsMap.values()).filter(r => isCasnRecord(r));
-    const activeCasnQueue = casnTicketsAll.filter(r => !FINISHED_STATUSES.has((r.st || '').toLowerCase()));
-    const activeCasnPending = activeCasnQueue.filter(r => (r.st || '').toLowerCase() === 'pending').length;
-    const queueText = activeCasnQueue.length >= 1000
-        ? `1000+ (${activeCasnQueue.length.toLocaleString('id-ID')} tiket | Pending: ${activeCasnPending.toLocaleString('id-ID')})`
-        : `${activeCasnQueue.length.toLocaleString('id-ID')} tiket (Pending: ${activeCasnPending.toLocaleString('id-ID')})`;
+    const accDailyTkt = summarizeAllTkt(dailyAllTkt);
+    const accMtdTkt = summarizeAllTkt(mtdAllTkt);
 
     return [
-        `*Daily Report Helpdesk SSCASN — ${indoDateLabel}*`,
+        `*Report Daily Helpdesk CASN — ${indoDateLabel}*`,
         `Interval: ${hStart}:00 - ${hEnd}:59 WIB`,
         ``,
-        `*1. Interaksi CASN*`,
-        `• Daily: *${sDailyCasnInt.total.toLocaleString('id-ID')}* (FCR: ${sDailyCasnInt.fcr.toLocaleString('id-ID')} | N-FCR: ${sDailyCasnInt.nfcr.toLocaleString('id-ID')} | FCR Rate: ${fcrRateDaily})`,
-        `• MTD: *${sMtdCasnInt.total.toLocaleString('id-ID')}* (FCR: ${sMtdCasnInt.fcr.toLocaleString('id-ID')} | N-FCR: ${sMtdCasnInt.nfcr.toLocaleString('id-ID')})`,
+        `*Total interaksi Voice*`,
+        `- Answered: *${voiceAnswered.toLocaleString('id-ID')}*`,
+        `- Abandon: *${voiceAbandon.toLocaleString('id-ID')}*`,
+        ``,
+        `*Total interaksi CASN nonvoice terpickup*`,
+        `- Email: *${nonVoiceEmail.toLocaleString('id-ID')}*`,
+        `- WhatsApp: *${nonVoiceWa.toLocaleString('id-ID')}*`,
+        ``,
+        `*Top Case Interaksi CASN*`,
         ...topCaseLines,
         ``,
-        `*2. Tiket & Antrian CASN*`,
-        `• Created: MTD *${sMtdCasnTkt.created.toLocaleString('id-ID')}* (Daily: ${sDailyCasnTkt.created.toLocaleString('id-ID')})`,
-        `• Resolved: MTD *${sMtdCasnTkt.resolved.toLocaleString('id-ID')}* (Daily: ${sDailyCasnTkt.resolved.toLocaleString('id-ID')})`,
-        `• Outstanding: MTD *${sMtdCasnTkt.outstanding.toLocaleString('id-ID')}* (Daily: ${sDailyCasnTkt.outstanding.toLocaleString('id-ID')}) | Pending: *${sMtdCasnTkt.pending.toLocaleString('id-ID')}*`,
-        `• Antrian Aktif SSCASN: *${queueText}*`,
+        `*Total Ticket CASN*`,
+        `- Created: *${casnCreated.toLocaleString('id-ID')}*`,
+        `- Resolved: *${casnResolved.toLocaleString('id-ID')}*`,
+        `- Pending: *${casnPending.toLocaleString('id-ID')}*`,
+        `- Outstanding: *${casnOutstanding.toLocaleString('id-ID')}*`,
+        `  • Ontrack: *${slaOntrack.toLocaleString('id-ID')}*`,
+        `  • Warning 90% SLA: *${slaWarning.toLocaleString('id-ID')}*`,
+        `  • Breach: *${slaBreach.toLocaleString('id-ID')}*`,
         ``,
-        `*3. Ringkasan Semua Produk*`,
-        `_(${prodListText})_`,
-        `• Interaksi: Daily *${sDailyAllInt.total.toLocaleString('id-ID')}* (FCR: ${sDailyAllInt.fcr.toLocaleString('id-ID')} | N-FCR: ${sDailyAllInt.nfcr.toLocaleString('id-ID')}) | MTD *${sMtdAllInt.total.toLocaleString('id-ID')}*`,
-        `• Tiket MTD: Created *${sMtdAllTkt.created.toLocaleString('id-ID')}* | Resolved *${sMtdAllTkt.resolved.toLocaleString('id-ID')}* | Outstanding *${sMtdAllTkt.outstanding.toLocaleString('id-ID')}*`
+        `*Akumulasi Semua Interaksi (CASN + Reguler)*`,
+        `- Daily: *${accDailyInt.total.toLocaleString('id-ID')}* (CASN: ${accDailyInt.casn.toLocaleString('id-ID')} | Reguler: ${accDailyInt.reguler.toLocaleString('id-ID')}) — FCR: ${accDailyInt.fcr.toLocaleString('id-ID')} | N-FCR: ${accDailyInt.nfcr.toLocaleString('id-ID')}`,
+        `- MTD: *${accMtdInt.total.toLocaleString('id-ID')}* (CASN: ${accMtdInt.casn.toLocaleString('id-ID')} | Reguler: ${accMtdInt.reguler.toLocaleString('id-ID')}) — FCR: ${accMtdInt.fcr.toLocaleString('id-ID')} | N-FCR: ${accMtdInt.nfcr.toLocaleString('id-ID')}`,
+        ``,
+        `*Akumulasi Semua Ticket (CASN + Reguler)*`,
+        `- Daily: Created *${accDailyTkt.created.toLocaleString('id-ID')}* | Resolved *${accDailyTkt.resolved.toLocaleString('id-ID')}* | Pending *${accDailyTkt.pending.toLocaleString('id-ID')}* | Outstanding *${accDailyTkt.outstanding.toLocaleString('id-ID')}* (CASN: ${accDailyTkt.outCasn.toLocaleString('id-ID')} | Reguler: ${accDailyTkt.outReguler.toLocaleString('id-ID')})`,
+        `- MTD: Created *${accMtdTkt.created.toLocaleString('id-ID')}* | Resolved *${accMtdTkt.resolved.toLocaleString('id-ID')}* | Pending *${accMtdTkt.pending.toLocaleString('id-ID')}* | Outstanding *${accMtdTkt.outstanding.toLocaleString('id-ID')}* (CASN: ${accMtdTkt.outCasn.toLocaleString('id-ID')} | Reguler: ${accMtdTkt.outReguler.toLocaleString('id-ID')})`
     ].join('\n');
 }
-
     async function handleCopyDashboardAndSummary(){
         ensureCopyModal();
         const theme = getCurrentTheme();
